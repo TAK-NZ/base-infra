@@ -2,7 +2,7 @@ import cf from '@openaddresses/cloudfriend';
 import VPC from './lib/vpc.js';
 import Connect from './lib/connect.js';
 import ECS from './lib/ecs.js';
-import ECR from './lib/ecs.js';
+import ECR from './lib/ecr.js';
 
 export default cf.merge(
     VPC,
