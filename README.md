@@ -2,6 +2,26 @@
 
 <p align=center>TAK Base Layer (VPC, ECS, ECR)</p>
 
+## Background
+
+The [Team Awareness Kit (TAK)](https://tak.gov/solutions/emergency) provides ire, Emergency Management, and First Responders an operationally agnostic tool for improved situational awareness and a common operational picture. 
+This repo deploys the base infrastructure required to deploy a [TAK server](https://tak.gov/solutions/emergency) along with [Authentik](https://goauthentik.io/) as the authentication layer on AWS.
+
+The following additional layers are required after deploying this `coe-base-<name>` layer:
+
+| Name                  | Notes |
+| --------------------- | ----- |
+| `coe-auth-<name>`     | Authentication layer using Authentik - [repo](https://github.com/TAK-NZ/auth-infra)      |
+| `coe-tak-<name>`      | TAK Server layer - [repo](https://github.com/TAK-NZ/tak-infra)      |
+
+## Pre-Reqs
+
+The following dependencies must be fulfilled:
+- An [AWS Account](https://signin.aws.amazon.com/signup?request_type=register).
+- A Domain Name under which the TAK server is made available, e.g. `tak.nz` in the example here.
+- An [AWS ACM certificate](https://docs.aws.amazon.com/acm/latest/userguide/gs.html) certificate.
+  - This certificate should cover the main domain - e.g. `tak.nz`, as well as two levels of wildcard subdomains, e.g. `*.tak.nz` and `*.*.tak.nz`.
+
 ## AWS Deployment
 
 ### 1. Install Tooling Dependencies
