@@ -76,10 +76,7 @@ npx deploy info --help
 
 The estimated AWS cost for this layer of the stack without data transfer or data processing based usage is:
 
-* Environment type: Prod
-  * Monthly cost: 73.00 USD
-  * Yearly cost: 876.00 USD
-* Environment type: Dev-Test
-  * Monthly cost: 36.50 USD
-  * Yearly cost: 438.00 USD
-
+| Environment type      | Estimated monthly cost | Estimated yearly cost |
+| --------------------- | ----- | ----- |
+| Prod                  | 73.00 USD | 876.00 USD |
+| Dev-Test              | 36.50 USD | 438.00 USD |
