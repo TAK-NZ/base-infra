@@ -29,7 +29,7 @@ export default {
             Properties: {
                 AmazonProvidedIpv6CidrBlock: true,
                 VpcId: cf.ref('VPC')
-            }   
+            }
         },
         SubnetPublicA: {
             Type: 'AWS::EC2::Subnet',
@@ -46,7 +46,7 @@ export default {
                     Value: cf.join([cf.stackName, '-subnet-public-a'])
                 }]
             }
-        },  
+        },
         SubnetPublicB: {
             Type: 'AWS::EC2::Subnet',
             DependsOn: 'VPCCIDR',
@@ -61,8 +61,8 @@ export default {
                     Key: 'Name',
                     Value: cf.join([cf.stackName, '-subnet-public-b'])
                 }]
-            }       
-        },          
+            }
+        },
         SubnetPrivateA: {
             Type: 'AWS::EC2::Subnet',
             Properties: {
@@ -83,7 +83,6 @@ export default {
             Properties: {
                 AvailabilityZone: cf.select(1, cf.getAzs(cf.region)),
                 VpcId: cf.ref('VPC'),
-                //CidrBlock: '10.0.4.0/24',
                 CidrBlock: cf.select(3, cf.cidr(cf.getAtt('VPC', 'CidrBlock'),256,8)),                            // Select the third out of 256 possible /24 IPv4 subnets from the VPC /16 IPv4 CIDR
                 Ipv6CidrBlock: cf.select(3, cf.cidr(cf.select(0, cf.getAtt('VPC', 'Ipv6CidrBlocks')),256,64)),    // Select the third out of 256 possible /64 IPv6 subnets from the VPC /56 IPv6 CIDR
                 AssignIpv6AddressOnCreation: true,
@@ -98,9 +97,9 @@ export default {
             Type: 'AWS::EC2::VPCEndpoint',
             Properties: {
                 VpcEndpointType: 'Gateway',
-                RouteTableIds: [ cf.ref('PublicRouteTable') ],
+                RouteTableIds: [cf.ref('PublicRouteTable')],
                 ServiceName: cf.join(['com.amazonaws.', cf.region, '.s3']),
-                VpcId: cf.ref('VPC'),
+                VpcId: cf.ref('VPC')
             }
         },
         InternetGateway: {
@@ -175,7 +174,6 @@ export default {
         },
         NatGatewayA: {
             Type: 'AWS::EC2::NatGateway',
-            DependsOn: 'NatPublicIPA',
             Properties:  {
                 AllocationId: cf.getAtt('NatPublicIPA', 'AllocationId'),
                 SubnetId: cf.ref('SubnetPublicA'),
@@ -188,7 +186,6 @@ export default {
         NatGatewayB: {
             Type: 'AWS::EC2::NatGateway',
             Condition: 'CreateProdResources',
-            DependsOn: 'NatPublicIPB',
             Properties:  {
                 AllocationId: cf.getAtt('NatPublicIPB', 'AllocationId'),
                 SubnetId: cf.ref('SubnetPublicB'),
@@ -267,7 +264,6 @@ export default {
         },
         PrivateRouteV6A: {
             Type: 'AWS::EC2::Route',
-            DependsOn:  'EgressOnlyInternetGateway',
             Properties: {
                 RouteTableId: cf.ref('PrivateRouteTableA'),
                 DestinationIpv6CidrBlock: '::/0',
@@ -276,7 +272,6 @@ export default {
         },
         PrivateRouteV6B: {
             Type: 'AWS::EC2::Route',
-            DependsOn:  'EgressOnlyInternetGateway',
             Properties: {
                 RouteTableId: cf.ref('PrivateRouteTableB'),
                 DestinationIpv6CidrBlock: '::/0',
@@ -343,6 +338,12 @@ export default {
                 Name: cf.join([cf.stackName, '-subnet-private-b'])
             },
             Value: cf.ref('SubnetPrivateB')
+        },
+        GitSha: {
+            Export: {
+                Name: cf.join([cf.stackName, '-gitsha'])
+            },
+            Value: cf.ref('GitSha')
         }
     }
 };

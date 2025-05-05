@@ -1,10 +1,10 @@
 <h1 align=center>TAK VPC</h1>
 
-<p align=center>TAK Base Layer (VPC, ECS, ECR)</p>
+<p align=center>TAK Base Layer (VPC, ECS, ECR, S3, KMS)</p>
 
 ## Background
 
-The [Team Awareness Kit (TAK)](https://tak.gov/solutions/emergency) provides ire, Emergency Management, and First Responders an operationally agnostic tool for improved situational awareness and a common operational picture. 
+The [Team Awareness Kit (TAK)](https://tak.gov/solutions/emergency) provides Fire, Emergency Management, and First Responders an operationally agnostic tool for improved situational awareness and a common operational picture. 
 This repo deploys the base infrastructure required to deploy a [TAK server](https://tak.gov/solutions/emergency) along with [Authentik](https://goauthentik.io/) as the authentication layer on AWS.
 
 The following additional layers are required after deploying this `coe-base-<name>` layer:
@@ -20,7 +20,7 @@ The following dependencies must be fulfilled:
 - An [AWS Account](https://signin.aws.amazon.com/signup?request_type=register).
 - A Domain Name under which the TAK server is made available, e.g. `tak.nz` in the example here.
 - An [AWS ACM certificate](https://docs.aws.amazon.com/acm/latest/userguide/gs.html) certificate.
-  - This certificate should cover the main domain - e.g. `tak.nz`, as well as two levels of wildcard subdomains, e.g. `*.tak.nz` and `*.*.tak.nz`.
+  - This certificate should cover the main domain - e.g. `tak.nz`, as well as `*.<domain name>` and `*.map.<domain name>`. E.g. `*.tak.nz` and `*.map.tak.nz`.
 
 ## AWS Deployment
 
@@ -78,5 +78,5 @@ The estimated AWS cost for this layer of the stack without data transfer or data
 
 | Environment type      | Estimated monthly cost | Estimated yearly cost |
 | --------------------- | ----- | ----- |
-| Prod                  | 73.00 USD | 876.00 USD |
-| Dev-Test              | 36.50 USD | 438.00 USD |
+| Prod                  | 80.00 USD | 960.00 USD |
+| Dev-Test              | 43.50 USD | 522.00 USD |
