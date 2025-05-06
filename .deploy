@@ -1,0 +1,13 @@
+{
+    "name": "coe-base",
+    "profile": "coe",
+    "region": "ap-southeast-2",
+    "tags": [
+        {
+            "Key": "Project",
+            "Value": "infra-base"
+        },
+        "Owner",
+        "Client"
+    ]
+}
