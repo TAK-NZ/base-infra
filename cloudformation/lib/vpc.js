@@ -351,20 +351,6 @@ export default {
                 Name: cf.join([cf.stackName, '-gitsha'])
             },
             Value: cf.ref('GitSha')
-        },
-        VPC: {
-            Description: 'VPC ID',
-            Export: {
-                Name: cf.join([cf.stackName, '-vpc'])
-            },
-            Value: cf.ref('VPC')
-        },
-        VPCCIDR: {
-            Description: 'VPC CIDR Block',
-            Export: {
-                Name: cf.join([cf.stackName, '-vpc-cidr'])
-            },
-            Value: cf.getAtt('VPC', 'CidrBlock')
-        },
+        }
     }
 };
