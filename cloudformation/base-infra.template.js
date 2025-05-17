@@ -14,10 +14,6 @@ export default cf.merge(
     {
         Description: 'TAK Base Layer - VPC, ECS, ECR, KMS, S3',
         Parameters: {
-            GitSha: {
-                Description: 'GitSha that is currently being deployed',
-                Type: 'String'
-            },
             EnvType: {
                 Description: 'Environment type',
                 Type: 'String',

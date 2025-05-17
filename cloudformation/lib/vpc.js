@@ -345,12 +345,6 @@ export default {
                 Name: cf.join([cf.stackName, '-subnet-private-b'])
             },
             Value: cf.ref('SubnetPrivateB')
-        },
-        GitSha: {
-            Export: {
-                Name: cf.join([cf.stackName, '-gitsha'])
-            },
-            Value: cf.ref('GitSha')
         }
     }
 };
