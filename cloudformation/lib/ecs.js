@@ -14,5 +14,14 @@ export default {
                 }]
             }
         }
+    },
+    Outputs: {
+        EcsArn: {
+            Description: 'ECS ARN',
+            Export: {
+                Name: cf.join([cf.stackName, '-ecs'])
+            },
+            Value: cf.getAtt('ECSCluster', 'Arn')
+        }
     }
 };

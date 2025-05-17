@@ -22,6 +22,15 @@ export default {
                 }
             }
         }
+    },
+    Outputs: {
+        EcrArn: {
+            Description: 'ECR ARN',
+            Export: {
+                Name: cf.join([cf.stackName, '-ecr'])
+            },
+            Value: cf.getAtt('Repository', 'Arn')
+        }
     }
 };
 
