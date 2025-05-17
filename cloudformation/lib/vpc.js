@@ -297,19 +297,26 @@ export default {
         CreateProdResources: cf.equals(cf.ref('EnvType'), 'prod')
     },
     Outputs: {
-        VPC: {
+        VpcId: {
             Description: 'VPC ID',
             Export: {
-                Name: cf.join([cf.stackName, '-vpc'])
+                Name: cf.join([cf.stackName, '-vpc-id'])
             },
             Value: cf.ref('VPC')
         },
-        VPCCIDR: {
-            Description: 'VPC CIDR Block',
+        VpcCidrIpv4: {
+            Description: 'VPC IPv4 CIDR Block',
             Export: {
-                Name: cf.join([cf.stackName, '-vpc-cidr'])
+                Name: cf.join([cf.stackName, '-vpc-cidr-ipv4'])
             },
             Value: cf.getAtt('VPC', 'CidrBlock')
+        },
+        VpcCidrIpv6: {
+            Description: 'VPC IPv6 CIDR Block',
+            Export: {
+                Name: cf.join([cf.stackName, '-vpc-cidr-ipv6'])
+            },
+            Value: cf.select(0,cf.getAtt('VPC', 'Ipv6CidrBlocks'))
         },
         SubnetPublicA: {
             Description: 'Subnet Public A',
@@ -338,12 +345,6 @@ export default {
                 Name: cf.join([cf.stackName, '-subnet-private-b'])
             },
             Value: cf.ref('SubnetPrivateB')
-        },
-        GitSha: {
-            Export: {
-                Name: cf.join([cf.stackName, '-gitsha'])
-            },
-            Value: cf.ref('GitSha')
         }
     }
 };
