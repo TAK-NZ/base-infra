@@ -93,15 +93,6 @@ export default {
                 }]
             }
         },
-        S3Endpoint: {
-            Type: 'AWS::EC2::VPCEndpoint',
-            Properties: {
-                VpcEndpointType: 'Gateway',
-                RouteTableIds: [cf.ref('PublicRouteTable')],
-                ServiceName: cf.join(['com.amazonaws.', cf.region, '.s3']),
-                VpcId: cf.ref('VPC')
-            }
-        },
         InternetGateway: {
             Type: 'AWS::EC2::InternetGateway',
             Properties: {
