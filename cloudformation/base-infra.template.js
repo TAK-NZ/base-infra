@@ -4,6 +4,7 @@ import ECS from './lib/ecs.js';
 import ECR from './lib/ecr.js';
 import KMS from './lib/kms.js';
 import S3 from './lib/s3.js';
+import endpoints from './lib/endpoints.js';
 
 export default cf.merge(
     VPC,
@@ -11,6 +12,7 @@ export default cf.merge(
     ECR,
     KMS,
     S3,
+    endpoints,
     {
         Description: 'TAK Base Layer - VPC, ECS, ECR, KMS, S3',
         Parameters: {
