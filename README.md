@@ -32,7 +32,11 @@ From the root directory, install the deploy dependencies
 npm install
 ```
 
-### 2. CloudFormation Stack Deployment
+### 2. First use of Amazon Elastic Container Service (ECS)
+
+Amazon Elastic Container Service uses AWS Identity and Access Management (IAM) service-linked roles. This service linked role needs to be created first - either manually or by having ECS create it during the first deployment. If you have never used ECS in this specific AWS account you need to manually create the service-linked role via `aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com`. If you have already used ECS before in this particular AWS account, you can move on to the next step. 
+
+### 3. CloudFormation Stack Deployment
 Deployment to AWS is handled via AWS Cloudformation. The template can be found in the `./cloudformation`
 directory. The deployment itself is performed by [Deploy](https://github.com/openaddresses/deploy) which
 was installed in the previous step.
