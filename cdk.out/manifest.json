@@ -1,0 +1,366 @@
+{
+  "version": "41.0.0",
+  "artifacts": {
+    "CdkStack.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "CdkStack.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "CdkStack": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://unknown-account/unknown-region",
+      "properties": {
+        "templateFile": "CdkStack.template.json",
+        "terminationProtection": false,
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-${AWS::Region}",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-${AWS::Region}",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/1fe4fe1c73b417484f0dff183e59b148eb99042e4068fe16bde2e3181db31d2c.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "CdkStack.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-lookup-role-${AWS::AccountId}-${AWS::Region}",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "CdkStack.assets"
+      ],
+      "metadata": {
+        "/CdkStack/VPCLocationId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VPCLocationId"
+          }
+        ],
+        "/CdkStack/EnvType": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EnvType"
+          }
+        ],
+        "/CdkStack/CreateProdResources": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreateProdResources"
+          }
+        ],
+        "/CdkStack/VPC": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VPC"
+          }
+        ],
+        "/CdkStack/VPCCIDR": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VPCCIDR"
+          }
+        ],
+        "/CdkStack/SubnetPublicA": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SubnetPublicA"
+          }
+        ],
+        "/CdkStack/SubnetPublicB": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SubnetPublicB"
+          }
+        ],
+        "/CdkStack/SubnetPrivateA": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SubnetPrivateA"
+          }
+        ],
+        "/CdkStack/SubnetPrivateB": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SubnetPrivateB"
+          }
+        ],
+        "/CdkStack/InternetGateway": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "InternetGateway"
+          }
+        ],
+        "/CdkStack/EgressOnlyInternetGateway": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EgressOnlyInternetGateway"
+          }
+        ],
+        "/CdkStack/NatPublicIPA": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NatPublicIPA"
+          }
+        ],
+        "/CdkStack/NatGatewayA": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NatGatewayA"
+          }
+        ],
+        "/CdkStack/PublicRouteTable": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PublicRouteTable"
+          }
+        ],
+        "/CdkStack/PrivateRouteTableA": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PrivateRouteTableA"
+          }
+        ],
+        "/CdkStack/PrivateRouteTableB": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PrivateRouteTableB"
+          }
+        ],
+        "/CdkStack/SubnetPublicAAssoc": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SubnetPublicAAssoc"
+          }
+        ],
+        "/CdkStack/SubnetPublicBAssoc": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SubnetPublicBAssoc"
+          }
+        ],
+        "/CdkStack/SubnetPrivateAAssoc": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SubnetPrivateAAssoc"
+          }
+        ],
+        "/CdkStack/SubnetPrivateBAssoc": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SubnetPrivateBAssoc"
+          }
+        ],
+        "/CdkStack/VPCIG": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VPCIG"
+          }
+        ],
+        "/CdkStack/PublicRoute": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PublicRoute"
+          }
+        ],
+        "/CdkStack/PublicRouteV6": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PublicRouteV6"
+          }
+        ],
+        "/CdkStack/PrivateRouteA": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PrivateRouteA"
+          }
+        ],
+        "/CdkStack/PrivateRouteB": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PrivateRouteB"
+          }
+        ],
+        "/CdkStack/PrivateRouteV6A": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PrivateRouteV6A"
+          }
+        ],
+        "/CdkStack/PrivateRouteV6B": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PrivateRouteV6B"
+          }
+        ],
+        "/CdkStack/ECSCluster": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ECSCluster"
+          }
+        ],
+        "/CdkStack/Repository": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "Repository"
+          }
+        ],
+        "/CdkStack/KMS": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "KMS"
+          }
+        ],
+        "/CdkStack/KMSAlias": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "KMSAlias"
+          }
+        ],
+        "/CdkStack/ConfigBucket": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ConfigBucket"
+          }
+        ],
+        "/CdkStack/S3Endpoint": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "S3Endpoint"
+          }
+        ],
+        "/CdkStack/ECRDKREndpoint": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ECRDKREndpoint"
+          }
+        ],
+        "/CdkStack/ECRAPIEndpoint": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ECRAPIEndpoint"
+          }
+        ],
+        "/CdkStack/KMSEndpoint": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "KMSEndpoint"
+          }
+        ],
+        "/CdkStack/SecretsManagerEndpoint": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SecretsManagerEndpoint"
+          }
+        ],
+        "/CdkStack/CloudwatchEndpoint": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CloudwatchEndpoint"
+          }
+        ],
+        "/CdkStack/VpcIdOutput": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcIdOutput"
+          }
+        ],
+        "/CdkStack/VpcCidrIpv4Output": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcCidrIpv4Output"
+          }
+        ],
+        "/CdkStack/VpcCidrIpv6Output": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcCidrIpv6Output"
+          }
+        ],
+        "/CdkStack/SubnetPublicAOutput": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SubnetPublicAOutput"
+          }
+        ],
+        "/CdkStack/SubnetPublicBOutput": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SubnetPublicBOutput"
+          }
+        ],
+        "/CdkStack/SubnetPrivateAOutput": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SubnetPrivateAOutput"
+          }
+        ],
+        "/CdkStack/SubnetPrivateBOutput": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SubnetPrivateBOutput"
+          }
+        ],
+        "/CdkStack/EcsArnOutput": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EcsArnOutput"
+          }
+        ],
+        "/CdkStack/EcrArnOutput": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EcrArnOutput"
+          }
+        ],
+        "/CdkStack/KmsArnOutput": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "KmsArnOutput"
+          }
+        ],
+        "/CdkStack/ConfigBucketArnOutput": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ConfigBucketArnOutput"
+          }
+        ],
+        "/CdkStack/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/CdkStack/CDKMetadata/Condition": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadataAvailable"
+          }
+        ],
+        "/CdkStack/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/CdkStack/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "CdkStack"
+    },
+    "Tree": {
+      "type": "cdk:tree",
+      "properties": {
+        "file": "tree.json"
+      }
+    }
+  },
+  "minimumCliVersion": "2.1005.0"
+}

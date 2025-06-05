@@ -22,65 +22,42 @@ The following dependencies must be fulfilled:
 - An [AWS ACM certificate](https://docs.aws.amazon.com/acm/latest/userguide/gs.html) certificate.
   - This certificate should cover the main domain - e.g. `tak.nz`, as well as `*.<domain name>` and `*.map.<domain name>`. E.g. `*.tak.nz` and `*.map.tak.nz`.
 
+
+## Resources
+
+This AWS CDK project provisions the following resources:
+- VPC with public and private subnets (IPv4/IPv6)
+- NAT Gateways (conditional on environment)
+- Route tables and associations
+- ECS Cluster
+- ECR Repository with lifecycle policy
+- KMS Key and Alias
+- S3 Bucket with encryption and ownership controls
+- VPC Endpoints for S3, ECR, KMS, Secrets Manager, and CloudWatch (only in production environment)
+
 ## AWS Deployment
 
 ### 1. Install Tooling Dependencies
-
-From the root directory, install the deploy dependencies
-
-```sh
-npm install
-```
+   ```bash
+   npm install
+   ```
 
 ### 2. First use of Amazon Elastic Container Service (ECS)
 
 Amazon Elastic Container Service uses AWS Identity and Access Management (IAM) service-linked roles. This service linked role needs to be created first - either manually or by having ECS create it during the first deployment. If you have never used ECS in this specific AWS account you need to manually create the service-linked role via `aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com`. If you have already used ECS before in this particular AWS account, you can move on to the next step. 
 
-### 3. CloudFormation Stack Deployment
-Deployment to AWS is handled via AWS Cloudformation. The template can be found in the `./cloudformation`
-directory. The deployment itself is performed by [Deploy](https://github.com/openaddresses/deploy) which
-was installed in the previous step.
+### 3. Bootstrap your AWS environment (if not already done):
+   ```bash
+   npx cdk bootstrap
+   ```
+### 4. Deploy the stack:
+   ```bash
+   npx cdk deploy
+   ```
 
-Deployment can then be performed via the `npx deploy create <stack>` command. 
+## Customization
+- Edit `lib/cdk-stack.ts` to adjust resources or parameters.
 
-For example:
-
-```
-npx deploy create staging
-```
-
-## About the deploy tool
-
-The deploy tool can be run via the `npx deploy` command.
-
-To install it globally - view the deploy [README](https://github.com/openaddresses/deploy)
-
-Deploy uses your existing AWS credentials. Ensure that your `~/.aws/credentials` has an entry like:
- 
-```
-[coe]
-aws_access_key_id = <redacted>
-aws_secret_access_key = <redacted>
-```
-
-Stacks can be created, deleted, cancelled, etc all via the deploy tool. For further information
-information about `deploy` functionality run the following for help.
- 
-```sh
-npx deploy
-```
- 
-Further help about a specific command can be obtained via something like:
-
-```sh
-npx deploy info --help
-```
-
-## Estimated Cost
-
-The estimated AWS cost for this layer of the stack without data transfer or data processing based usage is:
-
-| Environment type      | Estimated monthly cost | Estimated yearly cost |
-| --------------------- | ----- | ----- |
-| Prod                  | 80.00 USD | 960.00 USD |
-| Dev-Test              | 43.50 USD | 522.00 USD |
+## Notes
+- Make sure your AWS credentials are configured.
+- The stack name and environment type (prod/dev-test) can be set via CDK context or environment variables.
