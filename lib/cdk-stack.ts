@@ -1,0 +1,84 @@
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import { createVpcResources } from './vpc-resources';
+import { createEcsResources } from './ecs-resources';
+import { createEcrResources } from './ecr-resources';
+import { createKmsResources } from './kms-resources';
+import { createS3Resources } from './s3-resources';
+import { createVpcEndpoints } from './vpc-endpoints';
+import { RemovalPolicy, StackProps, Fn, CfnOutput, CfnParameter, CfnCondition } from 'aws-cdk-lib';
+import { getParameters } from './parameters';
+import { registerOutputs } from './outputs';
+
+export interface BaseInfraStackProps extends StackProps {
+  envType?: 'prod' | 'dev-test';
+  vpcLocationId?: number;
+}
+
+export class CdkStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props?: BaseInfraStackProps) {
+    super(scope, id, props);
+
+    // CDK Parameters
+    const vpcLocationIdParam = new CfnParameter(this, 'VPCLocationId', {
+      type: 'Number',
+      description: 'Unique VPC ID per AWS regions (0-255)',
+      default: 0,
+      minValue: 0,
+      maxValue: 255,
+    });
+    const envTypeParam = new CfnParameter(this, 'EnvType', {
+      type: 'String',
+      description: 'Environment type',
+      allowedValues: ['prod', 'dev-test'],
+      default: 'prod',
+    });
+
+    // Condition for prod resources
+    const createProdResources = new CfnCondition(this, 'CreateProdResources', {
+      expression: Fn.conditionEquals(envTypeParam.valueAsString, 'prod'),
+    });
+
+    const stackName = Fn.ref('AWS::StackName');
+    const region = cdk.Stack.of(this).region;
+
+    // VPC and networking resources
+    const vpcResources = createVpcResources(this, envTypeParam.valueAsString, vpcLocationIdParam.valueAsNumber, createProdResources);
+
+    // ECS
+    const { ecsCluster } = createEcsResources(this, stackName);
+
+    // ECR
+    const { ecrRepo } = createEcrResources(this, stackName);
+
+    // KMS
+    const { kmsKey, kmsAlias } = createKmsResources(this, stackName);
+
+    // S3
+    const { configBucket } = createS3Resources(this, stackName, region, kmsAlias.ref);
+
+    // VPC Endpoints
+    createVpcEndpoints(this, {
+      vpcId: vpcResources.vpc.ref,
+      region,
+      privateRouteTableA: vpcResources.privateRouteTableA.ref,
+      privateRouteTableB: vpcResources.privateRouteTableB.ref,
+      subnetPrivateA: vpcResources.subnetPrivateA.ref,
+      subnetPrivateB: vpcResources.subnetPrivateB.ref,
+      endpointSgId: envTypeParam.valueAsString === 'prod' ? 'EndpointSecurityGroup' : undefined,
+      stackName,
+      isProdCondition: createProdResources,
+    });
+
+    // Outputs
+    registerOutputs({
+      stack: this,
+      stackName,
+      vpcResources,
+      ecsCluster,
+      ecrRepo,
+      kmsKey,
+      configBucket,
+    });
+  }
+}

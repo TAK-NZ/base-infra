@@ -1,31 +1,27 @@
 {
-    "name": "@TAK-NZ/base-infra",
-    "type": "module",
-    "version": "1.0.0",
-    "description": "TAK Base Layer (VPC, ECS, ECR)",
-    "scripts": {
-        "lint": "eslint cloudformation/",
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "engines": {
-        "node": ">= 18"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/TAK-NZ/base-infra.git"
-    },
-    "author": "TAK.NZ - https://tak.nz",
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/TAK-NZ/base-infra/issues"
-    },
-    "homepage": "https://github.com/TAK-NZ/base-infra#readme",
-    "dependencies": {
-        "@openaddresses/cloudfriend": "^7.0.0",
-        "@openaddresses/deploy": "^9.0.0"
-    },
-    "devDependencies": {
-        "eslint": "^9.0.0",
-        "eslint-plugin-n": "^17.2.1"
-    }
+  "name": "@TAK-NZ/base-infra",
+  "version": "0.1.0",
+  "description": "Base infrastructure for TAK-NZ projects using AWS CDK",
+  "bin": {
+    "cdk": "bin/cdk.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "22.7.9",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "aws-cdk": "2.1017.1",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.6.3"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.198.0",
+    "constructs": "^10.0.0"
+  }
 }
