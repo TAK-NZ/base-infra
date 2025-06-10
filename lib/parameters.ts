@@ -36,11 +36,11 @@ export function resolveStackParameters(stack: cdk.Stack): {
   }) as string;
 
   const vpcLocationId = (vpcLocationIdFromContext !== undefined ? Number(vpcLocationIdFromContext) : resolver.resolveParameterSync(stack, 'vpcLocationId', {
-    description: 'Unique VPC ID per AWS regions (0-255)',
+    description: 'Unique VPC ID per AWS region (0-4095, used for /20 CIDR blocks)',
     default: 0,
     type: 'Number',
     minValue: 0,
-    maxValue: 255,
+    maxValue: 4095,
     required: true
   })) as number;
 

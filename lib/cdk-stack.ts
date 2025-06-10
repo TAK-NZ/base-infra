@@ -27,10 +27,10 @@ export class CdkStack extends cdk.Stack {
     // Create CDK Parameters (for CloudFormation template compatibility)
     const vpcLocationIdParam = resolver.createCfnParameter(this, 'vpcLocationId', 'VPCLocationId', {
       type: 'Number',
-      description: 'Unique VPC ID per AWS regions (0-255)',
+      description: 'Unique VPC ID per AWS region (0-4095, used for /20 CIDR blocks)',
       default: vpcLocationId,
       minValue: 0,
-      maxValue: 255,
+      maxValue: 4095,
     });
 
     const envTypeParam = resolver.createCfnParameter(this, 'envType', 'EnvType', {

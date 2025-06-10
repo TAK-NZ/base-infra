@@ -3,8 +3,8 @@
   "VPCLocationId": {
    "Type": "Number",
    "Default": 0,
-   "Description": "Unique VPC ID per AWS regions (0-255)",
-   "MaxValue": 255,
+   "Description": "Unique VPC ID per AWS region (0-4095, used for /20 CIDR blocks)",
+   "MaxValue": 4095,
    "MinValue": 0
   },
   "EnvType": {
@@ -300,18 +300,7 @@
   "VPC": {
    "Type": "AWS::EC2::VPC",
    "Properties": {
-    "CidrBlock": {
-     "Fn::Join": [
-      "",
-      [
-       "10.",
-       {
-        "Ref": "VPCLocationId"
-       },
-       ".0.0/16"
-      ]
-     ]
-    },
+    "CidrBlock": "10.-1.1800966185679708e+288.0.0/20",
     "EnableDnsHostnames": true,
     "EnableDnsSupport": true,
     "Tags": [

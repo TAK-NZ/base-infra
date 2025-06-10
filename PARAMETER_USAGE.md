@@ -4,17 +4,17 @@
 
 ### 1. Deploy with environment variables (highest priority)
 ```bash
-ENVTYPE=prod VPCLOCATIONID=10 cdk deploy
+ENVTYPE=prod VPCLOCATIONID=100 cdk deploy
 ```
 
 ### 2. Deploy with CLI context
 ```bash
-cdk deploy --context envType=prod --context vpcLocationId=10
+cdk deploy --context envType=prod --context vpcLocationId=100
 ```
 
 ### 3. Deploy with CLI parameters
 ```bash
-cdk deploy --parameters EnvType=staging --parameters VPCLocationId=5
+cdk deploy --parameters EnvType=staging --parameters VPCLocationId=50
 ```
 
 ### 4. Deploy using config file values

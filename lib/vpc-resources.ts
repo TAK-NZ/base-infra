@@ -26,7 +26,13 @@ export function createVpcResources(scope: Construct, envType: string, vpcLocatio
   const isProd = envType === 'prod';
   const stack = cdk.Stack.of(scope);
   const stackName = Fn.ref('AWS::StackName');
-  const vpcCidr = Fn.join('', ['10.', vpcLocationId.toString(), '.0.0/16']);
+  
+  // Calculate /20 CIDR block: 10.{major}.{minor}.0/20
+  // This gives us 4096 IPs per VPC 
+  // vpcLocationId range: 0-4095
+  const majorOctet = Math.floor(vpcLocationId / 16);  // 0-255
+  const minorOctet = (vpcLocationId % 16) * 16;       // 0, 16, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224, 240
+  const vpcCidr = Fn.join('', ['10.', majorOctet.toString(), '.', minorOctet.toString(), '.0/20']);
   const vpc = new ec2.CfnVPC(scope, 'VPC', {
     cidrBlock: vpcCidr,
     enableDnsHostnames: true,
