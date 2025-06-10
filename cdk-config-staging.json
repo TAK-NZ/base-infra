@@ -1,0 +1,5 @@
+{
+  "envType": "staging",
+  "vpcLocationId": 2,
+  "description": "Staging environment configuration"
+}

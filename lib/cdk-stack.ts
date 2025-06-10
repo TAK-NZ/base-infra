@@ -7,7 +7,7 @@ import { createKmsResources } from './kms-resources';
 import { createS3Resources } from './s3-resources';
 import { createVpcEndpoints } from './vpc-endpoints';
 import { RemovalPolicy, StackProps, Fn, CfnOutput, CfnParameter, CfnCondition } from 'aws-cdk-lib';
-import { getParameters } from './parameters';
+import { getParameters, resolveStackParameters } from './parameters';
 import { registerOutputs } from './outputs';
 
 export interface BaseInfraStackProps extends StackProps {
@@ -19,19 +19,25 @@ export class CdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: BaseInfraStackProps) {
     super(scope, id, props);
 
-    // CDK Parameters
-    const vpcLocationIdParam = new CfnParameter(this, 'VPCLocationId', {
+    // Resolve parameters using cascading resolution
+    const { envType, vpcLocationId, resolver } = resolveStackParameters(this);
+    
+    console.log(`🚀 Deploying stack with envType: ${envType}, vpcLocationId: ${vpcLocationId}`);
+
+    // Create CDK Parameters (for CloudFormation template compatibility)
+    const vpcLocationIdParam = resolver.createCfnParameter(this, 'vpcLocationId', 'VPCLocationId', {
       type: 'Number',
       description: 'Unique VPC ID per AWS regions (0-255)',
-      default: 0,
+      default: vpcLocationId,
       minValue: 0,
       maxValue: 255,
     });
-    const envTypeParam = new CfnParameter(this, 'EnvType', {
+
+    const envTypeParam = resolver.createCfnParameter(this, 'envType', 'EnvType', {
       type: 'String',
       description: 'Environment type',
       allowedValues: ['prod', 'dev-test'],
-      default: 'prod',
+      default: envType,
     });
 
     // Condition for prod resources

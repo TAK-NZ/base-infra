@@ -50,10 +50,42 @@ Amazon Elastic Container Service uses AWS Identity and Access Management (IAM) s
    ```bash
    npx cdk bootstrap
    ```
-### 4. Deploy the stack:
-   ```bash
-   npx cdk deploy
-   ```
+
+### 5. Deploy the stack:
+
+The stack supports flexible parameter configuration through multiple methods:
+
+#### Option A: CLI Context (Recommended)
+```bash
+npx cdk deploy --context envType=prod --context vpcLocationId=10
+```
+
+#### Option B: Configuration File
+Create or edit `cdk-config.json`:
+```json
+{
+  "envType": "dev-test",
+  "vpcLocationId": 0
+}
+```
+Then deploy:
+```bash
+npx cdk deploy
+```
+
+#### Option C: Interactive Prompts
+```bash
+npx cdk deploy
+# Will prompt for any missing required parameters
+```
+
+**Parameters:**
+- `envType`: Environment type (`prod` or `dev-test`)
+  - `prod`: Includes NAT Gateways and production-grade resources
+  - `dev-test`: Cost-optimized for development/testing
+- `vpcLocationId`: Unique VPC ID per AWS region (0-255); For future use
+
+See [PARAMETER_USAGE.md](./PARAMETER_USAGE.md) for detailed parameter configuration examples.
 
 ## Customization
 - Edit `lib/cdk-stack.ts` to adjust resources or parameters.

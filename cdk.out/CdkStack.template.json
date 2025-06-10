@@ -9,7 +9,7 @@
   },
   "EnvType": {
    "Type": "String",
-   "Default": "prod",
+   "Default": "dev-test",
    "AllowedValues": [
     "prod",
     "dev-test"
@@ -1454,7 +1454,7 @@
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/21PQU7DQAx8S+/bpQ0c4JhGFaqQaJQirsjZuLBN4o3WXqIoyt/RJhXlwGns8Xg0k+jt06PerKDntanqdWNLPZ4ETK2yM+XgoUVBH5fMUWXFOlLQ88eIJtFjdqb3PFMLZLbyu8Ytr6dQEkqcDiToCeUZBHsYIrX/9Mh8pGb473jII7zCX7JwQfANygZv5jcuZXbGwhxuyXJ9TUXAfLVI8mtyFeyp6pwlmRQa1rFeEzg2RePjWmDn2Irzg6pbnpu+4BwlbSzwpPg+ynbB1ChT5I9BuiCTIlehvvDdd5Lo7YPerC5s7doHEtuiLhb8AUwjgFJ4AQAA"
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/21P0UrDQBD8lr5fzzYi6GMaihTBhlR8lc1lq9cke+F2zxBC/l0uKdYHn2Z3dnaYSfT26VFvVtDz2lT1urGlHk8CplbZmXLw0KKgj0vmqLJiHSno+WNEk+gxO9N7nqkFMlv5XeOW11MoCSVOBxL0hPIMgj0Mkdp/emQ+UjP8dzzkEV7hL1m4IPgGZYM38xuXMjtjYQ63ZLm+piJgvlok+TW5CvZUdc6STAoN61ivCRybovFxLbBzbMX5QdUtz01fcI6SNhZ4UnwfZbtgapQp8scgXZBJkatQX/juO0n09kFvVhe2du0DiW1RFwv+AGtGpdN4AQAA"
    },
    "Metadata": {
     "aws:cdk:path": "CdkStack/CDKMetadata/Default"

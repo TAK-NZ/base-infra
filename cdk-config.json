@@ -1,0 +1,6 @@
+{
+  "envType": "dev-test",
+  "vpcLocationId": 0,
+  "description": "Default configuration for base-infra CDK deployment",
+  "project": "TAK-NZ"
+}

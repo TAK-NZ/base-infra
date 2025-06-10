@@ -1,1 +1,14 @@
 node_modules
+
+# Compiled TypeScript output
+bin/*.js
+bin/*.d.ts
+lib/*.js
+lib/*.d.ts
+test/*.js
+test/*.d.ts
+*.js.map
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
