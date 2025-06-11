@@ -15,6 +15,7 @@ export interface BaseInfraStackProps extends StackProps {
   envType?: 'prod' | 'dev-test';
   vpcMajorId?: number;
   vpcMinorId?: number;
+  resolver?: ParameterResolver;
 }
 
 export class CdkStack extends cdk.Stack {
@@ -27,7 +28,8 @@ export class CdkStack extends cdk.Stack {
     const vpcMinorId = props?.vpcMinorId || 0;
     const resolvedStackName = 'devtest'; // Default for now
     
-    const resolver = new ParameterResolver();
+    // Use provided resolver or create new one (fallback for backward compatibility)
+    const resolver = props?.resolver || new ParameterResolver();
 
     // Create CDK Parameters (for CloudFormation template compatibility)
     const vpcMajorIdParam = resolver.createCfnParameter(this, 'vpcMajorId', 'VPCMajorId', {

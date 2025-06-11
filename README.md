@@ -113,3 +113,12 @@ Higher priority methods override lower priority ones.
 ## Notes
 - Make sure your AWS credentials are configured.
 - The stack name and environment type (prod/dev-test) can be set via CDK context or environment variables.
+
+## Architecture Diagrams
+
+Visual representations of the infrastructure are available in the [`docs/`](docs/) folder:
+
+- **Production Architecture**: [`docs/tak-base-infrastructure-prod.png`](docs/tak-base-infrastructure-prod.png) - High availability configuration (~$91/month)
+- **Dev-Test Architecture**: [`docs/tak-base-infrastructure-dev-test.png`](docs/tak-base-infrastructure-dev-test.png) - Cost-optimized configuration (~$35/month)
+- **Complete Documentation**: [`docs/README.md`](docs/README.md) - Architecture analysis with comprehensive cost details
+- **Quick Reference**: [`docs/QUICK_REFERENCE.md`](docs/QUICK_REFERENCE.md) - Summary and decision guide

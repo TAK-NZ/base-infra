@@ -54,6 +54,7 @@ new CdkStack(app, stackName, {
   envType: envType as 'prod' | 'dev-test',
   vpcMajorId,
   vpcMinorId,
+  resolver, // Pass the resolver instance to avoid duplicate creation
   
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
