@@ -1,28 +1,31 @@
 {
   "version": "41.0.0",
   "artifacts": {
-    "CdkStack.assets": {
+    "TAK-DevTest-BaseInfra.assets": {
       "type": "cdk:asset-manifest",
       "properties": {
-        "file": "CdkStack.assets.json",
+        "file": "TAK-DevTest-BaseInfra.assets.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
       }
     },
-    "CdkStack": {
+    "TAK-DevTest-BaseInfra": {
       "type": "aws:cloudformation:stack",
       "environment": "aws://unknown-account/unknown-region",
       "properties": {
-        "templateFile": "CdkStack.template.json",
+        "templateFile": "TAK-DevTest-BaseInfra.template.json",
         "terminationProtection": false,
+        "tags": {
+          "Project": "TAK"
+        },
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-${AWS::Region}",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-${AWS::Region}",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/49bcd4ffcdfc6192f73fc04e46cac5bdbc67029603f1fc2ba04ccb51dab197d1.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/c3e5ddd6e13cc15bf30ede6877d61be32f6a34ea7595092dccdb76dfd6e95c81.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
-          "CdkStack.assets"
+          "TAK-DevTest-BaseInfra.assets"
         ],
         "lookupRole": {
           "arn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-lookup-role-${AWS::AccountId}-${AWS::Region}",
@@ -31,329 +34,352 @@
         }
       },
       "dependencies": [
-        "CdkStack.assets"
+        "TAK-DevTest-BaseInfra.assets"
       ],
       "metadata": {
-        "/CdkStack/VPCLocationId": [
+        "/TAK-DevTest-BaseInfra": [
           {
-            "type": "aws:cdk:logicalId",
-            "data": "VPCLocationId"
+            "type": "aws:cdk:stack-tags",
+            "data": [
+              {
+                "Key": "Project",
+                "Value": "TAK"
+              }
+            ]
           }
         ],
-        "/CdkStack/EnvType": [
+        "/TAK-DevTest-BaseInfra/VPCMajorId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VPCMajorId"
+          }
+        ],
+        "/TAK-DevTest-BaseInfra/VPCMinorId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VPCMinorId"
+          }
+        ],
+        "/TAK-DevTest-BaseInfra/EnvType": [
           {
             "type": "aws:cdk:logicalId",
             "data": "EnvType"
           }
         ],
-        "/CdkStack/CreateProdResources": [
+        "/TAK-DevTest-BaseInfra/StackName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StackName"
+          }
+        ],
+        "/TAK-DevTest-BaseInfra/CreateProdResources": [
           {
             "type": "aws:cdk:logicalId",
             "data": "CreateProdResources"
           }
         ],
-        "/CdkStack/VPC": [
+        "/TAK-DevTest-BaseInfra/VPC": [
           {
             "type": "aws:cdk:logicalId",
             "data": "VPC"
           }
         ],
-        "/CdkStack/VPCCIDR": [
+        "/TAK-DevTest-BaseInfra/VPCCIDR": [
           {
             "type": "aws:cdk:logicalId",
             "data": "VPCCIDR"
           }
         ],
-        "/CdkStack/SubnetPublicA": [
+        "/TAK-DevTest-BaseInfra/SubnetPublicA": [
           {
             "type": "aws:cdk:logicalId",
             "data": "SubnetPublicA"
           }
         ],
-        "/CdkStack/SubnetPublicB": [
+        "/TAK-DevTest-BaseInfra/SubnetPublicB": [
           {
             "type": "aws:cdk:logicalId",
             "data": "SubnetPublicB"
           }
         ],
-        "/CdkStack/SubnetPrivateA": [
+        "/TAK-DevTest-BaseInfra/SubnetPrivateA": [
           {
             "type": "aws:cdk:logicalId",
             "data": "SubnetPrivateA"
           }
         ],
-        "/CdkStack/SubnetPrivateB": [
+        "/TAK-DevTest-BaseInfra/SubnetPrivateB": [
           {
             "type": "aws:cdk:logicalId",
             "data": "SubnetPrivateB"
           }
         ],
-        "/CdkStack/InternetGateway": [
+        "/TAK-DevTest-BaseInfra/InternetGateway": [
           {
             "type": "aws:cdk:logicalId",
             "data": "InternetGateway"
           }
         ],
-        "/CdkStack/EgressOnlyInternetGateway": [
+        "/TAK-DevTest-BaseInfra/EgressOnlyInternetGateway": [
           {
             "type": "aws:cdk:logicalId",
             "data": "EgressOnlyInternetGateway"
           }
         ],
-        "/CdkStack/NatPublicIPA": [
+        "/TAK-DevTest-BaseInfra/NatPublicIPA": [
           {
             "type": "aws:cdk:logicalId",
             "data": "NatPublicIPA"
           }
         ],
-        "/CdkStack/NatGatewayA": [
+        "/TAK-DevTest-BaseInfra/NatGatewayA": [
           {
             "type": "aws:cdk:logicalId",
             "data": "NatGatewayA"
           }
         ],
-        "/CdkStack/PublicRouteTable": [
+        "/TAK-DevTest-BaseInfra/PublicRouteTable": [
           {
             "type": "aws:cdk:logicalId",
             "data": "PublicRouteTable"
           }
         ],
-        "/CdkStack/PrivateRouteTableA": [
+        "/TAK-DevTest-BaseInfra/PrivateRouteTableA": [
           {
             "type": "aws:cdk:logicalId",
             "data": "PrivateRouteTableA"
           }
         ],
-        "/CdkStack/PrivateRouteTableB": [
+        "/TAK-DevTest-BaseInfra/PrivateRouteTableB": [
           {
             "type": "aws:cdk:logicalId",
             "data": "PrivateRouteTableB"
           }
         ],
-        "/CdkStack/SubnetPublicAAssoc": [
+        "/TAK-DevTest-BaseInfra/SubnetPublicAAssoc": [
           {
             "type": "aws:cdk:logicalId",
             "data": "SubnetPublicAAssoc"
           }
         ],
-        "/CdkStack/SubnetPublicBAssoc": [
+        "/TAK-DevTest-BaseInfra/SubnetPublicBAssoc": [
           {
             "type": "aws:cdk:logicalId",
             "data": "SubnetPublicBAssoc"
           }
         ],
-        "/CdkStack/SubnetPrivateAAssoc": [
+        "/TAK-DevTest-BaseInfra/SubnetPrivateAAssoc": [
           {
             "type": "aws:cdk:logicalId",
             "data": "SubnetPrivateAAssoc"
           }
         ],
-        "/CdkStack/SubnetPrivateBAssoc": [
+        "/TAK-DevTest-BaseInfra/SubnetPrivateBAssoc": [
           {
             "type": "aws:cdk:logicalId",
             "data": "SubnetPrivateBAssoc"
           }
         ],
-        "/CdkStack/VPCIG": [
+        "/TAK-DevTest-BaseInfra/VPCIG": [
           {
             "type": "aws:cdk:logicalId",
             "data": "VPCIG"
           }
         ],
-        "/CdkStack/PublicRoute": [
+        "/TAK-DevTest-BaseInfra/PublicRoute": [
           {
             "type": "aws:cdk:logicalId",
             "data": "PublicRoute"
           }
         ],
-        "/CdkStack/PublicRouteV6": [
+        "/TAK-DevTest-BaseInfra/PublicRouteV6": [
           {
             "type": "aws:cdk:logicalId",
             "data": "PublicRouteV6"
           }
         ],
-        "/CdkStack/PrivateRouteA": [
+        "/TAK-DevTest-BaseInfra/PrivateRouteA": [
           {
             "type": "aws:cdk:logicalId",
             "data": "PrivateRouteA"
           }
         ],
-        "/CdkStack/PrivateRouteB": [
+        "/TAK-DevTest-BaseInfra/PrivateRouteB": [
           {
             "type": "aws:cdk:logicalId",
             "data": "PrivateRouteB"
           }
         ],
-        "/CdkStack/PrivateRouteV6A": [
+        "/TAK-DevTest-BaseInfra/PrivateRouteV6A": [
           {
             "type": "aws:cdk:logicalId",
             "data": "PrivateRouteV6A"
           }
         ],
-        "/CdkStack/PrivateRouteV6B": [
+        "/TAK-DevTest-BaseInfra/PrivateRouteV6B": [
           {
             "type": "aws:cdk:logicalId",
             "data": "PrivateRouteV6B"
           }
         ],
-        "/CdkStack/ECSCluster": [
+        "/TAK-DevTest-BaseInfra/ECSCluster": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ECSCluster"
           }
         ],
-        "/CdkStack/Repository": [
+        "/TAK-DevTest-BaseInfra/Repository": [
           {
             "type": "aws:cdk:logicalId",
             "data": "Repository"
           }
         ],
-        "/CdkStack/KMS": [
+        "/TAK-DevTest-BaseInfra/KMS": [
           {
             "type": "aws:cdk:logicalId",
             "data": "KMS"
           }
         ],
-        "/CdkStack/KMSAlias": [
+        "/TAK-DevTest-BaseInfra/KMSAlias": [
           {
             "type": "aws:cdk:logicalId",
             "data": "KMSAlias"
           }
         ],
-        "/CdkStack/ConfigBucket": [
+        "/TAK-DevTest-BaseInfra/ConfigBucket": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ConfigBucket"
           }
         ],
-        "/CdkStack/S3Endpoint": [
+        "/TAK-DevTest-BaseInfra/S3Endpoint": [
           {
             "type": "aws:cdk:logicalId",
             "data": "S3Endpoint"
           }
         ],
-        "/CdkStack/ECRDKREndpoint": [
+        "/TAK-DevTest-BaseInfra/ECRDKREndpoint": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ECRDKREndpoint"
           }
         ],
-        "/CdkStack/ECRAPIEndpoint": [
+        "/TAK-DevTest-BaseInfra/ECRAPIEndpoint": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ECRAPIEndpoint"
           }
         ],
-        "/CdkStack/KMSEndpoint": [
+        "/TAK-DevTest-BaseInfra/KMSEndpoint": [
           {
             "type": "aws:cdk:logicalId",
             "data": "KMSEndpoint"
           }
         ],
-        "/CdkStack/SecretsManagerEndpoint": [
+        "/TAK-DevTest-BaseInfra/SecretsManagerEndpoint": [
           {
             "type": "aws:cdk:logicalId",
             "data": "SecretsManagerEndpoint"
           }
         ],
-        "/CdkStack/CloudwatchEndpoint": [
+        "/TAK-DevTest-BaseInfra/CloudwatchEndpoint": [
           {
             "type": "aws:cdk:logicalId",
             "data": "CloudwatchEndpoint"
           }
         ],
-        "/CdkStack/VpcIdOutput": [
+        "/TAK-DevTest-BaseInfra/VpcIdOutput": [
           {
             "type": "aws:cdk:logicalId",
             "data": "VpcIdOutput"
           }
         ],
-        "/CdkStack/VpcCidrIpv4Output": [
+        "/TAK-DevTest-BaseInfra/VpcCidrIpv4Output": [
           {
             "type": "aws:cdk:logicalId",
             "data": "VpcCidrIpv4Output"
           }
         ],
-        "/CdkStack/VpcCidrIpv6Output": [
+        "/TAK-DevTest-BaseInfra/VpcCidrIpv6Output": [
           {
             "type": "aws:cdk:logicalId",
             "data": "VpcCidrIpv6Output"
           }
         ],
-        "/CdkStack/SubnetPublicAOutput": [
+        "/TAK-DevTest-BaseInfra/SubnetPublicAOutput": [
           {
             "type": "aws:cdk:logicalId",
             "data": "SubnetPublicAOutput"
           }
         ],
-        "/CdkStack/SubnetPublicBOutput": [
+        "/TAK-DevTest-BaseInfra/SubnetPublicBOutput": [
           {
             "type": "aws:cdk:logicalId",
             "data": "SubnetPublicBOutput"
           }
         ],
-        "/CdkStack/SubnetPrivateAOutput": [
+        "/TAK-DevTest-BaseInfra/SubnetPrivateAOutput": [
           {
             "type": "aws:cdk:logicalId",
             "data": "SubnetPrivateAOutput"
           }
         ],
-        "/CdkStack/SubnetPrivateBOutput": [
+        "/TAK-DevTest-BaseInfra/SubnetPrivateBOutput": [
           {
             "type": "aws:cdk:logicalId",
             "data": "SubnetPrivateBOutput"
           }
         ],
-        "/CdkStack/EcsArnOutput": [
+        "/TAK-DevTest-BaseInfra/EcsArnOutput": [
           {
             "type": "aws:cdk:logicalId",
             "data": "EcsArnOutput"
           }
         ],
-        "/CdkStack/EcrArnOutput": [
+        "/TAK-DevTest-BaseInfra/EcrArnOutput": [
           {
             "type": "aws:cdk:logicalId",
             "data": "EcrArnOutput"
           }
         ],
-        "/CdkStack/KmsArnOutput": [
+        "/TAK-DevTest-BaseInfra/KmsArnOutput": [
           {
             "type": "aws:cdk:logicalId",
             "data": "KmsArnOutput"
           }
         ],
-        "/CdkStack/ConfigBucketArnOutput": [
+        "/TAK-DevTest-BaseInfra/ConfigBucketArnOutput": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ConfigBucketArnOutput"
           }
         ],
-        "/CdkStack/CDKMetadata/Default": [
+        "/TAK-DevTest-BaseInfra/CDKMetadata/Default": [
           {
             "type": "aws:cdk:logicalId",
             "data": "CDKMetadata"
           }
         ],
-        "/CdkStack/CDKMetadata/Condition": [
+        "/TAK-DevTest-BaseInfra/CDKMetadata/Condition": [
           {
             "type": "aws:cdk:logicalId",
             "data": "CDKMetadataAvailable"
           }
         ],
-        "/CdkStack/BootstrapVersion": [
+        "/TAK-DevTest-BaseInfra/BootstrapVersion": [
           {
             "type": "aws:cdk:logicalId",
             "data": "BootstrapVersion"
           }
         ],
-        "/CdkStack/CheckBootstrapVersion": [
+        "/TAK-DevTest-BaseInfra/CheckBootstrapVersion": [
           {
             "type": "aws:cdk:logicalId",
             "data": "CheckBootstrapVersion"
           }
         ]
       },
-      "displayName": "CdkStack"
+      "displayName": "TAK-DevTest-BaseInfra"
     },
     "Tree": {
       "type": "cdk:tree",

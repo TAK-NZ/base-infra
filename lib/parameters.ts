@@ -1,15 +1,18 @@
 import { ParameterResolver } from './parameter-resolver';
+import { generateStackName, FIXED_STACK_CONFIG } from './stack-naming';
 import * as cdk from 'aws-cdk-lib';
 
 export interface BaseParameters {
   envType: 'prod' | 'dev-test';
-  vpcLocationId: number;
+  vpcMajorId: number;
+  vpcMinorId: number;
 }
 
 export function getParameters(props?: Partial<BaseParameters>): BaseParameters {
   return {
     envType: props?.envType ?? 'prod',
-    vpcLocationId: props?.vpcLocationId ?? 0,
+    vpcMajorId: props?.vpcMajorId ?? 0,
+    vpcMinorId: props?.vpcMinorId ?? 0,
   };
 }
 
@@ -18,14 +21,18 @@ export function getParameters(props?: Partial<BaseParameters>): BaseParameters {
  */
 export function resolveStackParameters(stack: cdk.Stack): {
   envType: string;
-  vpcLocationId: number;
+  vpcMajorId: number;
+  vpcMinorId: number;
+  stackName: string;
   resolver: ParameterResolver;
 } {
   const resolver = new ParameterResolver();
 
   // Check context first, then use resolver for fallback
   const envTypeFromContext = stack.node.tryGetContext('envType');
-  const vpcLocationIdFromContext = stack.node.tryGetContext('vpcLocationId');
+  const vpcMajorIdFromContext = stack.node.tryGetContext('vpcMajorId');
+  const vpcMinorIdFromContext = stack.node.tryGetContext('vpcMinorId');
+  const stackNameFromContext = stack.node.tryGetContext('stackName');
 
   const envType = envTypeFromContext || resolver.resolveParameterSync(stack, 'envType', {
     description: 'Environment type',
@@ -35,26 +42,36 @@ export function resolveStackParameters(stack: cdk.Stack): {
     required: true
   }) as string;
 
-  const vpcLocationId = (vpcLocationIdFromContext !== undefined ? Number(vpcLocationIdFromContext) : resolver.resolveParameterSync(stack, 'vpcLocationId', {
-    description: 'Unique VPC ID per AWS region (0-4095, used for /20 CIDR blocks)',
+  const stackName = stackNameFromContext || resolver.resolveParameterSync(stack, 'stackName', {
+    description: 'Stack deployment identifier for naming resources (only the environment part, e.g., "devtest", "prod")',
+    default: 'devtest',
+    type: 'String',
+    required: true
+  }) as string;
+
+  const vpcMajorId = (vpcMajorIdFromContext !== undefined ? Number(vpcMajorIdFromContext) : resolver.resolveParameterSync(stack, 'vpcMajorId', {
+    description: 'Major VPC ID (0-255) for selecting /16 block from 10.0.0.0/8',
     default: 0,
     type: 'Number',
     minValue: 0,
-    maxValue: 4095,
+    maxValue: 255,
     required: true
   })) as number;
 
-  // Log what we're using from context if applicable
-  if (envTypeFromContext) {
-    console.log(`✓ Using envType from context: ${envType}`);
-  }
-  if (vpcLocationIdFromContext !== undefined) {
-    console.log(`✓ Using vpcLocationId from context: ${vpcLocationId}`);
-  }
+  const vpcMinorId = (vpcMinorIdFromContext !== undefined ? Number(vpcMinorIdFromContext) : resolver.resolveParameterSync(stack, 'vpcMinorId', {
+    description: 'Minor VPC ID (0-15) for selecting /20 subnet within the /16 block',
+    default: 0,
+    type: 'Number',
+    minValue: 0,
+    maxValue: 15,
+    required: true
+  })) as number;
 
   return {
     envType,
-    vpcLocationId,
+    vpcMajorId,
+    vpcMinorId,
+    stackName,
     resolver
   };
 }

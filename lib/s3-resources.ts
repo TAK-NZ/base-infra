@@ -4,7 +4,7 @@ import { RemovalPolicy } from 'aws-cdk-lib';
 
 export function createS3Resources(scope: Construct, stackName: string, region: string, kmsAliasRef: string) {
   const configBucket = new s3.CfnBucket(scope, 'ConfigBucket', {
-    bucketName: `${stackName}-${region}-env-config`,
+    bucketName: `${stackName.toLowerCase()}-${region}-env-config`,
     ownershipControls: {
       rules: [{ objectOwnership: 'BucketOwnerEnforced' }],
     },

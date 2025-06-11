@@ -33,6 +33,13 @@ export class ParameterResolver {
     }
   }
 
+  /**
+   * Get a value directly from the config file
+   */
+  getConfigValue(key: string): any {
+    return this.config[key];
+  }
+
   private async promptUser(paramName: string, description?: string, allowedValues?: string[]): Promise<string> {
     return new Promise((resolve) => {
       const rl = readline.createInterface({
@@ -159,9 +166,12 @@ export class ParameterResolver {
     stack: Stack,
     paramName: string,
     cfnParamId: string,
-    options: ParameterOptions = {}
+    options: ParameterOptions = {},
+    preResolvedValue?: string | number
   ): CfnParameter {
-    const resolvedValue = this.resolveParameterSync(stack, paramName, options);
+    const resolvedValue = preResolvedValue !== undefined 
+      ? preResolvedValue 
+      : this.resolveParameterSync(stack, paramName, options);
     
     return new CfnParameter(stack, cfnParamId, {
       type: options.type || 'String',

@@ -12,7 +12,8 @@ import { registerOutputs } from './outputs';
 
 export interface BaseInfraStackProps extends StackProps {
   envType?: 'prod' | 'dev-test';
-  vpcLocationId?: number;
+  vpcMajorId?: number;
+  vpcMinorId?: number;
 }
 
 export class CdkStack extends cdk.Stack {
@@ -20,25 +21,33 @@ export class CdkStack extends cdk.Stack {
     super(scope, id, props);
 
     // Resolve parameters using cascading resolution
-    const { envType, vpcLocationId, resolver } = resolveStackParameters(this);
-    
-    console.log(`🚀 Deploying stack with envType: ${envType}, vpcLocationId: ${vpcLocationId}`);
+    const { envType, vpcMajorId, vpcMinorId, stackName: resolvedStackName, resolver } = resolveStackParameters(this);
 
     // Create CDK Parameters (for CloudFormation template compatibility)
-    const vpcLocationIdParam = resolver.createCfnParameter(this, 'vpcLocationId', 'VPCLocationId', {
+    const vpcMajorIdParam = resolver.createCfnParameter(this, 'vpcMajorId', 'VPCMajorId', {
       type: 'Number',
-      description: 'Unique VPC ID per AWS region (0-4095, used for /20 CIDR blocks)',
-      default: vpcLocationId,
+      description: 'Major VPC ID (0-255) for selecting /16 block from 10.0.0.0/8',
       minValue: 0,
-      maxValue: 4095,
-    });
+      maxValue: 255,
+    }, vpcMajorId);
+
+    const vpcMinorIdParam = resolver.createCfnParameter(this, 'vpcMinorId', 'VPCMinorId', {
+      type: 'Number',
+      description: 'Minor VPC ID (0-15) for selecting /20 subnet within the /16 block',
+      minValue: 0,
+      maxValue: 15,
+    }, vpcMinorId);
 
     const envTypeParam = resolver.createCfnParameter(this, 'envType', 'EnvType', {
       type: 'String',
       description: 'Environment type',
       allowedValues: ['prod', 'dev-test'],
-      default: envType,
-    });
+    }, envType);
+
+    const stackNameParam = resolver.createCfnParameter(this, 'stackName', 'StackName', {
+      type: 'String',
+      description: 'Stack deployment identifier for naming resources',
+    }, resolvedStackName);
 
     // Condition for prod resources
     const createProdResources = new CfnCondition(this, 'CreateProdResources', {
@@ -49,19 +58,19 @@ export class CdkStack extends cdk.Stack {
     const region = cdk.Stack.of(this).region;
 
     // VPC and networking resources
-    const vpcResources = createVpcResources(this, envTypeParam.valueAsString, vpcLocationIdParam.valueAsNumber, createProdResources);
+    const vpcResources = createVpcResources(this, envType, vpcMajorIdParam, vpcMinorIdParam, createProdResources);
 
     // ECS
-    const { ecsCluster } = createEcsResources(this, stackName);
+    const { ecsCluster } = createEcsResources(this, this.stackName);
 
     // ECR
-    const { ecrRepo } = createEcrResources(this, stackName);
+    const { ecrRepo } = createEcrResources(this, this.stackName);
 
     // KMS
-    const { kmsKey, kmsAlias } = createKmsResources(this, stackName);
+    const { kmsKey, kmsAlias } = createKmsResources(this, this.stackName);
 
     // S3
-    const { configBucket } = createS3Resources(this, stackName, region, kmsAlias.ref);
+    const { configBucket } = createS3Resources(this, this.stackName, region, kmsAlias.ref);
 
     // VPC Endpoints
     createVpcEndpoints(this, {
@@ -80,6 +89,7 @@ export class CdkStack extends cdk.Stack {
     registerOutputs({
       stack: this,
       stackName,
+      stackNameParam,
       vpcResources,
       ecsCluster,
       ecrRepo,
