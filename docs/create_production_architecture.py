@@ -27,7 +27,7 @@ diagram_name = "tak-base-infrastructure-prod"
 print("🔄 Creating TAK Base Infrastructure - Production Architecture Diagram")
 
 try:
-    # Create the diagram
+    # Create the diagram with larger spacing for bigger subnets
     with Diagram(
         "TAK Base Infrastructure - Production",
         filename=f"{output_path}/{diagram_name}",
@@ -36,10 +36,11 @@ try:
         graph_attr={
             "fontsize": "20",
             "bgcolor": "white",
-            "pad": "0.5",
+            "pad": "1.0",
             "splines": "ortho",
-            "nodesep": "0.8",
-            "ranksep": "1.2"
+            "nodesep": "1.5",
+            "ranksep": "2.0",
+            "size": "16,12"
         },
         node_attr={
             "fontsize": "11",
@@ -53,48 +54,152 @@ try:
         # External Internet
         internet = InternetAlt1("Internet")
         
-        with Cluster("AWS Region", graph_attr={"bgcolor": "#e8f4f8", "style": "rounded", "fontsize": "14"}):
+        # AWS Region - following AWS documentation style
+        with Cluster("Region", graph_attr={
+            "bgcolor": "white", 
+            "style": "solid", 
+            "color": "#232F3E", 
+            "fontsize": "14",
+            "fontname": "Arial Bold",
+            "penwidth": "2"
+        }):
             
-            with Cluster("VPC (10.x.x.0/20)\n4,096 IP Addresses", graph_attr={"bgcolor": "#d4edda", "style": "rounded", "fontsize": "12"}):
+            # VPC Container - green background as per AWS docs
+            with Cluster("VPC", graph_attr={
+                "bgcolor": "#E8F4E8", 
+                "style": "solid", 
+                "color": "#2E7D32", 
+                "fontsize": "12",
+                "fontname": "Arial Bold",
+                "penwidth": "2"
+            }):
                 
-                # Internet Gateway
-                igw = InternetGateway("Internet Gateway\n(IPv4/IPv6)")
+                # Internet Gateway - at VPC level
+                igw = InternetGateway("Internet Gateway")
                 
-                # Availability Zone A
-                with Cluster("Availability Zone A", graph_attr={"bgcolor": "#fff3cd", "style": "rounded", "fontsize": "11"}):
-                    pub_subnet_a = PublicSubnet("Public Subnet A\n10.x.x.0/24")
-                    priv_subnet_a = PrivateSubnet("Private Subnet A\n10.x.x.64/26")
-                    nat_a = NATGateway("NAT Gateway A\n+ Elastic IP")
-                    rt_priv_a = RouteTable("Private RT A")
+                # Availability Zone A - dashed border as per AWS docs
+                with Cluster("Availability Zone A", graph_attr={
+                    "bgcolor": "transparent", 
+                    "style": "dashed", 
+                    "color": "#1976D2", 
+                    "fontsize": "11",
+                    "fontname": "Arial",
+                    "penwidth": "2",
+                    "margin": "20"
+                }):
                     
-                # Availability Zone B
-                with Cluster("Availability Zone B", graph_attr={"bgcolor": "#fff3cd", "style": "rounded", "fontsize": "11"}):
-                    pub_subnet_b = PublicSubnet("Public Subnet B\n10.x.x.16/24")
-                    priv_subnet_b = PrivateSubnet("Private Subnet B\n10.x.x.80/26")
-                    nat_b = NATGateway("NAT Gateway B\n+ Elastic IP")
-                    rt_priv_b = RouteTable("Private RT B")
+                    # Public Subnet A - enlarged for more space
+                    with Cluster("Public subnet", graph_attr={
+                        "bgcolor": "#E3F2FD", 
+                        "style": "solid", 
+                        "color": "#1976D2", 
+                        "fontsize": "10",
+                        "penwidth": "1",
+                        "margin": "30",
+                        "minlen": "2"
+                    }):
+                        pub_subnet_a = PublicSubnet("")
+                        nat_a = NATGateway("NAT Gateway")
                     
-                # Public Route Table
+                    # Private Subnet A - enlarged for more space
+                    with Cluster("Private subnet", graph_attr={
+                        "bgcolor": "#F3E5F5", 
+                        "style": "solid", 
+                        "color": "#7B1FA2", 
+                        "fontsize": "10",
+                        "penwidth": "1",
+                        "margin": "30",
+                        "minlen": "2"
+                    }):
+                        priv_subnet_a = PrivateSubnet("")
+                        rt_priv_a = RouteTable("Route Table")
+                    
+                # Availability Zone B - dashed border as per AWS docs
+                with Cluster("Availability Zone B", graph_attr={
+                    "bgcolor": "transparent", 
+                    "style": "dashed", 
+                    "color": "#1976D2", 
+                    "fontsize": "11",
+                    "fontname": "Arial",
+                    "penwidth": "2",
+                    "margin": "20"
+                }):
+                    
+                    # Public Subnet B - enlarged for more space
+                    with Cluster("Public subnet", graph_attr={
+                        "bgcolor": "#E3F2FD", 
+                        "style": "solid", 
+                        "color": "#1976D2", 
+                        "fontsize": "10",
+                        "penwidth": "1",
+                        "margin": "30",
+                        "minlen": "2"
+                    }):
+                        pub_subnet_b = PublicSubnet("")
+                        nat_b = NATGateway("NAT Gateway")
+                    
+                    # Private Subnet B - enlarged for more space
+                    with Cluster("Private subnet", graph_attr={
+                        "bgcolor": "#F3E5F5", 
+                        "style": "solid", 
+                        "color": "#7B1FA2", 
+                        "fontsize": "10",
+                        "penwidth": "1",
+                        "margin": "30",
+                        "minlen": "2"
+                    }):
+                        priv_subnet_b = PrivateSubnet("")
+                        rt_priv_b = RouteTable("Route Table")
+                
+                # Public Route Table - at VPC level
                 rt_public = RouteTable("Public Route Table")
                 
-                # VPC Endpoints (Production Only)
-                with Cluster("VPC Endpoints (Prod Only)", graph_attr={"bgcolor": "#f8d7da", "style": "rounded", "fontsize": "11"}):
-                    vpc_s3 = S3("S3 Gateway\nEndpoint")
-                    vpc_ecr_dkr = S3("ECR DKR\nInterface")
-                    vpc_ecr_api = S3("ECR API\nInterface") 
-                    vpc_kms = KMS("KMS\nInterface")
-                    vpc_secrets = S3("Secrets Mgr\nInterface")
-                    vpc_logs = S3("CloudWatch\nInterface")
+                # VPC Endpoints - comprehensive for production
+                with Cluster("VPC Endpoints", graph_attr={
+                    "bgcolor": "#FFF8E1", 
+                    "style": "solid", 
+                    "color": "#F57C00", 
+                    "fontsize": "10",
+                    "penwidth": "1"
+                }):
+                    vpc_s3 = S3("S3 Gateway")
+                    vpc_ecr_dkr = S3("ECR DKR")
+                    vpc_ecr_api = S3("ECR API") 
+                    vpc_kms = KMS("KMS")
+                    vpc_secrets = S3("Secrets Mgr")
+                    vpc_logs = S3("CloudWatch")
             
-            # Compute Services
-            with Cluster("Compute Services", graph_attr={"bgcolor": "#e1f5fe", "style": "rounded", "fontsize": "12"}):
-                ecs_cluster = ECS("ECS Cluster\n(Fargate)")
-                ecr_repo = ECR("ECR Repository\nContainer Images")
-            
-            # Storage & Security
-            with Cluster("Storage & Security", graph_attr={"bgcolor": "#f3e5f5", "style": "rounded", "fontsize": "12"}):
-                s3_bucket = S3("S3 Config Bucket\nKMS Encrypted")
-                kms_key = KMS("KMS Key & Alias\nEncryption")
+            # AWS Services - outside VPC
+            with Cluster("AWS Services", graph_attr={
+                "bgcolor": "#FFF3E0", 
+                "style": "solid", 
+                "color": "#E65100", 
+                "fontsize": "12",
+                "fontname": "Arial Bold",
+                "penwidth": "2"
+            }):
+                
+                # Compute Services
+                with Cluster("Compute", graph_attr={
+                    "bgcolor": "#E1F5FE", 
+                    "style": "solid", 
+                    "color": "#0277BD", 
+                    "fontsize": "10",
+                    "penwidth": "1"
+                }):
+                    ecs_cluster = ECS("ECS Cluster")
+                    ecr_repo = ECR("ECR Repository")
+                
+                # Storage & Security
+                with Cluster("Storage & Security", graph_attr={
+                    "bgcolor": "#FCE4EC", 
+                    "style": "solid", 
+                    "color": "#C2185B", 
+                    "fontsize": "10",
+                    "penwidth": "1"
+                }):
+                    s3_bucket = S3("S3 Bucket")
+                    kms_key = KMS("KMS Key")
         
         # Network Connections
         internet >> Edge(label="IPv4/IPv6", color="blue") >> igw
