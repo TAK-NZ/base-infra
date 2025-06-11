@@ -17,14 +17,31 @@ const projectTag = app.node.tryGetContext('project') ||
 
 cdk.Tags.of(app).add("Project", projectTag);
 
-// Get environment type (this will become a CloudFormation parameter)
-const envType = app.node.tryGetContext('envType') || process.env.ENV_TYPE || 'dev-test';
+// Use synchronous resolution for all parameters
+// Priority: 1. Environment Variables, 2. CLI Context, 3. Config File, 4. Defaults
+const envType = process.env.ENV_TYPE || 
+               app.node.tryGetContext('envType') || 
+               resolver.getConfigValue('envType') || 
+               'dev-test';
 
-// Get stack name suffix for the environment part (from config file)
-const stackNameSuffix = app.node.tryGetContext('stackName') || 
-                       process.env.STACK_NAME_SUFFIX || 
+const stackNameSuffix = process.env.STACK_NAME_SUFFIX || 
+                       app.node.tryGetContext('stackName') || 
                        resolver.getConfigValue('stackName') || 
-                       'DevTest';
+                       'devtest';
+
+const vpcMajorId = parseInt(
+  process.env.VPC_MAJOR_ID || 
+  app.node.tryGetContext('vpcMajorId') || 
+  resolver.getConfigValue('vpcMajorId') || 
+  '0', 10
+);
+
+const vpcMinorId = parseInt(
+  process.env.VPC_MINOR_ID || 
+  app.node.tryGetContext('vpcMinorId') || 
+  resolver.getConfigValue('vpcMinorId') || 
+  '0', 10
+);
 
 // Generate consistent stack name using the utility function
 const stackName = generateStackName({
@@ -35,8 +52,8 @@ const stackName = generateStackName({
 
 new CdkStack(app, stackName, {
   envType: envType as 'prod' | 'dev-test',
-  vpcMajorId: parseInt(app.node.tryGetContext('vpcMajorId') || process.env.VPC_MAJOR_ID || '0', 10),
-  vpcMinorId: parseInt(app.node.tryGetContext('vpcMinorId') || process.env.VPC_MINOR_ID || '0', 10),
+  vpcMajorId,
+  vpcMinorId,
   
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,

@@ -9,6 +9,7 @@ import { createVpcEndpoints } from './vpc-endpoints';
 import { RemovalPolicy, StackProps, Fn, CfnOutput, CfnParameter, CfnCondition } from 'aws-cdk-lib';
 import { getParameters, resolveStackParameters } from './parameters';
 import { registerOutputs } from './outputs';
+import { ParameterResolver } from './parameter-resolver';
 
 export interface BaseInfraStackProps extends StackProps {
   envType?: 'prod' | 'dev-test';
@@ -20,8 +21,13 @@ export class CdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: BaseInfraStackProps) {
     super(scope, id, props);
 
-    // Resolve parameters using cascading resolution
-    const { envType, vpcMajorId, vpcMinorId, stackName: resolvedStackName, resolver } = resolveStackParameters(this);
+    // Use synchronous parameter resolution
+    const envType = props?.envType || 'dev-test';
+    const vpcMajorId = props?.vpcMajorId || 0;
+    const vpcMinorId = props?.vpcMinorId || 0;
+    const resolvedStackName = 'devtest'; // Default for now
+    
+    const resolver = new ParameterResolver();
 
     // Create CDK Parameters (for CloudFormation template compatibility)
     const vpcMajorIdParam = resolver.createCfnParameter(this, 'vpcMajorId', 'VPCMajorId', {

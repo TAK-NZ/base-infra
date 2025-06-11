@@ -10,7 +10,7 @@
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk",
-    "clean": "rm -f bin/*.js bin/*.d.ts lib/*.js lib/*.d.ts test/*.js test/*.d.ts"
+    "clean": "rm -f bin/*.js bin/*.d.ts lib/*.js lib/*.d.ts test/*.js test/*.d.ts; rm -rf cdk.out/*"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",

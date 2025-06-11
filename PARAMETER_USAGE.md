@@ -4,36 +4,24 @@
 
 ### 1. Deploy with environment variables (highest priority)
 ```bash
-ENVTYPE=prod VPCLOCATIONID=100 cdk deploy
+ENV_TYPE=prod VPC_MAJOR_ID=100 cdk deploy
 ```
 
 ### 2. Deploy with CLI context
 ```bash
-cdk deploy --context envType=prod --context vpcLocationId=100
+cdk deploy --context envType=prod --context vpcMajorId=100
 ```
 
-### 3. Deploy with CLI parameters
-```bash
-cdk deploy --parameters EnvType=staging --parameters VPCLocationId=50
-```
-
-### 4. Deploy using config file values
+### 3. Deploy using config file values
 Edit `cdk-config.json` and run:
 ```bash
 cdk deploy
 ```
 
-### 5. Deploy with interactive prompts
+### 4. Mixed approach (environment variables override everything)
 ```bash
-# Remove values from config file and run without other parameters
-cdk deploy
-# Will prompt for missing required parameters
-```
-
-### 6. Mixed approach (environment variables override everything)
-```bash
-# Uses envType from environment, vpcLocationId from config file
-ENVTYPE=prod cdk deploy
+# Uses envType from environment, other values from config file
+ENV_TYPE=prod cdk deploy
 ```
 
 ## Configuration File
@@ -42,31 +30,39 @@ Edit `cdk-config.json`:
 ```json
 {
   "envType": "dev-test",
-  "vpcLocationId": 1,
-  "description": "Development environment configuration"
+  "vpcMajorId": 0,
+  "vpcMinorId": 0,
+  "stackName": "devtest",
+  "description": "Development environment configuration",
+  "project": "TAK-NZ"
 }
 ```
 
 ## Parameter Resolution Order
 
-1. **Environment Variables** (`ENVTYPE`, `VPCLOCATIONID`) - Highest priority
+1. **Environment Variables** (`ENV_TYPE`, `VPC_MAJOR_ID`, `VPC_MINOR_ID`, `STACK_NAME_SUFFIX`) - Highest priority
 2. **CLI Context** (`--context paramName=value`)
-3. **CLI Parameters** (`--parameters ParamName=value`)
-4. **JSON Config File** (`cdk-config.json`)
-5. **Interactive Prompts** (TTY mode only)
-6. **Default Values** (defined in code)
-7. **Error** (if required parameter not found)
+3. **JSON Config File** (`cdk-config.json`)
+4. **Default Values** (defined in code) - Lowest priority
 
 ## Environment-specific Configs
 
 You can create multiple config files:
 ```bash
-# Development
-cdk deploy --context configFile=cdk-config-dev.json
+# Development using config file
+cdk deploy
 
-# Production  
-cdk deploy --context configFile=cdk-config-prod.json
+# Production using environment variables
+ENV_TYPE=prod VPC_MAJOR_ID=5 cdk deploy
 
-# Or use environment variables
-ENVTYPE=prod VPCLOCATIONID=5 cdk deploy
+# Using custom config file path
+CDK_CONFIG_FILE=configs/prod-config.json cdk deploy
 ```
+
+## Parameter Descriptions
+
+- **envType**: Controls resource creation (prod enables VPC endpoints, dual NAT gateways)
+- **vpcMajorId**: Selects /16 network block (0-255) from 10.0.0.0/8 address space
+- **vpcMinorId**: Selects /20 subnet block (0-15) within the chosen /16 network
+- **stackName**: Environment identifier used in stack naming and CloudFormation exports
+- **project**: Project tag applied to all resources for cost allocation

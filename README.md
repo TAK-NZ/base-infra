@@ -53,19 +53,26 @@ Amazon Elastic Container Service uses AWS Identity and Access Management (IAM) s
 
 ### 4. Deploy the stack:
 
-The stack supports flexible parameter configuration through multiple methods:
+The stack supports flexible parameter configuration through multiple methods with cascading priority:
 
-#### Option A: CLI Context (Recommended)
+#### Method 1: Environment Variables (Highest Priority)
 ```bash
-npx cdk deploy --context envType=prod --context vpcLocationId=10
+ENV_TYPE=prod VPC_MAJOR_ID=5 VPC_MINOR_ID=0 STACK_NAME_SUFFIX=prodtest npx cdk deploy
 ```
 
-#### Option B: Configuration File
+#### Method 2: CLI Context
+```bash
+npx cdk deploy --context envType=prod --context vpcMajorId=5 --context vpcMinorId=0 --context stackName=prodtest
+```
+
+#### Method 3: Configuration File
 Create or edit `cdk-config.json`:
 ```json
 {
   "envType": "dev-test",
-  "vpcLocationId": 0
+  "vpcMajorId": 0,
+  "vpcMinorId": 0,
+  "stackName": "devtest"
 }
 ```
 Then deploy:
@@ -73,22 +80,32 @@ Then deploy:
 npx cdk deploy
 ```
 
-#### Option C: Interactive Prompts
+#### Method 4: Default Values (Lowest Priority)
 ```bash
 npx cdk deploy
-# Will prompt for any missing required parameters
+# Uses hardcoded defaults when no other values are provided
 ```
 
 **Parameters:**
 - `envType`: Environment type (`prod` or `dev-test`)
-  - `prod`: Includes NAT Gateways and production-grade resources
+  - `prod`: Includes NAT Gateways, VPC endpoints, and production-grade resources
   - `dev-test`: Cost-optimized for development/testing
-- `vpcLocationId`: Unique VPC ID per AWS region (0-4095)
-  - Creates /20 CIDR blocks: `10.{major}.{minor}.0/20`
-  - Provides 4,096 IP addresses per VPC (vs 65,536 with /16)
-  - Allows for 4,096 unique VPC configurations; For future use
+- `vpcMajorId`: Major VPC network ID (0-255) - selects /16 block from 10.0.0.0/8
+- `vpcMinorId`: Minor VPC network ID (0-15) - selects /20 subnet within the /16 block
+  - Combined creates CIDR: `10.{vpcMajorId}.{vpcMinorId*16}.0/20`
+  - Provides 4,096 IP addresses per VPC
+  - Allows for thousands of unique VPC configurations
+- `stackName`: Environment identifier used in stack naming and CloudFormation exports
 
 See [PARAMETER_USAGE.md](./PARAMETER_USAGE.md) for detailed parameter configuration examples.
+
+**Parameter Resolution Priority:**
+1. Environment Variables (highest priority)
+2. CLI Context (`--context`)
+3. JSON Config File (`cdk-config.json`)
+4. Default Values (lowest priority)
+
+Higher priority methods override lower priority ones.
 
 ## Customization
 - Edit `lib/cdk-stack.ts` to adjust resources or parameters.

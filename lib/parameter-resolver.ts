@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import * as readline from 'readline';
 import { CfnParameter, Stack } from 'aws-cdk-lib';
 
 interface ParameterOptions {
@@ -40,37 +39,12 @@ export class ParameterResolver {
     return this.config[key];
   }
 
-  private async promptUser(paramName: string, description?: string, allowedValues?: string[]): Promise<string> {
-    return new Promise((resolve) => {
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-      });
-
-      let question = description 
-        ? `${description} (${paramName})` 
-        : `Enter value for ${paramName}`;
-      
-      if (allowedValues) {
-        question += ` [${allowedValues.join('|')}]`;
-      }
-      question += ': ';
-
-      rl.question(question, (answer) => {
-        rl.close();
-        resolve(answer.trim());
-      });
-    });
-  }
-
   /**
    * Resolves parameters with cascading priority:
-   * 1. CLI context (--context)
-   * 2. CLI parameters (--parameters) 
+   * 1. Environment variables 
+   * 2. CLI context (--context)
    * 3. JSON config file
-   * 4. Interactive prompts
-   * 5. Default values
-   * 6. Error if required
+   * 4. Default values
    */
   resolveParameterSync(
     stack: Stack,
@@ -91,68 +65,25 @@ export class ParameterResolver {
       return options.type === 'Number' ? Number(contextParam) : contextParam;
     }
 
-    // 2. Check JSON config file
+    // 3. Check JSON config file
     if (this.config[paramName] !== undefined) {
       console.log(`✓ Using ${paramName} from config file: ${this.config[paramName]}`);
       return options.type === 'Number' ? Number(this.config[paramName]) : this.config[paramName];
     }
 
-    // 3. Use default value
+    // 4. Use default value
     if (options.default !== undefined) {
       console.log(`✓ Using default value for ${paramName}: ${options.default}`);
       return options.default;
     }
 
-    // 4. Error if required
+    // 5. Error if required
     if (options.required) {
       throw new Error(
         `❌ Required parameter '${paramName}' not provided.\n` +
         `   Use: cdk deploy --context ${paramName}=value\n` +
-        `   Or add to cdk-config.json: {"${paramName}": "value"}`
-      );
-    }
-
-    return options.type === 'Number' ? 0 : '';
-  }
-
-  /**
-   * Async version for interactive prompting
-   */
-  async resolveParameter(
-    stack: Stack,
-    paramName: string,
-    options: ParameterOptions = {}
-  ): Promise<string | number> {
-    // Try sync resolution first
-    try {
-      return this.resolveParameterSync(stack, paramName, { ...options, required: false });
-    } catch (error) {
-      // Continue to interactive prompt
-    }
-
-    // Interactive prompting (only if in TTY mode and not CI)
-    if (process.stdin.isTTY && !process.env.CI) {
-      console.log(`📝 Parameter '${paramName}' not found in context or config file`);
-      const userInput = await this.promptUser(paramName, options.description, options.allowedValues);
-      
-      if (userInput) {
-        console.log(`✓ Using user input for ${paramName}: ${userInput}`);
-        return options.type === 'Number' ? Number(userInput) : userInput;
-      }
-    }
-
-    // Use default if available
-    if (options.default !== undefined) {
-      console.log(`✓ Using default value for ${paramName}: ${options.default}`);
-      return options.default;
-    }
-
-    // Error if required
-    if (options.required) {
-      throw new Error(
-        `❌ Required parameter '${paramName}' not provided.\n` +
-        `   Use: cdk deploy --context ${paramName}=value\n` +
-        `   Or add to cdk-config.json: {"${paramName}": "value"}`
+        `   Or add to cdk-config.json: {"${paramName}": "value"}\n` +
+        `   Or set environment variable: ${paramName.toUpperCase()}=value`
       );
     }
 
