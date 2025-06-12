@@ -9,16 +9,13 @@ const app = new cdk.App();
 // Create parameter resolver to read from cdk-config.json
 const resolver = new ParameterResolver();
 
-// Read project tag with cascading priority: context -> env -> config -> default
-const projectTag = app.node.tryGetContext('project') || 
-                   process.env.PROJECT || 
+// Read project tag with cascading priority:
+// Priority: 1. Environment Variables, 2. CLI Context, 3. Config File, 4. Defaults
+const projectTag = process.env.PROJECT || 
+                   app.node.tryGetContext('project') || 
                    resolver.getConfigValue('project') || 
                    FIXED_STACK_CONFIG.PROJECT;
 
-cdk.Tags.of(app).add("Project", projectTag);
-
-// Use synchronous resolution for all parameters
-// Priority: 1. Environment Variables, 2. CLI Context, 3. Config File, 4. Defaults
 const envType = process.env.ENV_TYPE || 
                app.node.tryGetContext('envType') || 
                resolver.getConfigValue('envType') || 
@@ -49,6 +46,9 @@ const stackName = generateStackName({
   environment: stackNameSuffix,  // Use stackName from config, not envType
   component: FIXED_STACK_CONFIG.COMPONENT
 });
+
+// Tag every resource in the stack with the project name
+cdk.Tags.of(app).add("Project", projectTag);
 
 new CdkStack(app, stackName, {
   envType: envType as 'prod' | 'dev-test',

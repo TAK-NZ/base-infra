@@ -87,15 +87,15 @@ npx cdk deploy
 ```
 
 **Parameters:**
-- `envType`: Environment type (`prod` or `dev-test`)
+- `envType`: Environment type (`prod` or `dev-test`). Default: dev-test
   - `prod`: Includes NAT Gateways, VPC endpoints, and production-grade resources
   - `dev-test`: Cost-optimized for development/testing
-- `vpcMajorId`: Major VPC network ID (0-255) - selects /16 block from 10.0.0.0/8
-- `vpcMinorId`: Minor VPC network ID (0-15) - selects /20 subnet within the /16 block
+- `vpcMajorId`: Major VPC network ID (0-255) - selects /16 block from 10.0.0.0/8. Default: 0.
+- `vpcMinorId`: Minor VPC network ID (0-15) - selects /20 subnet within the /16 block. Default: 0.
   - Combined creates CIDR: `10.{vpcMajorId}.{vpcMinorId*16}.0/20`
   - Provides 4,096 IP addresses per VPC
   - Allows for thousands of unique VPC configurations
-- `stackName`: Environment identifier used in stack naming and CloudFormation exports
+- `stackName`: Environment identifier used in stack naming and CloudFormation exports. Default: "devtest"
 
 See [PARAMETER_USAGE.md](./PARAMETER_USAGE.md) for detailed parameter configuration examples.
 
@@ -112,13 +112,5 @@ Higher priority methods override lower priority ones.
 
 ## Notes
 - Make sure your AWS credentials are configured.
-- The stack name and environment type (prod/dev-test) can be set via CDK context or environment variables.
+- The stack type (prod/dev-test) can be changed later on.
 
-## Architecture Diagrams
-
-Visual representations of the infrastructure are available in the [`docs/`](docs/) folder:
-
-- **Production Architecture**: [`docs/tak-base-infrastructure-prod.png`](docs/tak-base-infrastructure-prod.png) - High availability configuration (~$91/month)
-- **Dev-Test Architecture**: [`docs/tak-base-infrastructure-dev-test.png`](docs/tak-base-infrastructure-dev-test.png) - Cost-optimized configuration (~$35/month)
-- **Complete Documentation**: [`docs/README.md`](docs/README.md) - Architecture analysis with comprehensive cost details
-- **Quick Reference**: [`docs/QUICK_REFERENCE.md`](docs/QUICK_REFERENCE.md) - Summary and decision guide
