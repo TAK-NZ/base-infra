@@ -1,75 +1,48 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { createVpcResources } from './vpc-resources';
+import { createVpcL2Resources } from './vpc-resources';
 import { createEcsResources } from './ecs-resources';
 import { createEcrResources } from './ecr-resources';
 import { createKmsResources } from './kms-resources';
 import { createS3Resources } from './s3-resources';
 import { createVpcEndpoints } from './vpc-endpoints';
-import { RemovalPolicy, StackProps, Fn, CfnOutput, CfnParameter, CfnCondition } from 'aws-cdk-lib';
-import { getParameters, resolveStackParameters } from './parameters';
+import { RemovalPolicy, StackProps, Fn, CfnOutput } from 'aws-cdk-lib';
 import { registerOutputs } from './outputs';
-import { ParameterResolver } from './parameter-resolver';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+
 
 export interface BaseInfraStackProps extends StackProps {
   envType?: 'prod' | 'dev-test';
   vpcMajorId?: number;
   vpcMinorId?: number;
-  resolver?: ParameterResolver;
 }
 
 export class CdkStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: BaseInfraStackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string, props: BaseInfraStackProps) {
+    super(scope, id, {
+      ...props,
+      description: 'TAK Base Layer - VPC, ECS, ECR, KMS, S3',
+    });
 
-    // Use synchronous parameter resolution
-    const envType = props?.envType || 'dev-test';
-    const vpcMajorId = props?.vpcMajorId || 0;
-    const vpcMinorId = props?.vpcMinorId || 0;
-    const resolvedStackName = 'devtest'; // Default for now
+    const envType = props.envType || 'dev-test';
+    const vpcMajorId = props.vpcMajorId || 0;
+    const vpcMinorId = props.vpcMinorId || 0;
+    const resolvedStackName = id;
     
-    // Use provided resolver or create new one (fallback for backward compatibility)
-    const resolver = props?.resolver || new ParameterResolver();
-
     // Create CDK Parameters (for CloudFormation template compatibility)
-    const vpcMajorIdParam = resolver.createCfnParameter(this, 'vpcMajorId', 'VPCMajorId', {
-      type: 'Number',
-      description: 'Major VPC ID (0-255) for selecting /16 block from 10.0.0.0/8',
-      minValue: 0,
-      maxValue: 255,
-    }, vpcMajorId);
-
-    const vpcMinorIdParam = resolver.createCfnParameter(this, 'vpcMinorId', 'VPCMinorId', {
-      type: 'Number',
-      description: 'Minor VPC ID (0-15) for selecting /20 subnet within the /16 block',
-      minValue: 0,
-      maxValue: 15,
-    }, vpcMinorId);
-
-    const envTypeParam = resolver.createCfnParameter(this, 'envType', 'EnvType', {
-      type: 'String',
-      description: 'Environment type',
-      allowedValues: ['prod', 'dev-test'],
-    }, envType);
-
-    const stackNameParam = resolver.createCfnParameter(this, 'stackName', 'StackName', {
-      type: 'String',
-      description: 'Stack deployment identifier for naming resources',
-    }, resolvedStackName);
+    // Removed parameterization logic, using direct values or context
 
     // Condition for prod resources
-    const createProdResources = new CfnCondition(this, 'CreateProdResources', {
-      expression: Fn.conditionEquals(envTypeParam.valueAsString, 'prod'),
-    });
+    const createProdResources = envType === 'prod';
 
     const stackName = Fn.ref('AWS::StackName');
     const region = cdk.Stack.of(this).region;
 
-    // VPC and networking resources
-    const vpcResources = createVpcResources(this, envType, vpcMajorIdParam, vpcMinorIdParam, createProdResources);
+    // Create L2 VPC and subnets directly
+    const vpc = createVpcL2Resources(this, vpcMajorId, vpcMinorId);
 
     // ECS
-    const { ecsCluster } = createEcsResources(this, this.stackName);
+    const { ecsCluster } = createEcsResources(this, this.stackName, vpc);
 
     // ECR
     const { ecrRepo } = createEcrResources(this, this.stackName);
@@ -78,31 +51,39 @@ export class CdkStack extends cdk.Stack {
     const { kmsKey, kmsAlias } = createKmsResources(this, this.stackName);
 
     // S3
-    const { configBucket } = createS3Resources(this, this.stackName, region, kmsAlias.ref);
+    const { configBucket } = createS3Resources(this, this.stackName, region, kmsKey);
+
+    // Endpoint Security Group (for interface endpoints)
+    let endpointSg: ec2.SecurityGroup | undefined = undefined;
+    if (envType === 'prod') {
+      endpointSg = new ec2.SecurityGroup(this, 'EndpointSecurityGroup', {
+        vpc,
+        description: 'Access to Endpoint services',
+        allowAllOutbound: true,
+      });
+      endpointSg.addIngressRule(ec2.Peer.ipv4(vpc.vpcCidrBlock), ec2.Port.tcp(443));
+    }
 
     // VPC Endpoints
-    createVpcEndpoints(this, {
-      vpcId: vpcResources.vpc.ref,
-      region,
-      privateRouteTableA: vpcResources.privateRouteTableA.ref,
-      privateRouteTableB: vpcResources.privateRouteTableB.ref,
-      subnetPrivateA: vpcResources.subnetPrivateA.ref,
-      subnetPrivateB: vpcResources.subnetPrivateB.ref,
-      endpointSgId: envTypeParam.valueAsString === 'prod' ? 'EndpointSecurityGroup' : undefined,
+    const vpcEndpoints = createVpcEndpoints(this, {
+      vpc,
+      privateSubnets: vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }).subnetIds,
+      endpointSg,
       stackName,
-      isProdCondition: createProdResources,
+      isProd: envType === 'prod',
     });
 
     // Outputs
     registerOutputs({
       stack: this,
       stackName,
-      stackNameParam,
-      vpcResources,
+      vpc,
       ecsCluster,
       ecrRepo,
       kmsKey,
+      kmsAlias,
       configBucket,
+      vpcEndpoints,
     });
   }
 }

@@ -1,7 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Construct } from 'constructs';
-import { Fn, CfnCondition, CfnParameter } from 'aws-cdk-lib';
+import { Fn } from 'aws-cdk-lib';
 
 export interface VpcResources {
   vpc: ec2.CfnVPC;
@@ -22,29 +22,14 @@ export interface VpcResources {
   endpointSg?: ec2.CfnSecurityGroup;
 }
 
-export function createVpcResources(scope: Construct, envType: string, vpcMajorIdParam: CfnParameter, vpcMinorIdParam: CfnParameter, prodCondition: CfnCondition): VpcResources {
+export function createVpcResources(scope: Construct, envType: string): VpcResources {
   const isProd = envType === 'prod';
   const stack = cdk.Stack.of(scope);
   const stackName = Fn.ref('AWS::StackName');
-  
-  // Use CloudFormation native Fn::Cidr to calculate /20 CIDR block
-  // Two-level approach using separate Major and Minor IDs:
-  // Level 1: Major ID (0-255) selects one of 256 /16 blocks from 10.0.0.0/8
-  // Level 2: Minor ID (0-15) selects one of 16 /20 blocks from the chosen /16 block
-  // Total: 256 * 16 = 4096 possible /20 subnets
-  
-  // First, get the /16 CIDR block from 10.0.0.0/8 using Major ID
-  const vpc16Block = { "Fn::Select": [
-    { "Ref": vpcMajorIdParam.logicalId },
-    { "Fn::Cidr": ["10.0.0.0/8", 256, 16] }
-  ] } as any;
-  
-  // Then, get the /20 subnet from within that /16 block using Minor ID
-  const vpcCidr = { "Fn::Select": [
-    { "Ref": vpcMinorIdParam.logicalId },
-    { "Fn::Cidr": [vpc16Block, 16, 12] }
-  ] } as any;
-  
+
+  // Direct VPC CIDR block values for simplicity
+  const vpcCidr = '10.0.0.0/16';
+
   const vpc = new ec2.CfnVPC(scope, 'VPC', {
     cidrBlock: vpcCidr,
     enableDnsHostnames: true,
@@ -123,7 +108,6 @@ export function createVpcResources(scope: Construct, envType: string, vpcMajorId
       domain: 'vpc',
       tags: [{ key: 'Name', value: stackName }],
     });
-    natEipB.cfnOptions.condition = prodCondition;
   }
 
   const natGatewayA = new ec2.CfnNatGateway(scope, 'NatGatewayA', {
@@ -139,7 +123,6 @@ export function createVpcResources(scope: Construct, envType: string, vpcMajorId
       allocationId: natEipB.attrAllocationId,
       tags: [{ key: 'Name', value: Fn.join('', [stackName, '-subnet-b']) }],
     });
-    natGatewayB.cfnOptions.condition = prodCondition;
   }
 
   const publicRouteTable = new ec2.CfnRouteTable(scope, 'PublicRouteTable', {
@@ -180,7 +163,6 @@ export function createVpcResources(scope: Construct, envType: string, vpcMajorId
       }],
       tags: [{ key: 'Name', value: `${stackName}-endpoint-sg` }],
     });
-    endpointSg.cfnOptions.condition = prodCondition;
   }
 
   // Add explicit route table associations and routes for parity with cfn.json
@@ -240,7 +222,6 @@ export function createVpcResources(scope: Construct, envType: string, vpcMajorId
       destinationCidrBlock: '0.0.0.0/0',
       natGatewayId: natGatewayB.ref,
     });
-    privateRouteB.cfnOptions.condition = prodCondition;
   } else {
     privateRouteB = new ec2.CfnRoute(scope, 'PrivateRouteB', {
       routeTableId: privateRouteTableB.ref,
@@ -279,4 +260,23 @@ export function createVpcResources(scope: Construct, envType: string, vpcMajorId
     privateRouteTableB,
     endpointSg,
   };
+}
+
+export function createVpcL2Resources(scope: Construct, vpcMajorId: number, vpcMinorId: number): ec2.Vpc {
+  return new ec2.Vpc(scope, 'Vpc', {
+    ipAddresses: ec2.IpAddresses.cidr(`10.${vpcMajorId}.0.0/16`),
+    maxAzs: 2,
+    subnetConfiguration: [
+      {
+        cidrMask: 24,
+        name: 'public',
+        subnetType: ec2.SubnetType.PUBLIC,
+      },
+      {
+        cidrMask: 24,
+        name: 'private',
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+    ],
+  });
 }

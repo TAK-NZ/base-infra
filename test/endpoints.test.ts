@@ -5,6 +5,7 @@ import { getResourceByType } from './utils';
 
 describe('VPC Endpoints', () => {
   it('creates S3 gateway endpoint and prod interface endpoints', () => {
+    // Always create a new App for each stack in this test
     const app = new cdk.App();
     const stack = new CdkStack(app, 'TestStack', { envType: 'prod' });
     const template = Template.fromStack(stack);
@@ -14,17 +15,18 @@ describe('VPC Endpoints', () => {
     });
     // Interface endpoints (prod)
     const endpoints = getResourceByType(template.toJSON(), 'AWS::EC2::VPCEndpoint');
-    // At least one interface endpoint should exist and have Condition: 'CreateProdResources'
-    expect(endpoints.some((ep: any) => ep.Properties.VpcEndpointType === 'Interface' && ep.Condition === 'CreateProdResources')).toBe(true);
+    // At least one interface endpoint should exist
+    expect(endpoints.some((ep: any) => ep.Properties.VpcEndpointType === 'Interface')).toBe(true);
   });
 
   it('does not create interface endpoints in dev-test', () => {
+    // Always create a new App for each stack in this test
     const app = new cdk.App();
     const stack = new CdkStack(app, 'TestStack', { envType: 'dev-test' });
     const template = Template.fromStack(stack);
     const endpoints = getResourceByType(template.toJSON(), 'AWS::EC2::VPCEndpoint');
-    // All interface endpoints, if present, must have Condition: 'CreateProdResources'
+    // No interface endpoints should exist in dev-test
     const interfaceEndpoints = endpoints.filter((ep: any) => ep.Properties.VpcEndpointType === 'Interface');
-    expect(interfaceEndpoints.every((ep: any) => ep.Condition === 'CreateProdResources')).toBe(true);
+    expect(interfaceEndpoints.length).toBe(0);
   });
 });

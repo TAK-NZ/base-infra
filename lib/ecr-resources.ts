@@ -1,24 +1,32 @@
+import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
+import * as iam from 'aws-cdk-lib/aws-iam';
 
 export function createEcrResources(scope: Construct, stackName: string) {
-  // ECR repository names must be lowercase and follow specific naming rules
-  // Only allow lowercase letters, numbers, hyphens, underscores, and periods
   const repoName = stackName.toLowerCase().replace(/[^a-z0-9\-_.]/g, '-').replace(/^-+|-+$/g, '');
-  
-  const ecrRepo = new ecr.CfnRepository(scope, 'Repository', {
+
+  // Create the ECR repository
+  const ecrRepo = new ecr.Repository(scope, 'Repository', {
     repositoryName: repoName,
-    repositoryPolicyText: {
-      Version: '2012-10-17',
-      Statement: [{
-        Effect: 'Allow',
-        Principal: '*',
-        Action: ['ecr:BatchGetImage', 'ecr:GetDownloadUrlForLayer'],
-      }],
-    },
-    lifecyclePolicy: {
-      lifecyclePolicyText: '{"rules":[{"rulePriority":1,"description":"Expire untagged images older than 8 days","selection":{"tagStatus":"untagged","countType":"sinceImagePushed","countUnit": "days","countNumber":8},"action":{"type": "expire"}}]}'
-    },
+    lifecycleRules: [
+      {
+        description: 'Expire untagged images older than 8 days',
+        rulePriority: 1,
+        tagStatus: ecr.TagStatus.UNTAGGED,
+        maxImageAge: cdk.Duration.days(8),
+      },
+    ],
+    // ECR will not be retained after stack deletion
+    removalPolicy: cdk.RemovalPolicy.DESTROY,
   });
+
+  // Add a resource policy (repository policy)
+  ecrRepo.addToResourcePolicy(new iam.PolicyStatement({
+    effect: iam.Effect.ALLOW,
+    principals: [new iam.AnyPrincipal()],
+    actions: ['ecr:BatchGetImage', 'ecr:GetDownloadUrlForLayer'],
+  }));
+
   return { ecrRepo };
 }

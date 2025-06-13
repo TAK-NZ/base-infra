@@ -1,107 +1,122 @@
 import * as cdk from 'aws-cdk-lib';
-import { Fn, CfnParameter } from 'aws-cdk-lib';
+import { Fn } from 'aws-cdk-lib';
 import { createDynamicExportName, EXPORT_NAMES } from './stack-naming';
 
 export interface OutputParams {
   stack: cdk.Stack;
   stackName: string;
-  stackNameParam: CfnParameter;
-  vpcResources: any;
+  vpc: import('aws-cdk-lib/aws-ec2').Vpc;
   ecsCluster: any;
   ecrRepo: any;
   kmsKey: any;
+  kmsAlias: any;
   configBucket: any;
+  vpcEndpoints?: Record<string, any>;
 }
 
-export function registerOutputs({ stack, stackName, stackNameParam, vpcResources, ecsCluster, ecrRepo, kmsKey, configBucket }: OutputParams) {
-  const stackNameRef = Fn.ref('AWS::StackName');
-
-  // Create dynamic export names that include the stackName parameter
+export function registerOutputs({ stack, stackName, vpc, ecsCluster, ecrRepo, kmsKey, kmsAlias, configBucket, vpcEndpoints }: OutputParams) {
   new cdk.CfnOutput(stack, 'VpcIdOutput', {
     description: 'VPC ID',
-    value: vpcResources.vpc.ref,
+    value: vpc.vpcId,
     exportName: Fn.sub(createDynamicExportName(EXPORT_NAMES.VPC_ID), {
-      StackName: stackNameParam.valueAsString
+      StackName: stackName,
     }),
   });
-  
   new cdk.CfnOutput(stack, 'VpcCidrIpv4Output', {
     description: 'VPC IPv4 CIDR Block',
-    value: cdk.Fn.getAtt(vpcResources.vpc.logicalId, 'CidrBlock') as any,
+    value: `10.${stack.node.tryGetContext('vpcMajorId') ?? 0}.0.0/16`,
     exportName: Fn.sub(createDynamicExportName(EXPORT_NAMES.VPC_CIDR_IPV4), {
-      StackName: stackNameParam.valueAsString
+      StackName: stackName,
     }),
   });
-  
-  new cdk.CfnOutput(stack, 'VpcCidrIpv6Output', {
-    description: 'VPC IPv6 CIDR Block',
-    value: { "Fn::Select": [0, { "Fn::GetAtt": [vpcResources.vpc.logicalId, "Ipv6CidrBlocks"] }] } as any,
-    exportName: Fn.sub(createDynamicExportName(EXPORT_NAMES.VPC_CIDR_IPV6), {
-      StackName: stackNameParam.valueAsString
-    }),
-  });
-  
+  // Subnet outputs (explicit for A/B only)
+  // Subnet outputs (static, L2 VPC)
   new cdk.CfnOutput(stack, 'SubnetPublicAOutput', {
     description: 'Subnet Public A',
-    value: vpcResources.subnetPublicA.ref,
+    value: vpc.publicSubnets[0].subnetId,
     exportName: Fn.sub(createDynamicExportName(EXPORT_NAMES.SUBNET_PUBLIC_A), {
-      StackName: stackNameParam.valueAsString
+      StackName: stackName,
     }),
   });
-  
   new cdk.CfnOutput(stack, 'SubnetPublicBOutput', {
     description: 'Subnet Public B',
-    value: vpcResources.subnetPublicB.ref,
+    value: vpc.publicSubnets[1].subnetId,
     exportName: Fn.sub(createDynamicExportName(EXPORT_NAMES.SUBNET_PUBLIC_B), {
-      StackName: stackNameParam.valueAsString
+      StackName: stackName,
     }),
   });
-  
   new cdk.CfnOutput(stack, 'SubnetPrivateAOutput', {
     description: 'Subnet Private A',
-    value: vpcResources.subnetPrivateA.ref,
+    value: vpc.privateSubnets[0].subnetId,
     exportName: Fn.sub(createDynamicExportName(EXPORT_NAMES.SUBNET_PRIVATE_A), {
-      StackName: stackNameParam.valueAsString
+      StackName: stackName,
     }),
   });
-  
   new cdk.CfnOutput(stack, 'SubnetPrivateBOutput', {
     description: 'Subnet Private B',
-    value: vpcResources.subnetPrivateB.ref,
+    value: vpc.privateSubnets[1].subnetId,
     exportName: Fn.sub(createDynamicExportName(EXPORT_NAMES.SUBNET_PRIVATE_B), {
-      StackName: stackNameParam.valueAsString
+      StackName: stackName,
     }),
   });
-  
   new cdk.CfnOutput(stack, 'EcsArnOutput', {
     description: 'ECS ARN',
-    value: ecsCluster.attrArn,
+    value: ecsCluster.clusterArn,
     exportName: Fn.sub(createDynamicExportName(EXPORT_NAMES.ECS_CLUSTER), {
-      StackName: stackNameParam.valueAsString
+      StackName: stackName,
     }),
   });
-  
   new cdk.CfnOutput(stack, 'EcrArnOutput', {
     description: 'ECR ARN',
-    value: ecrRepo.attrArn,
+    value: ecrRepo.repositoryArn,
     exportName: Fn.sub(createDynamicExportName(EXPORT_NAMES.ECR_REPO), {
-      StackName: stackNameParam.valueAsString
+      StackName: stackName,
     }),
   });
-  
   new cdk.CfnOutput(stack, 'KmsArnOutput', {
     description: 'KMS ARN',
-    value: kmsKey.attrArn,
+    value: kmsKey.keyArn,
     exportName: Fn.sub(createDynamicExportName(EXPORT_NAMES.KMS_KEY), {
-      StackName: stackNameParam.valueAsString
+      StackName: stackName,
     }),
   });
-  
+  new cdk.CfnOutput(stack, 'KmsAliasOutput', {
+    description: 'KMS Alias Name',
+    value: kmsAlias.aliasName,
+    exportName: Fn.sub(createDynamicExportName('kms-alias'), {
+      StackName: stackName,
+    }),
+  });
   new cdk.CfnOutput(stack, 'ConfigBucketArnOutput', {
     description: 'S3 Config Bucket ARN',
-    value: configBucket.attrArn,
+    value: configBucket.bucketArn,
     exportName: Fn.sub(createDynamicExportName(EXPORT_NAMES.S3_BUCKET), {
-      StackName: stackNameParam.valueAsString
+      StackName: stackName,
     }),
   });
+  if (vpcEndpoints) {
+    Object.entries(vpcEndpoints).forEach(([key, endpoint]) => {
+      if (endpoint && endpoint.vpcEndpointId) {
+        // Replace underscores with hyphens for export name
+        const exportKey = `${key.toUpperCase()}-ID`;
+        new cdk.CfnOutput(stack, `${key}IdOutput`, {
+          description: `${key} VPC Endpoint ID`,
+          value: endpoint.vpcEndpointId,
+          exportName: Fn.sub(createDynamicExportName(exportKey), {
+            StackName: stackName,
+          }),
+        });
+      }
+      if (endpoint && endpoint.vpcEndpointType) {
+        const exportKey = `${key.toUpperCase()}-ENDPOINT-TYPE`;
+        new cdk.CfnOutput(stack, `${key}TypeOutput`, {
+          description: `${key} VPC Endpoint Type`,
+          value: endpoint.vpcEndpointType,
+          exportName: Fn.sub(createDynamicExportName(exportKey), {
+            StackName: stackName,
+          }),
+        });
+      }
+    });
+  }
 }

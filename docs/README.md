@@ -4,20 +4,9 @@ This folder contains the architecture documentation for the TAK Base Infrastruct
 
 ## Files
 
-### Architecture Diagrams
-
-- **`tak-base-infrastructure-prod.png`** - Production architecture diagram showing all AWS resources deployed in the `prod` environment
-- **`tak-base-infrastructure-dev-test.png`** - Dev-Test architecture diagram showing cost-optimized resources for development/testing
-- **`architecture-diagram.md`** - Mermaid diagram and detailed documentation of the production architecture
-
 ### Documentation
 
 - **`QUICK_REFERENCE.md`** - Summary and decision guide for choosing configurations
-
-### Scripts
-
-- **`create_production_architecture.py`** - Python script to generate the production AWS architecture diagram
-- **`create_devtest_architecture.py`** - Python script to generate the dev-test AWS architecture diagram
 
 ## Production Architecture Overview
 
@@ -109,27 +98,6 @@ The dev-test deployment is optimized for cost-effectiveness during development a
 - No private VPC endpoints (AWS service calls go through NAT Gateway)
 - Less suitable for production workloads requiring high availability
 
-## Generating the Diagrams
-
-To regenerate the architecture diagrams:
-
-**Production diagram:**
-```bash
-cd docs/
-python3 create_production_architecture.py
-```
-
-**Dev-Test diagram:**
-```bash
-cd docs/
-python3 create_devtest_architecture.py
-```
-
-**Requirements:**
-- Python 3.10+
-- `diagrams` library: `pip3 install --user diagrams`
-- `graphviz` system package: `sudo apt install graphviz`
-
 ## Architecture Benefits
 
 ### vs dev-test Configuration
@@ -162,7 +130,6 @@ The infrastructure is designed to support:
 
 - [`../README.md`](../README.md) - Main project documentation and deployment guide
 - [`QUICK_REFERENCE.md`](QUICK_REFERENCE.md) - Quick decision guide and summary
-- [`../PARAMETER_USAGE.md`](../PARAMETER_USAGE.md) - Configuration parameters and examples
 
 ## Architecture Comparison: Dev-Test vs Production
 

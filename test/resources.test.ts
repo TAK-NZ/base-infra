@@ -4,6 +4,7 @@ import { CdkStack } from '../lib/cdk-stack';
 
 describe('AWS Resources', () => {
   it('creates ECS cluster, ECR repo, KMS key/alias, and S3 bucket', () => {
+    // Always create a new App for each stack in this test
     const app = new cdk.App();
     const stack = new CdkStack(app, 'TestStack', { envType: 'prod' });
     const template = Template.fromStack(stack);

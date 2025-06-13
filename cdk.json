@@ -17,6 +17,11 @@
     ]
   },
   "context": {
+        "project": "TAK-NZ",
+    "stackName": "DevTest",
+    "envType": "dev-test",
+    "vpcMajorId": 0,
+    "vpcMinorId": 0,
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/core:target-partitions": [

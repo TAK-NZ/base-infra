@@ -20,14 +20,14 @@ The following dependencies must be fulfilled:
 - An [AWS Account](https://signin.aws.amazon.com/signup?request_type=register).
 - A Domain Name under which the TAK server is made available, e.g. `tak.nz` in the example here.
 - An [AWS ACM certificate](https://docs.aws.amazon.com/acm/latest/userguide/gs.html) certificate.
-  - This certificate should cover the main domain - e.g. `tak.nz`, as well as `*.<domain name>` and `*.map.<domain name>`. E.g. `*.tak.nz` and `*.map.tak.nz`.
+  - This certificate should cover the main domain - e.g. `tak.nz`, as well as `*.<domain name>` and `*.map.<domain name>`. E.g. `tak.nz`, `*.tak.nz`, and `*.map.tak.nz`.
 
 
 ## Resources
 
 This AWS CDK project provisions the following resources:
 - VPC with public and private subnets (IPv4/IPv6)
-- NAT Gateways (conditional on environment)
+- NAT Gateways (number conditional on environment)
 - Route tables and associations
 - ECS Cluster
 - ECR Repository with lifecycle policy
@@ -65,22 +65,7 @@ ENV_TYPE=prod VPC_MAJOR_ID=5 VPC_MINOR_ID=0 STACK_NAME_SUFFIX=prodtest npx cdk d
 npx cdk deploy --context envType=prod --context vpcMajorId=5 --context vpcMinorId=0 --context stackName=prodtest
 ```
 
-#### Method 3: Configuration File
-Create or edit `cdk-config.json`:
-```json
-{
-  "envType": "dev-test",
-  "vpcMajorId": 0,
-  "vpcMinorId": 0,
-  "stackName": "devtest"
-}
-```
-Then deploy:
-```bash
-npx cdk deploy
-```
-
-#### Method 4: Default Values (Lowest Priority)
+#### Method 3: Default Values (Lowest Priority)
 ```bash
 npx cdk deploy
 # Uses hardcoded defaults when no other values are provided
@@ -97,18 +82,13 @@ npx cdk deploy
   - Allows for thousands of unique VPC configurations
 - `stackName`: Environment identifier used in stack naming and CloudFormation exports. Default: "devtest"
 
-See [PARAMETER_USAGE.md](./PARAMETER_USAGE.md) for detailed parameter configuration examples.
 
 **Parameter Resolution Priority:**
 1. Environment Variables (highest priority)
 2. CLI Context (`--context`)
-3. JSON Config File (`cdk-config.json`)
-4. Default Values (lowest priority)
+3. Default Values (lowest priority)
 
 Higher priority methods override lower priority ones.
-
-## Customization
-- Edit `lib/cdk-stack.ts` to adjust resources or parameters.
 
 ## Notes
 - Make sure your AWS credentials are configured.

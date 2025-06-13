@@ -1,50 +1,36 @@
 import { Construct } from 'constructs';
-import { CfnVPCEndpoint } from 'aws-cdk-lib/aws-ec2';
-import { CfnCondition } from 'aws-cdk-lib';
-import { Fn } from 'aws-cdk-lib';
+import { Vpc, SubnetType, SecurityGroup, GatewayVpcEndpointAwsService, InterfaceVpcEndpointAwsService, GatewayVpcEndpoint, InterfaceVpcEndpoint, IVpc, ISecurityGroup } from 'aws-cdk-lib/aws-ec2';
 
 export function createVpcEndpoints(scope: Construct, params: {
-  vpcId: string;
-  region: string;
-  privateRouteTableA: string;
-  privateRouteTableB: string;
-  subnetPrivateA: string;
-  subnetPrivateB: string;
-  endpointSgId?: string;
+  vpc: IVpc;
+  privateSubnets: string[]; // subnet IDs or SubnetSelection
+  endpointSg?: ISecurityGroup;
   stackName: string;
-  isProdCondition: CfnCondition;
+  isProd: boolean;
 }) {
-  const endpoints: Record<string, CfnVPCEndpoint> = {};
-  const stackName = Fn.ref('AWS::StackName');
+  const endpoints: Record<string, GatewayVpcEndpoint | InterfaceVpcEndpoint> = {};
   // S3 Gateway Endpoint (always created)
-  endpoints.s3 = new CfnVPCEndpoint(scope, 'S3Endpoint', {
-    vpcEndpointType: 'Gateway',
-    vpcId: params.vpcId,
-    serviceName: `com.amazonaws.${params.region}.s3`,
-    routeTableIds: [params.privateRouteTableA, params.privateRouteTableB],
-    tags: [{ key: 'Name', value: Fn.join('', [stackName, '-s3-gateway']) }],
+  endpoints.s3 = params.vpc.addGatewayEndpoint('S3Endpoint', {
+    service: GatewayVpcEndpointAwsService.S3,
+    subnets: [{ subnets: params.vpc.selectSubnets({ subnetType: SubnetType.PRIVATE_WITH_EGRESS }).subnets }],
   });
-  // Interface Endpoints (always present, but only created in prod)
-  const endpointSubnets = [params.subnetPrivateA, params.subnetPrivateB];
-  const sgIds = params.endpointSgId ? [params.endpointSgId] : [];
-  [
-    { id: 'ECRDKREndpoint', service: 'ecr.dkr', name: 'ecr-dkr-interface' },
-    { id: 'ECRAPIEndpoint', service: 'ecr.api', name: 'ecr-api-interface' },
-    { id: 'KMSEndpoint', service: 'kms', name: 'kms-interface' },
-    { id: 'SecretsManagerEndpoint', service: 'secretsmanager', name: 'secretsmanager-interface' },
-    { id: 'CloudwatchEndpoint', service: 'logs', name: 'cloudwatch-interface' },
-  ].forEach(ep => {
-    const endpoint = new CfnVPCEndpoint(scope, ep.id, {
-      vpcEndpointType: 'Interface',
-      vpcId: params.vpcId,
-      serviceName: `com.amazonaws.${params.region}.${ep.service}`,
-      subnetIds: endpointSubnets,
-      privateDnsEnabled: true,
-      securityGroupIds: sgIds,
-      tags: [{ key: 'Name', value: Fn.join('', [stackName, `-${ep.name}`]) }],
-    });
-    endpoint.cfnOptions.condition = params.isProdCondition;
-    endpoints[ep.id] = endpoint;
-  });
+  // Interface Endpoints (only created in prod)
+  if (params.isProd) {
+    const interfaceServices = [
+      { id: 'ECRDKREndpoint', service: InterfaceVpcEndpointAwsService.ECR_DOCKER, name: 'ecr-dkr-interface' },
+      { id: 'ECRAPIEndpoint', service: InterfaceVpcEndpointAwsService.ECR, name: 'ecr-api-interface' },
+      { id: 'KMSEndpoint', service: InterfaceVpcEndpointAwsService.KMS, name: 'kms-interface' },
+      { id: 'SecretsManagerEndpoint', service: InterfaceVpcEndpointAwsService.SECRETS_MANAGER, name: 'secretsmanager-interface' },
+      { id: 'CloudwatchEndpoint', service: InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS, name: 'cloudwatch-interface' },
+    ];
+    for (const ep of interfaceServices) {
+      endpoints[ep.id] = params.vpc.addInterfaceEndpoint(ep.id, {
+        service: ep.service,
+        subnets: { subnets: params.vpc.selectSubnets({ subnetType: SubnetType.PRIVATE_WITH_EGRESS }).subnets },
+        securityGroups: params.endpointSg ? [params.endpointSg] : undefined,
+        privateDnsEnabled: true,
+      });
+    }
+  }
   return endpoints;
 }

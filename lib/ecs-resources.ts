@@ -1,11 +1,14 @@
 import { Construct } from 'constructs';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
 
-export function createEcsResources(scope: Construct, stackName: string) {
-  const ecsCluster = new ecs.CfnCluster(scope, 'ECSCluster', {
+export function createEcsResources(scope: Construct, stackName: string, vpc: ec2.IVpc) {
+  // Use the L2 construct for ECS Cluster, passing the provided VPC
+  const ecsCluster = new ecs.Cluster(scope, 'ECSCluster', {
     clusterName: stackName,
-    capacityProviders: ['FARGATE'],
-    defaultCapacityProviderStrategy: [{ base: 0, capacityProvider: 'FARGATE', weight: 0 }],
+    vpc,
   });
+  ecsCluster.enableFargateCapacityProviders();
+  // Do not set addDefaultCapacityProviderStrategy for FARGATE-only clusters; FARGATE is default
   return { ecsCluster };
 }

@@ -1,78 +1,49 @@
-import { ParameterResolver } from './parameter-resolver';
-import { generateStackName, FIXED_STACK_CONFIG } from './stack-naming';
 import * as cdk from 'aws-cdk-lib';
 
-export interface BaseParameters {
-  envType: 'prod' | 'dev-test';
-  vpcMajorId: number;
-  vpcMinorId: number;
-}
 
-export function getParameters(props?: Partial<BaseParameters>): BaseParameters {
+// Remove all parameterization logic and CfnParameter usage. Use direct values, env vars, or CDK context instead.
+// Refactor all exports to provide direct values or constants as needed for the stack.
+// Example: export const VPC_CIDR = process.env.VPC_CIDR || '10.0.0.0/16';
+
+export const ENV_TYPE = process.env.ENV_TYPE as 'prod' | 'dev-test' || 'prod';
+export const VPC_MAJOR_ID = Number(process.env.VPC_MAJOR_ID) || 0;
+export const VPC_MINOR_ID = Number(process.env.VPC_MINOR_ID) || 0;
+
+export function getParameters() {
   return {
-    envType: props?.envType ?? 'prod',
-    vpcMajorId: props?.vpcMajorId ?? 0,
-    vpcMinorId: props?.vpcMinorId ?? 0,
+    envType: ENV_TYPE,
+    vpcMajorId: VPC_MAJOR_ID,
+    vpcMinorId: VPC_MINOR_ID,
   };
 }
 
 /**
  * Resolves all stack parameters using cascading resolution
  */
-export function resolveStackParameters(stack: cdk.Stack, resolver?: ParameterResolver): {
+export function resolveStackParameters(stack: cdk.Stack): {
   envType: string;
   vpcMajorId: number;
   vpcMinorId: number;
   stackName: string;
-  resolver: ParameterResolver;
 } {
-  // Use provided resolver or create new one (fallback for backward compatibility)
-  const paramResolver = resolver || new ParameterResolver();
-
-  // Check context first, then use resolver for fallback
+  // Check context first, then use environment variables for fallback
   const envTypeFromContext = stack.node.tryGetContext('envType');
   const vpcMajorIdFromContext = stack.node.tryGetContext('vpcMajorId');
   const vpcMinorIdFromContext = stack.node.tryGetContext('vpcMinorId');
   const stackNameFromContext = stack.node.tryGetContext('stackName');
 
-  const envType = envTypeFromContext || paramResolver.resolveParameterSync(stack, 'envType', {
-    description: 'Environment type',
-    default: 'dev-test',
-    type: 'String',
-    allowedValues: ['prod', 'dev-test'],
-    required: true
-  }) as string;
+  const envType = envTypeFromContext || ENV_TYPE;
 
-  const stackName = stackNameFromContext || paramResolver.resolveParameterSync(stack, 'stackName', {
-    description: 'Stack deployment identifier for naming resources (only the environment part, e.g., "devtest", "prod")',
-    default: 'devtest',
-    type: 'String',
-    required: true
-  }) as string;
+  const stackName = stackNameFromContext || `${envType}-stack`;
 
-  const vpcMajorId = (vpcMajorIdFromContext !== undefined ? Number(vpcMajorIdFromContext) : paramResolver.resolveParameterSync(stack, 'vpcMajorId', {
-    description: 'Major VPC ID (0-255) for selecting /16 block from 10.0.0.0/8',
-    default: 0,
-    type: 'Number',
-    minValue: 0,
-    maxValue: 255,
-    required: true
-  })) as number;
+  const vpcMajorId = (vpcMajorIdFromContext !== undefined ? Number(vpcMajorIdFromContext) : VPC_MAJOR_ID);
 
-  const vpcMinorId = (vpcMinorIdFromContext !== undefined ? Number(vpcMinorIdFromContext) : paramResolver.resolveParameterSync(stack, 'vpcMinorId', {
-    description: 'Minor VPC ID (0-15) for selecting /20 subnet within the /16 block',
-    default: 0,
-    type: 'Number',
-    minValue: 0,
-    maxValue: 15,
-    required: true
-  })) as number;
+  const vpcMinorId = (vpcMinorIdFromContext !== undefined ? Number(vpcMinorIdFromContext) : VPC_MINOR_ID);
 
   return {
     envType,
     vpcMajorId,
     vpcMinorId,
     stackName,
-    resolver: paramResolver
   };
 }

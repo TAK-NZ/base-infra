@@ -7,19 +7,12 @@ This folder contains AWS ## Related Documentation
 - [`README.md`](README.md) - Detailed architecture documentation with comprehensive cost analysis
 - [`../README.md`](../README.md) - Main project documentationtecture diagrams for the TAK Base Infrastructure project showing both deployment configurations.
 
-### Diagrams Available
-
-| Diagram | File | Environment | Monthly Cost | Use Case |
-|---------|------|-------------|--------------|----------|
-| **Production** | `tak-base-infrastructure-prod.png` | `prod` | ~$91/month | Production workloads, high availability |
-| **Dev-Test** | `tak-base-infrastructure-dev-test.png` | `dev-test` | ~$35/month | Development, testing, learning |
-
 ## Quick Comparison
 
 ### Production Configuration
 ```bash
 # Deploy production
-ENV_TYPE=prod npx cdk deploy
+npx cdk deploy --app "prod"
 ```
 - ✅ High availability (dual NAT Gateways)
 - ✅ Private VPC endpoints for AWS services
@@ -90,13 +83,8 @@ Choose **Production** if:
 
 3. **Deploy production:**
    ```bash
-   ENV_TYPE=prod npx cdk deploy
+   npx cdk deploy --app "prod"
    ```
-
-4. **View architecture:**
-   - Open `tak-base-infrastructure-dev-test.png`
-   - Open `tak-base-infrastructure-prod.png`
-
 ## Related Documentation
 
 - [`README.md`](README.md) - Detailed architecture documentation
