@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
-import { CdkStack } from '../lib/cdk-stack';
+import { BaseInfraStack } from '../lib/base-infra-stack';
 import { generateStackName, FIXED_STACK_CONFIG } from '../lib/stack-naming';
 
 const app = new cdk.App();
@@ -41,7 +41,7 @@ const stackName = generateStackName({
 // Tag every resource in the stack with the project name
 cdk.Tags.of(app).add("Project", projectTag);
 
-new CdkStack(app, stackName, {
+new BaseInfraStack(app, stackName, {
   envType: envType as 'prod' | 'dev-test',
   vpcMajorId,
   vpcMinorId,

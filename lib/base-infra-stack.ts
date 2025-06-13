@@ -1,11 +1,11 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { createVpcL2Resources } from './vpc-resources';
-import { createEcsResources } from './ecs-resources';
-import { createEcrResources } from './ecr-resources';
-import { createKmsResources } from './kms-resources';
-import { createS3Resources } from './s3-resources';
-import { createVpcEndpoints } from './vpc-endpoints';
+import { createVpcL2Resources } from './constructs/vpc';
+import { createEcsResources } from './constructs/ecs';
+import { createEcrResources } from './constructs/ecr';
+import { createKmsResources } from './constructs/kms';
+import { createS3Resources } from './constructs/s3';
+import { createVpcEndpoints } from './constructs/endpoints';
 import { RemovalPolicy, StackProps, Fn, CfnOutput } from 'aws-cdk-lib';
 import { registerOutputs } from './outputs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
@@ -17,7 +17,7 @@ export interface BaseInfraStackProps extends StackProps {
   vpcMinorId?: number;
 }
 
-export class CdkStack extends cdk.Stack {
+export class BaseInfraStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BaseInfraStackProps) {
     super(scope, id, {
       ...props,
