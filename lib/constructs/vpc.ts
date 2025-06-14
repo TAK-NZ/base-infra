@@ -19,11 +19,9 @@ export interface VpcResources {
   publicRouteTable: ec2.CfnRouteTable;
   privateRouteTableA: ec2.CfnRouteTable;
   privateRouteTableB: ec2.CfnRouteTable;
-  endpointSg?: ec2.CfnSecurityGroup;
 }
 
-export function createVpcResources(scope: Construct, envType: string): VpcResources {
-  const isProd = envType === 'prod';
+export function createVpcResources(scope: Construct, envType: string, createNatGateways: boolean): VpcResources {
   const stack = cdk.Stack.of(scope);
   const stackName = Fn.ref('AWS::StackName');
 
@@ -103,7 +101,7 @@ export function createVpcResources(scope: Construct, envType: string): VpcResour
   });
 
   let natEipB: ec2.CfnEIP | undefined;
-  if (isProd) {
+  if (createNatGateways) {
     natEipB = new ec2.CfnEIP(scope, 'NatPublicIPB', {
       domain: 'vpc',
       tags: [{ key: 'Name', value: stackName }],
@@ -117,7 +115,7 @@ export function createVpcResources(scope: Construct, envType: string): VpcResour
   });
 
   let natGatewayB: ec2.CfnNatGateway | undefined;
-  if (isProd && natEipB) {
+  if (createNatGateways && natEipB) {
     natGatewayB = new ec2.CfnNatGateway(scope, 'NatGatewayB', {
       subnetId: subnetPublicB.ref,
       allocationId: natEipB.attrAllocationId,
@@ -148,22 +146,6 @@ export function createVpcResources(scope: Construct, envType: string): VpcResour
       { key: 'Name', value: Fn.join('', [stackName, '-private-subnet-b']) },
     ],
   });
-
-  let endpointSg: ec2.CfnSecurityGroup | undefined;
-  if (isProd) {
-    endpointSg = new ec2.CfnSecurityGroup(scope, 'EndpointSecurityGroup', {
-      groupName: `${stackName}-endpoint-sg`,
-      groupDescription: 'Access to Endpoint services',
-      vpcId: vpc.ref,
-      securityGroupIngress: [{
-        ipProtocol: 'tcp',
-        fromPort: 443,
-        toPort: 443,
-        cidrIp: Fn.getAtt(vpc.logicalId, 'CidrBlock') as any,
-      }],
-      tags: [{ key: 'Name', value: `${stackName}-endpoint-sg` }],
-    });
-  }
 
   // Add explicit route table associations and routes for parity with cfn.json
   // Public subnet associations
@@ -216,7 +198,7 @@ export function createVpcResources(scope: Construct, envType: string): VpcResour
   });
 
   let privateRouteB: ec2.CfnRoute | undefined;
-  if (isProd && natGatewayB) {
+  if (createNatGateways && natGatewayB) {
     privateRouteB = new ec2.CfnRoute(scope, 'PrivateRouteB', {
       routeTableId: privateRouteTableB.ref,
       destinationCidrBlock: '0.0.0.0/0',
@@ -258,14 +240,14 @@ export function createVpcResources(scope: Construct, envType: string): VpcResour
     publicRouteTable,
     privateRouteTableA,
     privateRouteTableB,
-    endpointSg,
   };
 }
 
-export function createVpcL2Resources(scope: Construct, vpcMajorId: number, vpcMinorId: number): ec2.Vpc {
+export function createVpcL2Resources(scope: Construct, vpcMajorId: number, vpcMinorId: number, createNatGateways: boolean): ec2.Vpc {
   return new ec2.Vpc(scope, 'Vpc', {
     ipAddresses: ec2.IpAddresses.cidr(`10.${vpcMajorId}.0.0/16`),
     maxAzs: 2,
+    natGateways: createNatGateways ? 2 : 1, // 1 NAT Gateway always, 2 for redundancy
     subnetConfiguration: [
       {
         cidrMask: 24,

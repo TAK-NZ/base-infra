@@ -85,7 +85,7 @@ export function registerOutputs({ stack, stackName, vpc, ecsCluster, ecrRepo, km
   new cdk.CfnOutput(stack, 'KmsAliasOutput', {
     description: 'KMS Alias Name',
     value: kmsAlias.aliasName,
-    exportName: Fn.sub(createDynamicExportName('kms-alias'), {
+    exportName: Fn.sub(createDynamicExportName(EXPORT_NAMES.KMS_ALIAS), {
       StackName: stackName,
     }),
   });
@@ -126,7 +126,7 @@ export function registerOutputs({ stack, stackName, vpc, ecsCluster, ecrRepo, km
     new cdk.CfnOutput(stack, 'CertificateArnOutput', {
       description: 'ACM Certificate ARN for public hosted zone',
       value: certificate.certificateArn,
-      exportName: Fn.sub(createDynamicExportName('CERTIFICATE_ARN'), {
+      exportName: Fn.sub(createDynamicExportName(EXPORT_NAMES.CERTIFICATE_ARN), {
         StackName: stackName,
       }),
     });
@@ -137,7 +137,7 @@ export function registerOutputs({ stack, stackName, vpc, ecsCluster, ecrRepo, km
     new cdk.CfnOutput(stack, 'HostedZoneIdOutput', {
       description: 'Route53 Public Hosted Zone ID',
       value: hostedZone.hostedZoneId,
-      exportName: Fn.sub(createDynamicExportName('HOSTED_ZONE_ID'), {
+      exportName: Fn.sub(createDynamicExportName(EXPORT_NAMES.HOSTED_ZONE_ID), {
         StackName: stackName,
       }),
     });

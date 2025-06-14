@@ -5,6 +5,7 @@ import { Construct } from 'constructs';
 
 export interface AcmCertificateProps {
   zoneName: string;
+  certificateTransparency?: boolean;
 }
 
 export function createAcmCertificate(scope: Construct, props: AcmCertificateProps) {
@@ -26,6 +27,7 @@ export function createAcmCertificate(scope: Construct, props: AcmCertificateProp
       `*.map.${props.zoneName}` // e.g., *.map.example.com
     ],
     validation: acm.CertificateValidation.fromDns(hostedZone),
+    transparencyLoggingEnabled: props.certificateTransparency ?? true,
   });
 
   return { certificate, hostedZone };

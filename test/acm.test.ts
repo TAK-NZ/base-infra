@@ -41,12 +41,17 @@ describe('ACM Certificate', () => {
     
     // Test that the stack throws error when no R53 zone name is provided (now mandatory)
     expect(() => {
-      new BaseInfraStack(app, 'TestStack', { envType: 'prod' });
+      new BaseInfraStack(app, 'TestStack', { 
+        envType: 'prod',
+        env: { account: '123456789012', region: 'us-east-1' }
+      });
     }).toThrow('R53 zone name is required. Please provide it via R53_ZONE_NAME environment variable or --context r53ZoneName=your-domain.com');
 
     // Test direct function call with empty zone name
     const { createAcmCertificate } = require('../lib/constructs/acm');
-    const testStack = new cdk.Stack(app, 'ErrorTestStack');
+    const testStack = new cdk.Stack(app, 'ErrorTestStack', {
+      env: { account: '123456789012', region: 'us-east-1' }
+    });
     
     expect(() => {
       createAcmCertificate(testStack, { zoneName: '' });
@@ -62,7 +67,10 @@ describe('ACM Certificate', () => {
     
     // Test that stack throws error when no R53 zone name is provided
     expect(() => {
-      new BaseInfraStack(app, 'TestStack', { envType: 'prod' });
+      new BaseInfraStack(app, 'TestStack', { 
+        envType: 'prod',
+        env: { account: '123456789012', region: 'us-east-1' }
+      });
     }).toThrow('R53 zone name is required. Please provide it via R53_ZONE_NAME environment variable or --context r53ZoneName=your-domain.com');
   });
 
@@ -88,5 +96,56 @@ describe('ACM Certificate', () => {
     const outputs = template.toJSON().Outputs;
     expect(outputs['CertificateArnOutput']).toBeDefined();
     expect(outputs['CertificateArnOutput'].Description).toBe('ACM Certificate ARN for public hosted zone');
+  });
+
+  it('configures certificate transparency based on environment type', () => {
+    const app = new cdk.App({
+      context: {
+        r53ZoneName: 'example.com',
+        envType: 'dev-test',
+        // Mock the hosted zone lookup
+        'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
+          Id: '/hostedzone/Z1PA6795UKMFR9',
+          Name: 'example.com.'
+        }
+      }
+    });
+    
+    const stack = new BaseInfraStack(app, 'TestStack', { 
+      envType: 'dev-test',
+      env: { account: '123456789012', region: 'us-east-1' }
+    });
+    const template = Template.fromStack(stack);
+
+    // Check that certificate transparency is disabled for dev-test
+    template.hasResourceProperties('AWS::CertificateManager::Certificate', {
+      CertificateTransparencyLoggingPreference: 'DISABLED'
+    });
+  });
+
+  it('allows certificate transparency override via context', () => {
+    const app = new cdk.App({
+      context: {
+        r53ZoneName: 'example.com',
+        envType: 'dev-test',
+        certificateTransparency: true, // Override dev-test default
+        // Mock the hosted zone lookup
+        'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
+          Id: '/hostedzone/Z1PA6795UKMFR9',
+          Name: 'example.com.'
+        }
+      }
+    });
+    
+    const stack = new BaseInfraStack(app, 'TestStack', { 
+      envType: 'dev-test',
+      env: { account: '123456789012', region: 'us-east-1' }
+    });
+    const template = Template.fromStack(stack);
+
+    // Check that certificate transparency is enabled despite dev-test environment
+    template.hasResourceProperties('AWS::CertificateManager::Certificate', {
+      CertificateTransparencyLoggingPreference: 'ENABLED'
+    });
   });
 });

@@ -34,15 +34,15 @@ export class BaseInfraStack extends cdk.Stack {
     const vpcMinorId = props.vpcMinorId ?? params.vpcMinorId;
     const resolvedStackName = id;
     const r53ZoneName = params.r53ZoneName;
-
-    // Condition for prod resources
-    const createProdResources = envType === 'prod';
+    const createNatGateways = params.createNatGateways;
+    const enableVpcEndpoints = params.createVpcEndpoints;
+    const certificateTransparency = params.certificateTransparency;
 
     const stackName = Fn.ref('AWS::StackName');
     const region = cdk.Stack.of(this).region;
 
     // Create L2 VPC and subnets directly
-    const vpc = createVpcL2Resources(this, vpcMajorId, vpcMinorId);
+    const vpc = createVpcL2Resources(this, vpcMajorId, vpcMinorId, createNatGateways);
 
     // ECS
     const { ecsCluster } = createEcsResources(this, this.stackName, vpc);
@@ -58,7 +58,7 @@ export class BaseInfraStack extends cdk.Stack {
 
     // Endpoint Security Group (for interface endpoints)
     let endpointSg: ec2.SecurityGroup | undefined = undefined;
-    if (envType === 'prod') {
+    if (enableVpcEndpoints) {
       endpointSg = new ec2.SecurityGroup(this, 'EndpointSecurityGroup', {
         vpc,
         description: 'Access to Endpoint services',
@@ -73,7 +73,7 @@ export class BaseInfraStack extends cdk.Stack {
       privateSubnets: vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }).subnetIds,
       endpointSg,
       stackName,
-      isProd: envType === 'prod',
+      createVpcEndpoints: enableVpcEndpoints,
     });
 
     // ACM Certificate (mandatory - auto-create with R53 zone)
@@ -81,7 +81,10 @@ export class BaseInfraStack extends cdk.Stack {
     let hostedZone: any = undefined;
     
     // Always create certificate with R53 zone (now mandatory)
-    const acmResources = createAcmCertificate(this, { zoneName: r53ZoneName });
+    const acmResources = createAcmCertificate(this, { 
+      zoneName: r53ZoneName,
+      certificateTransparency: certificateTransparency,
+    });
     certificate = acmResources.certificate;
     hostedZone = acmResources.hostedZone;
 

@@ -5,5 +5,5 @@ export declare function createVpcEndpoints(scope: Construct, params: {
     privateSubnets: string[];
     endpointSg?: ISecurityGroup;
     stackName: string;
-    isProd: boolean;
+    createVpcEndpoints: boolean;
 }): Record<string, GatewayVpcEndpoint | InterfaceVpcEndpoint>;

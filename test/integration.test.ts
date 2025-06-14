@@ -24,7 +24,10 @@ describe('Integration Tests', () => {
   it('throws error when R53 zone is not provided', () => {
     const app = new cdk.App();
     expect(() => {
-      new BaseInfraStack(app, 'TestStack', { envType: 'prod' });
+      new BaseInfraStack(app, 'TestStack', { 
+        envType: 'prod',
+        env: { account: '123456789012', region: 'us-east-1' }
+      });
     }).toThrow('R53 zone name is required. Please provide it via R53_ZONE_NAME environment variable or --context r53ZoneName=your-domain.com');
   });
 });

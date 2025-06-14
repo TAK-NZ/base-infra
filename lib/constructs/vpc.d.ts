@@ -16,7 +16,6 @@ export interface VpcResources {
     publicRouteTable: ec2.CfnRouteTable;
     privateRouteTableA: ec2.CfnRouteTable;
     privateRouteTableB: ec2.CfnRouteTable;
-    endpointSg?: ec2.CfnSecurityGroup;
 }
-export declare function createVpcResources(scope: Construct, envType: string): VpcResources;
-export declare function createVpcL2Resources(scope: Construct, vpcMajorId: number, vpcMinorId: number): ec2.Vpc;
+export declare function createVpcResources(scope: Construct, envType: string, createNatGateways: boolean): VpcResources;
+export declare function createVpcL2Resources(scope: Construct, vpcMajorId: number, vpcMinorId: number, createNatGateways: boolean): ec2.Vpc;

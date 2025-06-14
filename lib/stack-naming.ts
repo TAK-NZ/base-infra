@@ -82,6 +82,7 @@ export const EXPORT_NAMES = {
   ECS_CLUSTER: 'ecs',
   ECR_REPO: 'ecr',
   KMS_KEY: 'kms',
+  KMS_ALIAS: 'kms-alias',
   S3_BUCKET: 's3',
   CERTIFICATE_ARN: 'CERTIFICATE-ARN',
   HOSTED_ZONE_ID: 'HOSTED-ZONE-ID',
@@ -89,9 +90,9 @@ export const EXPORT_NAMES = {
 
 /**
  * Helper to create CloudFormation Fn::Sub expression for dynamic export names
- * The StackName parameter contains only the environment identifier (e.g., "devtest")
- * This function creates the full export name: TAK-{environment}-BaseInfra-{resource}
+ * The StackName parameter contains the full stack name (e.g., "TAK-devtest-BaseInfra")
+ * This function creates the export name: {StackName}-{resource}
  */
 export function createDynamicExportName(resourceType: string): string {
-  return `${FIXED_STACK_CONFIG.PROJECT}-\${StackName}-${FIXED_STACK_CONFIG.COMPONENT}-${resourceType}`;
+  return `\${StackName}-${resourceType}`;
 }
