@@ -17,7 +17,7 @@
     ]
   },
   "context": {
-        "project": "TAK-NZ",
+    "project": "TAK-NZ",
     "stackName": "DevTest",
     "envType": "dev-test",
     "vpcMajorId": 0,

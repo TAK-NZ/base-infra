@@ -12,9 +12,11 @@ export interface OutputParams {
   kmsAlias: any;
   configBucket: any;
   vpcEndpoints?: Record<string, any>;
+  certificate?: any;
+  hostedZone?: any;
 }
 
-export function registerOutputs({ stack, stackName, vpc, ecsCluster, ecrRepo, kmsKey, kmsAlias, configBucket, vpcEndpoints }: OutputParams) {
+export function registerOutputs({ stack, stackName, vpc, ecsCluster, ecrRepo, kmsKey, kmsAlias, configBucket, vpcEndpoints, certificate, hostedZone }: OutputParams) {
   new cdk.CfnOutput(stack, 'VpcIdOutput', {
     description: 'VPC ID',
     value: vpc.vpcId,
@@ -117,6 +119,27 @@ export function registerOutputs({ stack, stackName, vpc, ecsCluster, ecrRepo, km
           }),
         });
       }
+    });
+  }
+  // ACM Certificate output (if certificate exists)
+  if (certificate) {
+    new cdk.CfnOutput(stack, 'CertificateArnOutput', {
+      description: 'ACM Certificate ARN for public hosted zone',
+      value: certificate.certificateArn,
+      exportName: Fn.sub(createDynamicExportName('CERTIFICATE_ARN'), {
+        StackName: stackName,
+      }),
+    });
+  }
+
+  // Hosted Zone output (if hosted zone exists)
+  if (hostedZone) {
+    new cdk.CfnOutput(stack, 'HostedZoneIdOutput', {
+      description: 'Route53 Public Hosted Zone ID',
+      value: hostedZone.hostedZoneId,
+      exportName: Fn.sub(createDynamicExportName('HOSTED_ZONE_ID'), {
+        StackName: stackName,
+      }),
     });
   }
 }

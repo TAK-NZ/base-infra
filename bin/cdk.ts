@@ -15,7 +15,7 @@ const envType = process.env.ENV_TYPE ||
                app.node.tryGetContext('envType') || 
                'dev-test';
 
-const stackNameSuffix = process.env.STACK_NAME_SUFFIX || 
+const stackNameSuffix = process.env.STACK_NAME || 
                        app.node.tryGetContext('stackName') || 
                        'devtest';
 

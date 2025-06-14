@@ -9,6 +9,8 @@ import { createVpcEndpoints } from './constructs/endpoints';
 import { RemovalPolicy, StackProps, Fn, CfnOutput } from 'aws-cdk-lib';
 import { registerOutputs } from './outputs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import { createAcmCertificate } from './constructs/acm';
+import { resolveStackParameters } from './parameters';
 
 
 export interface BaseInfraStackProps extends StackProps {
@@ -21,16 +23,17 @@ export class BaseInfraStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BaseInfraStackProps) {
     super(scope, id, {
       ...props,
-      description: 'TAK Base Layer - VPC, ECS, ECR, KMS, S3',
+      description: 'TAK Base Layer - VPC, ECS, ECR, KMS, S3, ACM',
     });
 
-    const envType = props.envType || 'dev-test';
-    const vpcMajorId = props.vpcMajorId || 0;
-    const vpcMinorId = props.vpcMinorId || 0;
-    const resolvedStackName = id;
+    // Resolve parameters from context, env vars, or defaults
+    const params = resolveStackParameters(this);
     
-    // Create CDK Parameters (for CloudFormation template compatibility)
-    // Removed parameterization logic, using direct values or context
+    const envType = (props.envType || params.envType) as 'prod' | 'dev-test';
+    const vpcMajorId = props.vpcMajorId ?? params.vpcMajorId;
+    const vpcMinorId = props.vpcMinorId ?? params.vpcMinorId;
+    const resolvedStackName = id;
+    const r53ZoneName = params.r53ZoneName;
 
     // Condition for prod resources
     const createProdResources = envType === 'prod';
@@ -73,6 +76,15 @@ export class BaseInfraStack extends cdk.Stack {
       isProd: envType === 'prod',
     });
 
+    // ACM Certificate (mandatory - auto-create with R53 zone)
+    let certificate: any = undefined;
+    let hostedZone: any = undefined;
+    
+    // Always create certificate with R53 zone (now mandatory)
+    const acmResources = createAcmCertificate(this, { zoneName: r53ZoneName });
+    certificate = acmResources.certificate;
+    hostedZone = acmResources.hostedZone;
+
     // Outputs
     registerOutputs({
       stack: this,
@@ -84,6 +96,8 @@ export class BaseInfraStack extends cdk.Stack {
       kmsAlias,
       configBucket,
       vpcEndpoints,
+      certificate,
+      hostedZone,
     });
   }
 }

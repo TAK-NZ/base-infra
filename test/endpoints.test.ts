@@ -6,8 +6,20 @@ import { getResourceByType } from './utils';
 describe('VPC Endpoints', () => {
   it('creates S3 gateway endpoint and prod interface endpoints', () => {
     // Always create a new App for each stack in this test
-    const app = new cdk.App();
-    const stack = new BaseInfraStack(app, 'TestStack', { envType: 'prod' });
+    const app = new cdk.App({
+      context: {
+        r53ZoneName: 'example.com',
+        // Mock the hosted zone lookup to avoid AWS calls
+        'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
+          Id: '/hostedzone/Z1PA6795UKMFR9',
+          Name: 'example.com.'
+        }
+      }
+    });
+    const stack = new BaseInfraStack(app, 'TestStack', { 
+      envType: 'prod',
+      env: { account: '123456789012', region: 'us-east-1' }
+    });
     const template = Template.fromStack(stack);
     template.hasResourceProperties('AWS::EC2::VPCEndpoint', {
       VpcEndpointType: 'Gateway',
@@ -21,12 +33,25 @@ describe('VPC Endpoints', () => {
 
   it('does not create interface endpoints in dev-test', () => {
     // Always create a new App for each stack in this test
-    const app = new cdk.App();
-    const stack = new BaseInfraStack(app, 'TestStack', { envType: 'dev-test' });
+    const app = new cdk.App({
+      context: {
+        r53ZoneName: 'example.com',
+        // Mock the hosted zone lookup to avoid AWS calls
+        'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
+          Id: '/hostedzone/Z1PA6795UKMFR9',
+          Name: 'example.com.'
+        }
+      }
+    });
+    const stack = new BaseInfraStack(app, 'TestStack', { 
+      envType: 'dev-test',
+      env: { account: '123456789012', region: 'us-east-1' }
+    });
     const template = Template.fromStack(stack);
     const endpoints = getResourceByType(template.toJSON(), 'AWS::EC2::VPCEndpoint');
     // No interface endpoints should exist in dev-test
     const interfaceEndpoints = endpoints.filter((ep: any) => ep.Properties.VpcEndpointType === 'Interface');
+    expect(interfaceEndpoints.length).toBe(0);
     expect(interfaceEndpoints.length).toBe(0);
   });
 });
