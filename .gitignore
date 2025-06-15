@@ -15,6 +15,3 @@ cdk.out
 
 # Debug and development files
 debug-params.js
-
-# GitHub Copilot instructions
-.github/copilot-instructions.md
