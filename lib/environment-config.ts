@@ -101,36 +101,6 @@ export const PROD_CONFIG: BaseInfraEnvironmentConfig = {
 };
 
 /**
- * Staging environment configuration
- * Production-like configuration but with some cost optimizations
- */
-export const STAGING_CONFIG: BaseInfraEnvironmentConfig = {
-  networking: {
-    createNatGateways: true,       // Test high availability setup
-    createVpcEndpoints: false,     // Cost optimization while testing
-  },
-  certificate: {
-    transparencyLoggingEnabled: true,   // Test production certificate setup
-  },
-  general: {
-    removalPolicy: cdk.RemovalPolicy.DESTROY,  // Allow cleanup of staging resources
-    enableDetailedLogging: true,               // Enable for testing/debugging
-    enableContainerInsights: true,             // Test production monitoring setup
-  },
-  kms: {
-    enableKeyRotation: false,      // Cost optimization for staging
-  },
-  s3: {
-    enableVersioning: true,        // Test versioning behavior
-    lifecycleRules: true,          // Enable cleanup for staging
-  },
-  ecr: {
-    imageRetentionCount: 10,       // Moderate retention for staging
-    scanOnPush: true,              // Test security scanning
-  },
-};
-
-/**
  * Get environment configuration based on environment type
  */
 export function getEnvironmentConfig(envType: string): BaseInfraEnvironmentConfig {
