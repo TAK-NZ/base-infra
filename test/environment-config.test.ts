@@ -1,4 +1,4 @@
-import { getEnvironmentConfig, mergeEnvironmentConfig, DEV_TEST_CONFIG, PROD_CONFIG, STAGING_CONFIG } from '../lib/environment-config';
+import { getEnvironmentConfig, mergeEnvironmentConfig, DEV_TEST_CONFIG, PROD_CONFIG } from '../lib/environment-config';
 
 describe('Environment Configuration', () => {
   describe('getEnvironmentConfig', () => {
@@ -14,15 +14,9 @@ describe('Environment Configuration', () => {
       expect(getEnvironmentConfig('production')).toEqual(PROD_CONFIG);
     });
 
-    it('returns staging config for staging environment types', () => {
-      expect(getEnvironmentConfig('staging')).toEqual(STAGING_CONFIG);
-      expect(getEnvironmentConfig('stage')).toEqual(STAGING_CONFIG);
-    });
-
     it('is case insensitive', () => {
       expect(getEnvironmentConfig('PROD')).toEqual(PROD_CONFIG);
       expect(getEnvironmentConfig('Dev-Test')).toEqual(DEV_TEST_CONFIG);
-      expect(getEnvironmentConfig('STAGING')).toEqual(STAGING_CONFIG);
     });
   });
 
@@ -106,16 +100,5 @@ describe('Environment Configuration', () => {
       expect(config.ecr.scanOnPush).toBe(true);
     });
 
-    it('staging has production-like but cost-optimized defaults', () => {
-      const config = STAGING_CONFIG;
-      
-      expect(config.networking.createNatGateways).toBe(true); // Test HA
-      expect(config.networking.createVpcEndpoints).toBe(false); // Cost optimization
-      expect(config.certificate.transparencyLoggingEnabled).toBe(true); // Test prod setup
-      expect(config.general.enableContainerInsights).toBe(true); // Test monitoring
-      expect(config.kms.enableKeyRotation).toBe(false); // Cost optimization
-      expect(config.s3.enableVersioning).toBe(true); // Test versioning
-      expect(config.ecr.scanOnPush).toBe(true); // Test security
-    });
   });
 });

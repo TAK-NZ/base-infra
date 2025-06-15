@@ -78,11 +78,11 @@ export class BaseInfraStack extends cdk.Stack {
       createVpcEndpoints: enableVpcEndpoints,
     });
 
-    // ACM Certificate (mandatory - auto-create with R53 zone)
+    // ACM Certificate
     let certificate: any = undefined;
     let hostedZone: any = undefined;
     
-    // Always create certificate with R53 zone (now mandatory)
+    // Always create certificate with R53 zone 
     const acmResources = createAcmCertificate(this, { 
       zoneName: r53ZoneName,
       certificateTransparency: certificateTransparency,

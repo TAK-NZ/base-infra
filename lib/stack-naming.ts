@@ -24,7 +24,7 @@ export const FIXED_STACK_CONFIG = {
 export function generateStackName(config: StackNamingConfig): string {
   const parts = [
     config.project || FIXED_STACK_CONFIG.PROJECT,
-    config.environment || 'DevTest',  // This comes from stackName in config
+    config.environment || 'MyFirstStack',  // This comes from stackName in config
     config.component || FIXED_STACK_CONFIG.COMPONENT
   ];
   
@@ -33,39 +33,6 @@ export function generateStackName(config: StackNamingConfig): string {
   }
   
   return parts.join('-');
-}
-
-/**
- * Generate a stack name with fixed project/component and configurable deployment identifier
- * @param deployment - The deployment identifier (e.g., "devtest", "prod", "staging")
- */
-export function generateBaseInfraStackName(deployment: string): string {
-  return `${FIXED_STACK_CONFIG.PROJECT}-${deployment}-${FIXED_STACK_CONFIG.COMPONENT}`;
-}
-
-/**
- * Generate export names for cross-stack references
- */
-export function generateExportName(stackName: string, resourceType: string): string {
-  return `${stackName}-${resourceType}`;
-}
-
-/**
- * Generate export name with environment parameter (for CloudFormation functions)
- * @param environment - The environment type (e.g., "dev-test", "prod") from EnvType parameter
- */
-export function generateDynamicExportName(environment: string, resourceType: string): string {
-  const stackName = generateBaseInfraStackName(environment);
-  return generateExportName(stackName, resourceType);
-}
-
-/**
- * Get the base infrastructure stack name for imports
- * @param deployment - The deployment identifier (e.g., "devtest", "prod") 
- * @deprecated Use generateBaseInfraStackName instead
- */
-export function getBaseInfraStackName(deployment: string = 'DevTest'): string {
-  return generateBaseInfraStackName(deployment);
 }
 
 /**

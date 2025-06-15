@@ -138,9 +138,6 @@ export function getEnvironmentConfig(envType: string): BaseInfraEnvironmentConfi
     case 'prod':
     case 'production':
       return PROD_CONFIG;
-    case 'staging':
-    case 'stage':
-      return STAGING_CONFIG;
     case 'dev':
     case 'dev-test':
     case 'development':
