@@ -58,9 +58,9 @@ const stack = new BaseInfraStack(app, stackName, {
   },
   tags: {
     Project: ProjectName || 'TAK',
-    'Environment-Name': environmentName,
+    'Environment Name': environmentName,
     Component: 'BaseInfra',
     ManagedBy: 'CDK',
-    'DNS-Zone': r53ZoneName,
+    'DNS Zone': r53ZoneName,
   }
 });
