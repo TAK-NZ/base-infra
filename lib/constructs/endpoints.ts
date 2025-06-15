@@ -1,11 +1,9 @@
 import { Construct } from 'constructs';
-import { Vpc, SubnetType, SecurityGroup, GatewayVpcEndpointAwsService, InterfaceVpcEndpointAwsService, GatewayVpcEndpoint, InterfaceVpcEndpoint, IVpc, ISecurityGroup } from 'aws-cdk-lib/aws-ec2';
+import { SubnetType, GatewayVpcEndpointAwsService, InterfaceVpcEndpointAwsService, GatewayVpcEndpoint, InterfaceVpcEndpoint, IVpc, ISecurityGroup } from 'aws-cdk-lib/aws-ec2';
 
 export function createVpcEndpoints(scope: Construct, params: {
   vpc: IVpc;
-  privateSubnets: string[]; // subnet IDs or SubnetSelection
   endpointSg?: ISecurityGroup;
-  stackName: string;
   createVpcEndpoints: boolean;
 }) {
   const endpoints: Record<string, GatewayVpcEndpoint | InterfaceVpcEndpoint> = {};

@@ -74,9 +74,7 @@ export class BaseInfraStack extends cdk.Stack {
     // VPC Endpoints
     const vpcEndpoints = createVpcEndpoints(this, {
       vpc,
-      privateSubnets: vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }).subnetIds,
       endpointSg,
-      stackName,
       createVpcEndpoints: enableVpcEndpoints,
     });
 

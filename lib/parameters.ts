@@ -50,7 +50,7 @@ export function resolveStackParameters(stack: cdk.Stack): {
   const certificateTransparencyFromContext = stack.node.tryGetContext('certificateTransparency');
 
   // Resolution with environment variables taking precedence
-  const envType = ENV_TYPE || envTypeFromContext || 'dev-test';
+  const envType = process.env.ENV_TYPE || envTypeFromContext || 'dev-test';
 
   const stackName = STACK_NAME || stackNameFromContext || `${envType}-stack`;
 
