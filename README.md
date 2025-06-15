@@ -87,37 +87,42 @@ echo "Region: $CDK_DEFAULT_REGION"
 
 The stack supports flexible parameter configuration through multiple methods with cascading priority:
 
-#### Method 1: Environment Variables (Recommended)
+#### Method 1: CDK Context (Primary Method)
 ```bash
-# Required parameters
-export R53_ZONE_NAME="tak.nz"
-
-# Optional parameters with defaults
-export PROJECT="TAK"                    # Project tag for all resources
-export STACK_NAME="MyFirstStack"        # Used in stack naming
-export ENV_TYPE="dev-test"              # Options: prod, dev-test
-export VPC_MAJOR_ID="0"                 # VPC CIDR major identifier
-export VPC_MINOR_ID="0"                 # VPC CIDR minor identifier
-
-# Optional resource control (can override ENV_TYPE defaults)
-export CREATE_NAT_GATEWAYS="false"      # true/false - Create redundant NAT Gateway
-export CREATE_VPC_ENDPOINTS="false"     # true/false - Create VPC interface endpoints
-export CERTIFICATE_TRANSPARENCY="false" # true/false - Enable ACM certificate transparency
-
-# Deploy the stack
-npx cdk deploy --profile tak
+# Deploy with all parameters via context
+npx cdk deploy \
+  --context envType=prod \
+  --context r53ZoneName=tak.nz \
+  --context vpcMajorId=5 \
+  --context vpcMinorId=0 \
+  --context createNatGateways=true \
+  --context createVpcEndpoints=true \
+  --context certificateTransparency=true \
+  --profile tak
 ```
 
-#### Method 2: CLI Context
+#### Method 2: Minimal Context (Uses Environment Defaults)
 ```bash
-npx cdk deploy --context envType=prod --context vpcMajorId=5 --context vpcMinorId=0 --context stackName=MyFirstStack --context r53ZoneName=tak.nz --context certificateTransparency=true --profile tak
+# Deploy with only required parameters (other parameters use environment-based defaults)
+npx cdk deploy \
+  --context envType=dev-test \
+  --context r53ZoneName=tak.nz \
+  --profile tak
 ```
 
-#### Method 3: Default Values (Lowest Priority)
-```bash
-npx cdk deploy --profile tak
-# Uses hardcoded defaults when no other values are provided
-```
+#### Available Context Parameters
+
+| Parameter | Required | Default | Description |
+|-----------|----------|---------|-------------|
+| `envType` | No | `dev-test` | Environment type: `prod` or `dev-test` |
+| `r53ZoneName` | **Yes** | None | Route 53 hosted zone domain name |
+| `vpcMajorId` | No | `0` | VPC CIDR major ID (10.{major}.0.0/16) |
+| `vpcMinorId` | No | `0` | VPC CIDR minor ID (10.{major}.{minor}.0/16) |
+| `createNatGateways` | No | env-based* | Create NAT Gateways: `true` or `false` |
+| `createVpcEndpoints` | No | env-based* | Create VPC endpoints: `true` or `false` |
+| `certificateTransparency` | No | env-based* | Enable ACM cert transparency: `true` or `false` |
+
+*Environment-based defaults: `prod` = `true`, `dev-test` = `false`
 
 **Parameters:**
 - `envType`: Environment type (`prod` or `dev-test`). Default: `dev-test`
@@ -147,32 +152,15 @@ npx cdk deploy --profile tak
   - `true`: Certificate is logged to public Certificate Transparency logs (recommended for production)
   - `false`: Certificate transparency logging is disabled (useful for development/testing)
 
-
-**Parameter Resolution Priority:**
-1. Environment Variables (highest priority)
-2. CLI Context (`--context`)
-3. Default Values (lowest priority)
-
-Higher priority methods override lower priority ones.
-
-**Environment Variable to Context Mapping:**
-- `ENV_TYPE` → `--context envType`
-- `VPC_MAJOR_ID` → `--context vpcMajorId`
-- `VPC_MINOR_ID` → `--context vpcMinorId`
-- `STACK_NAME` → `--context stackName`
-- `R53_ZONE_NAME` → `--context r53ZoneName`
-- No environment variables for individual overrides → `--context createNatGateways=true/false`
-- No environment variables for individual overrides → `--context createVpcEndpoints=true/false`
-
 **Hierarchical Parameter System:**
-The stack uses a cascading parameter resolution system:
-1. **ENV_TYPE** provides defaults for conditional resources:
-   - `prod`: `createNatGateways=true`, `createVpcEndpoints=true`
-   - `dev-test`: `createNatGateways=false`, `createVpcEndpoints=false`
-2. **Individual parameters** override ENV_TYPE defaults when specified
-3. **Example**: `--context envType=prod --context createNatGateways=false` creates production environment with single NAT Gateway
+The stack uses a cascading configuration system:
+1. **Environment Type** (`envType`) provides defaults for resource creation:
+   - `prod`: `createNatGateways=true`, `createVpcEndpoints=true`, `certificateTransparency=true`
+   - `dev-test`: `createNatGateways=false`, `createVpcEndpoints=false`, `certificateTransparency=false`
+2. **Individual context parameters** override environment defaults when specified
+3. **Example**: `--context envType=prod --context createNatGateways=false` creates production environment with cost-optimized NAT Gateway configuration
 
-**Required AWS Environment Variables:**
+**Required AWS Environment Variables (for AWS SDK only):**
 - `CDK_DEFAULT_ACCOUNT` - Your AWS account ID (auto-set with: `aws sts get-caller-identity --query Account --output text --profile tak`)
 - `CDK_DEFAULT_REGION` - Your AWS region (auto-set with: `aws configure get region --profile tak`)
 
@@ -214,7 +202,7 @@ The base infrastructure uses a structured environment configuration system defin
 The environment configuration can be overridden at multiple levels:
 
 1. **Environment Type** (`envType`) sets the base configuration
-2. **Individual Parameters** override specific settings via context or environment variables
+2. **Individual Parameters** override specific settings via CDK context
 3. **Code-level Overrides** using `mergeEnvironmentConfig()` for advanced customization
 
 ## CloudFormation Exports
@@ -334,7 +322,7 @@ npx cdk deploy --context r53ZoneName=tak.nz --profile tak --method change-set
 
 ```bash
 # Production with cost optimization - disable redundant NAT Gateway
-ENV_TYPE=prod VPC_MAJOR_ID=5 STACK_NAME=Primary R53_ZONE_NAME=tak.nz npx cdk deploy --context createNatGateways=false --profile tak
+npx cdk deploy --context envType=prod --context vpcMajorId=5 --context r53ZoneName=tak.nz --context createNatGateways=false --profile tak
 
 # Development with specific production features for testing
 npx cdk deploy --context envType=dev-test --context createVpcEndpoints=true --context r53ZoneName=tak.nz --profile tak

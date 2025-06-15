@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
 import { BaseInfraStack } from '../lib/base-infra-stack';
+import { createStackConfig } from '../lib/stack-config';
 import { getResourceByType } from './utils';
 
 describe('VPC Endpoints', () => {
@@ -8,8 +9,6 @@ describe('VPC Endpoints', () => {
     // Always create a new App for each stack in this test
     const app = new cdk.App({
       context: {
-        r53ZoneName: 'example.com',
-        envType: 'prod', // Explicitly set context for prod environment
         // Mock the hosted zone lookup to avoid AWS calls
         'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
           Id: '/hostedzone/Z1PA6795UKMFR9',
@@ -17,7 +16,11 @@ describe('VPC Endpoints', () => {
         }
       }
     });
+    
+    const config = createStackConfig('prod', 'example.com');
+    
     const stack = new BaseInfraStack(app, 'TestStack', { 
+      stackConfig: config,
       env: { account: '123456789012', region: 'us-east-1' }
     });
     const template = Template.fromStack(stack);
@@ -35,7 +38,6 @@ describe('VPC Endpoints', () => {
     // Always create a new App for each stack in this test
     const app = new cdk.App({
       context: {
-        r53ZoneName: 'example.com',
         // Mock the hosted zone lookup to avoid AWS calls
         'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
           Id: '/hostedzone/Z1PA6795UKMFR9',
@@ -43,8 +45,11 @@ describe('VPC Endpoints', () => {
         }
       }
     });
+    
+    const config = createStackConfig('dev-test', 'example.com');
+    
     const stack = new BaseInfraStack(app, 'TestStack', { 
-      envType: 'dev-test',
+      stackConfig: config,
       env: { account: '123456789012', region: 'us-east-1' }
     });
     const template = Template.fromStack(stack);
@@ -59,9 +64,6 @@ describe('VPC Endpoints', () => {
     // Test that individual parameter overrides work regardless of envType
     const app = new cdk.App({
       context: {
-        r53ZoneName: 'example.com',
-        envType: 'dev-test', // Would normally not create interface endpoints
-        createVpcEndpoints: true, // Override to create them
         // Mock the hosted zone lookup to avoid AWS calls
         'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
           Id: '/hostedzone/Z1PA6795UKMFR9',
@@ -69,7 +71,14 @@ describe('VPC Endpoints', () => {
         }
       }
     });
+    
+    // Create config with override to create VPC endpoints (normally not created in dev-test)
+    const config = createStackConfig('dev-test', 'example.com', {
+      networking: { createVpcEndpoints: true }
+    });
+    
     const stack = new BaseInfraStack(app, 'TestStack', { 
+      stackConfig: config,
       env: { account: '123456789012', region: 'us-east-1' }
     });
     const template = Template.fromStack(stack);

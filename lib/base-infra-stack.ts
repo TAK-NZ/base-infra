@@ -10,13 +10,10 @@ import { RemovalPolicy, StackProps, Fn, CfnOutput } from 'aws-cdk-lib';
 import { registerOutputs } from './outputs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { createAcmCertificate } from './constructs/acm';
-import { resolveStackParameters } from './parameters';
-
+import { BaseInfraConfig } from './stack-config';
 
 export interface BaseInfraStackProps extends StackProps {
-  envType?: 'prod' | 'dev-test';
-  vpcMajorId?: number;
-  vpcMinorId?: number;
+  stackConfig: BaseInfraConfig;
 }
 
 export class BaseInfraStack extends cdk.Stack {
@@ -26,17 +23,23 @@ export class BaseInfraStack extends cdk.Stack {
       description: 'TAK Base Layer - VPC, ECS, ECR, KMS, S3, ACM',
     });
 
-    // Resolve parameters from context, env vars, or defaults
-    const params = resolveStackParameters(this);
+    const config = props.stackConfig;
     
-    const envType = (props.envType || params.envType) as 'prod' | 'dev-test';
-    const vpcMajorId = props.vpcMajorId ?? params.vpcMajorId;
-    const vpcMinorId = props.vpcMinorId ?? params.vpcMinorId;
+    // Extract configuration values
+    const envType = config.envType;
+    const vpcMajorId = config.overrides?.networking?.vpcMajorId ?? 0;
+    const vpcMinorId = config.overrides?.networking?.vpcMinorId ?? 0;
     const resolvedStackName = id;
-    const r53ZoneName = params.r53ZoneName;
-    const createNatGateways = params.createNatGateways;
-    const enableVpcEndpoints = params.createVpcEndpoints;
-    const certificateTransparency = params.certificateTransparency;
+    const r53ZoneName = config.r53ZoneName;
+    
+    // Get environment-specific defaults
+    const envConfig = config.envType === 'prod' ? 
+      { createNatGateways: true, createVpcEndpoints: true, certificateTransparency: true } :
+      { createNatGateways: false, createVpcEndpoints: false, certificateTransparency: false };
+    
+    const createNatGateways = config.overrides?.networking?.createNatGateways ?? envConfig.createNatGateways;
+    const enableVpcEndpoints = config.overrides?.networking?.createVpcEndpoints ?? envConfig.createVpcEndpoints;
+    const certificateTransparency = config.overrides?.certificate?.transparencyLoggingEnabled ?? envConfig.certificateTransparency;
 
     // Add Environment Type tag to the stack
     const environmentLabel = envType === 'prod' ? 'Prod' : 'Dev-Test';

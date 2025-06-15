@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "test": "unset R53_ZONE_NAME && unset ENV_TYPE && unset CDK_DEFAULT_ACCOUNT && unset CDK_DEFAULT_REGION && jest",
+    "test": "unset CDK_DEFAULT_ACCOUNT && unset CDK_DEFAULT_REGION && jest",
     "cdk": "cdk",
     "clean": "rm -f bin/*.js bin/*.d.ts lib/*.js lib/*.d.ts test/*.js test/*.d.ts; rm -rf cdk.out/*"
   },

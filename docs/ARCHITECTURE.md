@@ -180,11 +180,11 @@ The TAK Base Infrastructure provides foundational AWS resources for containerize
 - **S3 Versioning**: Enabled (test data protection)
 - **Resource Removal**: DESTROY policy (allows staging cleanup)
 
-### 2. Parameter Override System
-- **Environment Variables**: Highest precedence override mechanism
-- **CDK Context**: CLI-based parameter overrides
-- **Environment Defaults**: Fallback configuration based on environment type
-- **Hierarchical Resolution**: Context → Environment Variables → Environment Defaults
+### 2. Parameter Configuration System
+- **CDK Context**: Primary configuration mechanism via `--context` CLI parameters
+- **Environment Defaults**: Automatic configuration based on `envType` (prod vs dev-test)
+- **Built-in Defaults**: Hardcoded fallback values for optional parameters
+- **Hierarchical Resolution**: CDK Context → Environment Defaults → Built-in Defaults
 
 ## Security Architecture
 
@@ -211,8 +211,8 @@ The TAK Base Infrastructure provides foundational AWS resources for containerize
 ### 1. Infrastructure as Code
 - **AWS CDK**: TypeScript-based infrastructure definitions
 - **Environment Configuration**: Structured configuration system in `lib/environment-config.ts`
-- **Parameter Resolution**: Cascading parameter system in `lib/parameters.ts`
-- **Testing**: Comprehensive unit tests with 35+ test cases
+- **Parameter Configuration**: Config-driven parameter system in `lib/stack-config.ts`
+- **Testing**: Comprehensive unit tests with 31+ test cases
 
 ### 2. Stack Naming and Exports
 - **Naming Convention**: `TAK-{stackName}-BaseInfra`

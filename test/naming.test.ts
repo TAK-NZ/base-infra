@@ -1,13 +1,13 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
 import { BaseInfraStack } from '../lib/base-infra-stack';
+import { createStackConfig } from '../lib/stack-config';
 
 describe('Dynamic Stack Naming', () => {
   it('all names, tags, and output export names use dynamic stack naming where possible', () => {
     // Always create a new App for each stack in this test
     const app = new cdk.App({
       context: {
-        r53ZoneName: 'example.com',
         // Mock the hosted zone lookup to avoid AWS calls
         'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
           Id: '/hostedzone/Z1PA6795UKMFR9',
@@ -15,8 +15,11 @@ describe('Dynamic Stack Naming', () => {
         }
       }
     });
+    
+    const config = createStackConfig('prod', 'example.com');
+    
     const stack = new BaseInfraStack(app, 'TestStack', { 
-      envType: 'prod',
+      stackConfig: config,
       env: { account: '123456789012', region: 'us-east-1' }
     });
     const template = Template.fromStack(stack).toJSON();

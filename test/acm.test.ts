@@ -1,12 +1,12 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
 import { BaseInfraStack } from '../lib/base-infra-stack';
+import { createStackConfig } from '../lib/stack-config';
 
 describe('ACM Certificate', () => {
   it('creates ACM certificate with correct domain names when R53 zone is provided', () => {
     const app = new cdk.App({
       context: {
-        r53ZoneName: 'example.com',
         // Mock the hosted zone lookup to avoid AWS calls
         'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
           Id: '/hostedzone/Z1PA6795UKMFR9',
@@ -15,9 +15,11 @@ describe('ACM Certificate', () => {
       }
     });
     
+    const config = createStackConfig('prod', 'example.com');
+    
     // Specify env to enable context lookups
     const stack = new BaseInfraStack(app, 'TestStack', { 
-      envType: 'prod',
+      stackConfig: config,
       env: { account: '123456789012', region: 'us-east-1' }
     });
     const template = Template.fromStack(stack);
@@ -37,18 +39,18 @@ describe('ACM Certificate', () => {
   });
 
   it('throws error when zone name is empty string', () => {
-    const app = new cdk.App();
-    
-    // Test that the stack throws error when no R53 zone name is provided (now mandatory)
+    // Test config creation with empty zone name
     expect(() => {
-      new BaseInfraStack(app, 'TestStack', { 
-        envType: 'prod',
-        env: { account: '123456789012', region: 'us-east-1' }
-      });
-    }).toThrow('R53 zone name is required. Please provide it via R53_ZONE_NAME environment variable or --context r53ZoneName=your-domain.com');
+      createStackConfig('prod', '');
+    }).toThrow('r53ZoneName is required and cannot be empty');
 
+    expect(() => {
+      createStackConfig('prod', '   ');
+    }).toThrow('r53ZoneName is required and cannot be empty');
+    
     // Test direct function call with empty zone name
     const { createAcmCertificate } = require('../lib/constructs/acm');
+    const app = new cdk.App();
     const testStack = new cdk.Stack(app, 'ErrorTestStack', {
       env: { account: '123456789012', region: 'us-east-1' }
     });
@@ -63,21 +65,15 @@ describe('ACM Certificate', () => {
   });
 
   it('throws error when R53 zone name is not provided', () => {
-    const app = new cdk.App();
-    
-    // Test that stack throws error when no R53 zone name is provided
+    // Test that config creation throws error when no R53 zone name is provided
     expect(() => {
-      new BaseInfraStack(app, 'TestStack', { 
-        envType: 'prod',
-        env: { account: '123456789012', region: 'us-east-1' }
-      });
-    }).toThrow('R53 zone name is required. Please provide it via R53_ZONE_NAME environment variable or --context r53ZoneName=your-domain.com');
+      createStackConfig('prod', undefined as any);
+    }).toThrow('r53ZoneName is required and cannot be empty');
   });
 
   it('creates certificate ARN output when certificate is created', () => {
     const app = new cdk.App({
       context: {
-        r53ZoneName: 'example.com',
         // Mock the hosted zone lookup to avoid AWS calls
         'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
           Id: '/hostedzone/Z1PA6795UKMFR9',
@@ -86,8 +82,10 @@ describe('ACM Certificate', () => {
       }
     });
     
+    const config = createStackConfig('prod', 'example.com');
+    
     const stack = new BaseInfraStack(app, 'TestStack', { 
-      envType: 'prod',
+      stackConfig: config,
       env: { account: '123456789012', region: 'us-east-1' }
     });
     const template = Template.fromStack(stack);
@@ -101,8 +99,6 @@ describe('ACM Certificate', () => {
   it('configures certificate transparency based on environment type', () => {
     const app = new cdk.App({
       context: {
-        r53ZoneName: 'example.com',
-        envType: 'dev-test',
         // Mock the hosted zone lookup
         'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
           Id: '/hostedzone/Z1PA6795UKMFR9',
@@ -111,8 +107,10 @@ describe('ACM Certificate', () => {
       }
     });
     
+    const config = createStackConfig('dev-test', 'example.com');
+    
     const stack = new BaseInfraStack(app, 'TestStack', { 
-      envType: 'dev-test',
+      stackConfig: config,
       env: { account: '123456789012', region: 'us-east-1' }
     });
     const template = Template.fromStack(stack);
@@ -126,9 +124,6 @@ describe('ACM Certificate', () => {
   it('allows certificate transparency override via context', () => {
     const app = new cdk.App({
       context: {
-        r53ZoneName: 'example.com',
-        envType: 'dev-test',
-        certificateTransparency: true, // Override dev-test default
         // Mock the hosted zone lookup
         'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
           Id: '/hostedzone/Z1PA6795UKMFR9',
@@ -137,8 +132,12 @@ describe('ACM Certificate', () => {
       }
     });
     
+    const config = createStackConfig('dev-test', 'example.com', {
+      certificate: { transparencyLoggingEnabled: true } // Override dev-test default
+    });
+    
     const stack = new BaseInfraStack(app, 'TestStack', { 
-      envType: 'dev-test',
+      stackConfig: config,
       env: { account: '123456789012', region: 'us-east-1' }
     });
     const template = Template.fromStack(stack);

@@ -1,57 +1,55 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
 import { BaseInfraStack } from '../lib/base-infra-stack';
-import { generateStackName, FIXED_STACK_CONFIG } from '../lib/stack-naming';
+import { createStackConfig } from '../lib/stack-config';
 
 const app = new cdk.App();
 
-// Read project tag with cascading priority:
-// Priority: 1. Environment Variables, 2. CLI Context, 3. Defaults
-const projectTag = process.env.PROJECT || 
-                   app.node.tryGetContext('project') || 
-                   FIXED_STACK_CONFIG.PROJECT;
+// Read configuration from CDK context only (command line --context parameters)
+const envType = app.node.tryGetContext('envType') || 'dev-test';
+const r53ZoneName = app.node.tryGetContext('r53ZoneName');
 
-const envType = process.env.ENV_TYPE || 
-               app.node.tryGetContext('envType') || 
-               'dev-test';
+// Validate envType
+if (envType !== 'prod' && envType !== 'dev-test') {
+  throw new Error(`Invalid envType: ${envType}. Must be 'prod' or 'dev-test'`);
+}
 
-const stackNameSuffix = process.env.STACK_NAME || 
-                       app.node.tryGetContext('stackName') || 
-                       'MyFirstStack';
+// Validate required parameters
+if (!r53ZoneName) {
+  throw new Error('r53ZoneName is required. Use --context r53ZoneName=your.domain.com');
+}
 
-const vpcMajorId = parseInt(
-  process.env.VPC_MAJOR_ID || 
-  app.node.tryGetContext('vpcMajorId') || 
-  '0', 10
+// Read optional context overrides
+const overrides = {
+  ...(app.node.tryGetContext('vpcMajorId') && {
+    networking: { vpcMajorId: parseInt(app.node.tryGetContext('vpcMajorId'), 10) }
+  }),
+  ...(app.node.tryGetContext('vpcMinorId') && {
+    networking: { vpcMinorId: parseInt(app.node.tryGetContext('vpcMinorId'), 10) }
+  }),
+  ...(app.node.tryGetContext('createNatGateways') !== undefined && {
+    networking: { createNatGateways: app.node.tryGetContext('createNatGateways') === 'true' }
+  }),
+  ...(app.node.tryGetContext('createVpcEndpoints') !== undefined && {
+    networking: { createVpcEndpoints: app.node.tryGetContext('createVpcEndpoints') === 'true' }
+  }),
+};
+
+// Create configuration
+const config = createStackConfig(
+  envType as 'prod' | 'dev-test',
+  r53ZoneName,
+  Object.keys(overrides).length > 0 ? overrides : undefined,
+  'TAK', // Always use TAK as project prefix
+  'BaseInfra'
 );
 
-const vpcMinorId = parseInt(
-  process.env.VPC_MINOR_ID || 
-  app.node.tryGetContext('vpcMinorId') || 
-  '0', 10
-);
-
-// Generate consistent stack name using the utility function
-const stackName = generateStackName({
-  project: FIXED_STACK_CONFIG.PROJECT,
-  environment: stackNameSuffix,  // Use stackName from config, not envType
-  component: FIXED_STACK_CONFIG.COMPONENT
-});
-
-// Tag every resource in the stack with the project name
-cdk.Tags.of(app).add("Project", projectTag);
-
-new BaseInfraStack(app, stackName, {
-  envType: envType as 'prod' | 'dev-test',
-  vpcMajorId,
-  vpcMinorId,
-  
-  // Environment can be resolved from AWS profile or environment variables
-  // Route 53 hosted zone lookups require explicit account/region specification
-  env: { 
-    account: process.env.CDK_DEFAULT_ACCOUNT || process.env.CDK_DEPLOY_ACCOUNT,
-    region: process.env.CDK_DEFAULT_REGION || process.env.CDK_DEPLOY_REGION || 'ap-southeast-2'
+// Create the stack with environment configuration for AWS API calls only
+const stackName = `${config.projectName}-${config.envType === 'prod' ? 'Prod' : 'Dev'}-${config.componentName}`;
+const stack = new BaseInfraStack(app, stackName, {
+  stackConfig: config,
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: process.env.CDK_DEFAULT_REGION || 'ap-southeast-2',
   },
-
-  /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
 });
