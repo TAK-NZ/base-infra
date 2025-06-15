@@ -17,8 +17,8 @@
     ]
   },
   "context": {
-    "project": "TAK-NZ",
-    "stackName": "MyFirstStack",
+    "project": "TAK.NZ",
+    "stackName": "PrimaryStack",
     "vpcMajorId": 0,
     "vpcMinorId": 0,
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,

@@ -18,6 +18,8 @@ Parameters are resolved through the **config-driven system** in the following or
 |-----------|----------|---------|-------------|
 | `envType` | No | `'dev-test'` | Environment type: `'prod'` or `'dev-test'` |
 | `r53ZoneName` | **Yes** | N/A | Route 53 zone name ⚠️ **Required** |
+| `project` | No | `'TAK'` | Project name for resource tagging (does not affect stack name) |
+| `stackName` | No | Auto-generated | Environment name for stack (forms `TAK-{stackName}-BaseInfra`) |
 | `vpcMajorId` | No | `0` | VPC CIDR major ID (10.{major}.0.0/16) |
 | `vpcMinorId` | No | `0` | VPC CIDR minor ID (10.{major}.{minor}.0/16) |
 
@@ -33,6 +35,58 @@ Parameters are resolved through the **config-driven system** in the following or
 | Parameter | Required | Default | Description |
 |-----------|----------|---------|-------------|
 | `certificateTransparency` | No | Environment-specific | Enable certificate transparency logging (`true`/`false`) |
+
+## Stack Naming
+
+### Default Stack Names
+- **dev-test**: `TAK-Dev-BaseInfra`
+- **prod**: `TAK-Prod-BaseInfra`
+
+### Custom Environment Names
+You can override the environment name (middle part) using the `stackName` context parameter:
+
+```bash
+# Custom environment name: Results in "TAK-MyEnv-BaseInfra"
+npx cdk deploy --context r53ZoneName=example.com \
+               --context stackName=MyEnv
+
+# Multiple environments: Results in "TAK-Staging-BaseInfra"
+npx cdk deploy --context envType=prod \
+               --context r53ZoneName=example.com \
+               --context stackName=Staging
+```
+
+**Note**: Stack naming parameters:
+- Stack name format is **always**: `TAK-{stackName}-BaseInfra`
+- `stackName`: Replaces the default environment name (Dev/Prod based on `envType`)
+- The "TAK" prefix and "BaseInfra" suffix are fixed and cannot be changed
+
+### Project Tagging
+The `project` parameter is used for resource tagging only (does not affect stack name):
+
+```bash
+# Custom project tagging: Stack name still "TAK-Dev-BaseInfra" but tagged with "MyCompany"
+npx cdk deploy --context r53ZoneName=example.com \
+               --context project=MyCompany
+
+# Combined: Stack name "TAK-Staging-BaseInfra" but tagged with "MyCompany"
+npx cdk deploy --context project=MyCompany \
+               --context stackName=Staging \
+               --context r53ZoneName=example.com
+```
+
+### Resource Tagging
+All AWS resources created by the stack are automatically tagged with:
+- **Project**: The project name (from `project` parameter or "TAK" default)
+- **Environment**: The environment name (from `stackName` parameter or auto-generated)
+- **Component**: Always "BaseInfra"
+- **ManagedBy**: Always "CDK"
+
+These tags help with:
+- Cost allocation and tracking
+- Resource organization and filtering
+- Compliance and governance
+- Automated resource management
 
 ## Environment-Specific Default Values
 
@@ -89,6 +143,14 @@ npx cdk deploy --context envType=prod \
 # Minimal deployment (dev-test with defaults)
 npx cdk deploy --context r53ZoneName=example.com
 
+# Custom environment name deployment: Results in "TAK-MyEnv-BaseInfra"
+npx cdk deploy --context r53ZoneName=example.com \
+               --context stackName=MyEnv
+
+# Custom project tagging: Stack name "TAK-Dev-BaseInfra", tagged with "MyCompany"
+npx cdk deploy --context r53ZoneName=example.com \
+               --context project=MyCompany
+
 # Production deployment with custom VPC
 npx cdk deploy --context envType=prod \
                --context r53ZoneName=example.com \
@@ -97,9 +159,11 @@ npx cdk deploy --context envType=prod \
                --context createVpcEndpoints=true \
                --context certificateTransparency=true
 
-# Cost-optimized production
+# Custom project and environment: Stack name "TAK-ProdOptimized-BaseInfra", tagged with "MyCompany"
 npx cdk deploy --context envType=prod \
                --context r53ZoneName=example.com \
+               --context project=MyCompany \
+               --context stackName=ProdOptimized \
                --context createNatGateways=false \
                --context createVpcEndpoints=false
 ```

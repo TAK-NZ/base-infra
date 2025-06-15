@@ -91,6 +91,7 @@ The stack supports flexible parameter configuration through multiple methods wit
 ```bash
 # Deploy with all parameters via context
 npx cdk deploy \
+  --context stackName=Primary \
   --context envType=prod \
   --context r53ZoneName=tak.nz \
   --context vpcMajorId=5 \
@@ -105,6 +106,7 @@ npx cdk deploy \
 ```bash
 # Deploy with only required parameters (other parameters use environment-based defaults)
 npx cdk deploy \
+  --context stackName=Primary \
   --context envType=dev-test \
   --context r53ZoneName=tak.nz \
   --profile tak
@@ -114,6 +116,8 @@ npx cdk deploy \
 
 | Parameter | Required | Default | Description |
 |-----------|----------|---------|-------------|
+| `project` | No | `'TAK'` | Project name for resource tagging (does not affect stack name) |
+| `stackName` | No | Auto-generated | Environment name for stack (forms `TAK-{stackName}-BaseInfra`) |
 | `envType` | No | `dev-test` | Environment type: `prod` or `dev-test` |
 | `r53ZoneName` | **Yes** | None | Route 53 hosted zone domain name |
 | `vpcMajorId` | No | `0` | VPC CIDR major ID (10.{major}.0.0/16) |
@@ -188,15 +192,6 @@ The base infrastructure uses a structured environment configuration system defin
 - **KMS Key Rotation**: Enabled
 - **S3 Versioning**: Enabled
 
-#### **staging**
-- **Focus**: Production-like testing with cost optimizations
-- **NAT Gateways**: Redundant NAT Gateways (test HA setup)
-- **VPC Endpoints**: S3 gateway only (cost optimization)
-- **Certificate Transparency**: Enabled (test production setup)
-- **Container Insights**: Enabled (test monitoring)
-- **KMS Key Rotation**: Disabled (cost optimization)
-- **S3 Versioning**: Enabled (test data protection)
-
 ### Configuration Override System
 
 The environment configuration can be overridden at multiple levels:
@@ -204,136 +199,3 @@ The environment configuration can be overridden at multiple levels:
 1. **Environment Type** (`envType`) sets the base configuration
 2. **Individual Parameters** override specific settings via CDK context
 3. **Code-level Overrides** using `mergeEnvironmentConfig()` for advanced customization
-
-## CloudFormation Exports
-
-This stack exports the following values for use by other stacks:
-
-| Export Name Pattern | Description | Example Value |
-|---------------------|-------------|---------------|
-| `TAK-{StackName}-BaseInfra-VPC-ID` | VPC ID | `vpc-abc123def456` |
-| `TAK-{StackName}-BaseInfra-VPC-CIDR-IPV4` | VPC IPv4 CIDR Block | `10.0.0.0/16` |
-| `TAK-{StackName}-BaseInfra-SUBNET-PUBLIC-A` | Public Subnet A ID | `subnet-abc123` |
-| `TAK-{StackName}-BaseInfra-SUBNET-PUBLIC-B` | Public Subnet B ID | `subnet-def456` |
-| `TAK-{StackName}-BaseInfra-SUBNET-PRIVATE-A` | Private Subnet A ID | `subnet-ghi789` |
-| `TAK-{StackName}-BaseInfra-SUBNET-PRIVATE-B` | Private Subnet B ID | `subnet-jkl012` |
-| `TAK-{StackName}-BaseInfra-ECS-CLUSTER` | ECS Cluster ARN | `arn:aws:ecs:region:account:cluster/name` |
-| `TAK-{StackName}-BaseInfra-ECR-REPO` | ECR Repository ARN | `arn:aws:ecr:region:account:repository/name` |
-| `TAK-{StackName}-BaseInfra-KMS-KEY` | KMS Key ARN | `arn:aws:kms:region:account:key/key-id` |
-| `TAK-{StackName}-BaseInfra-S3-BUCKET` | S3 Config Bucket ARN | `arn:aws:s3:::bucket-name` |
-| `TAK-{StackName}-BaseInfra-CERTIFICATE-ARN` | ACM Certificate ARN | `arn:aws:acm:region:account:certificate/cert-id` |
-| `TAK-{StackName}-BaseInfra-HOSTED-ZONE-ID` | Route53 Hosted Zone ID | `Z1PA6795UKMFR9` |
-
-**VPC Endpoints** (production environment only):
-- `TAK-{StackName}-BaseInfra-S3-ID` - S3 Gateway Endpoint ID
-- `TAK-{StackName}-BaseInfra-ECR-DKR-ID` - ECR Docker Interface Endpoint ID
-- `TAK-{StackName}-BaseInfra-ECR-API-ID` - ECR API Interface Endpoint ID
-- `TAK-{StackName}-BaseInfra-SECRETSMANAGER-ID` - Secrets Manager Interface Endpoint ID
-- `TAK-{StackName}-BaseInfra-KMS-ID` - KMS Interface Endpoint ID
-- `TAK-{StackName}-BaseInfra-LOGS-ID` - CloudWatch Logs Interface Endpoint ID
-
-**Usage Example:**
-```bash
-# Reference VPC ID in another stack
-aws cloudformation describe-stacks --stack-name TAK-Primary-BaseInfra --query 'Stacks[0].Outputs[?OutputKey==`VpcIdOutput`].OutputValue' --output text --profile tak
-
-# Import in another CDK stack
-const vpcId = Fn.importValue('TAK-Primary-BaseInfra-VPC-ID');
-```
-
-## ACM Certificate Integration
-
-When you provide a Route 53 hosted zone name (which is now required), the stack automatically:
-
-1. **Looks up your existing public hosted zone** in Route 53
-2. **Creates an ACM certificate** with DNS validation covering:
-   - Primary domain: `your-domain.com`
-   - Wildcard subdomain: `*.your-domain.com`
-   - Map subdomain wildcard: `*.map.your-domain.com`
-3. **Exports the certificate ARN** as `{StackName}-CERTIFICATE-ARN` for use in other stacks
-
-**Example Usage:**
-```bash
-# Deploy with automatic certificate creation (R53 zone name is required)
-npx cdk deploy --context r53ZoneName=tak.nz --profile tak
-
-# Reference the certificate in other stacks
-aws cloudformation describe-stacks --stack-name TAK-DevTest-BaseInfra --query 'Stacks[0].Outputs[?OutputKey==`CertificateArnOutput`].OutputValue' --output text --profile tak
-```
-
-**Requirements:**
-- Public hosted zone must exist in Route 53 in the same AWS account
-- Sufficient permissions to create ACM certificates and Route 53 records
-- AWS account and region must be specified for hosted zone lookups
-
-**Note:** If testing without a real hosted zone, you can mock the lookup by adding context to [`cdk.json`](cdk.json ):
-```json
-{
-  "context": {
-    "hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false": {
-      "Id": "/hostedzone/Z1PA6795UKMFR9",
-      "Name": "example.com."
-    }
-  }
-}
-```
-
-## Notes
-- Make sure your AWS credentials are configured.
-- The stack type (prod/dev-test) can be changed later on.
-- **The R53 zone name is now mandatory** - the stack will fail to deploy without it.
-- **Important**: CDK does not have a `--dry-run` flag. Use `cdk synth` or `cdk diff` for testing without deployment.
-
-## Testing and Validation
-
-Always test your deployment before applying changes to production:
-
-```bash
-# Validate template syntax and show what resources will be created
-npx cdk synth --context r53ZoneName=your-domain.com --profile tak
-
-# Show exactly what changes will be made (compared to current stack)
-npx cdk diff --context r53ZoneName=your-domain.com --profile tak
-
-# For production deployments, create changeset first for review
-npx cdk deploy --context r53ZoneName=your-domain.com --profile tak --method prepare-change-set --change-set-name "my-review-changeset"
-```
-
-#### Testing Before Deployment (Recommended)
-
-Before deploying, you can test and validate your changes using these commands:
-
-```bash
-# 1. Synthesize CloudFormation template (no deployment)
-npx cdk synth --context r53ZoneName=tak.nz --profile tak
-
-# 2. Check what changes would be made (no deployment)
-npx cdk diff --context r53ZoneName=tak.nz --profile tak
-
-# 3. Create changeset without executing (for review)
-npx cdk deploy --context r53ZoneName=tak.nz --profile tak --method prepare-change-set
-
-# 4. View the prepared changeset in AWS Console before executing
-# Then execute with:
-npx cdk deploy --context r53ZoneName=tak.nz --profile tak --method change-set
-```
-
-#### Advanced Examples: Individual Parameter Control
-
-```bash
-# Production with cost optimization - disable redundant NAT Gateway
-npx cdk deploy --context envType=prod --context vpcMajorId=5 --context r53ZoneName=tak.nz --context createNatGateways=false --profile tak
-
-# Development with specific production features for testing
-npx cdk deploy --context envType=dev-test --context createVpcEndpoints=true --context r53ZoneName=tak.nz --profile tak
-
-# Custom configuration - prod environment with cost-optimized networking
-npx cdk deploy --context envType=prod --context createNatGateways=false --context r53ZoneName=tak.nz --profile tak
-
-# Override multiple parameters
-npx cdk deploy --context envType=dev-test --context createNatGateways=true --context createVpcEndpoints=true --context certificateTransparency=true --context r53ZoneName=tak.nz --profile tak
-
-# Development environment with certificate transparency enabled for testing
-npx cdk deploy --context envType=dev-test --context certificateTransparency=true --context r53ZoneName=tak.nz --profile tak
-```
-

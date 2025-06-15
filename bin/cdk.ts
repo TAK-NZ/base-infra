@@ -6,6 +6,8 @@ import { createStackConfig } from '../lib/stack-config';
 const app = new cdk.App();
 
 // Read configuration from CDK context only (command line --context parameters)
+const ProjectName = app.node.tryGetContext('project');
+const customStackName = app.node.tryGetContext('stackName');
 const envType = app.node.tryGetContext('envType') || 'dev-test';
 const r53ZoneName = app.node.tryGetContext('r53ZoneName');
 
@@ -45,11 +47,20 @@ const config = createStackConfig(
 );
 
 // Create the stack with environment configuration for AWS API calls only
-const stackName = `${config.projectName}-${config.envType === 'prod' ? 'Prod' : 'Dev'}-${config.componentName}`;
+const environmentName = customStackName || (config.envType === 'prod' ? 'Prod' : 'Dev');
+const stackName = `TAK-${environmentName}-BaseInfra`; // Always use TAK prefix
+
 const stack = new BaseInfraStack(app, stackName, {
   stackConfig: config,
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: process.env.CDK_DEFAULT_REGION || 'ap-southeast-2',
   },
+  tags: {
+    Project: ProjectName || 'TAK',
+    'Environment-Name': environmentName,
+    Component: 'BaseInfra',
+    ManagedBy: 'CDK',
+    'DNS-Zone': r53ZoneName,
+  }
 });

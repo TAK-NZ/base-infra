@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Fn } from 'aws-cdk-lib';
-import { createDynamicExportName, EXPORT_NAMES } from './stack-naming';
+import { createDynamicExportName, EXPORT_NAMES } from './cloudformation-exports.js';
 
 export interface OutputParams {
   stack: cdk.Stack;
