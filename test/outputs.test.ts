@@ -22,7 +22,7 @@ describe('Stack Outputs', () => {
     const template = Template.fromStack(stack as unknown as cdk.Stack);
     const outputs = template.toJSON().Outputs;
     [
-      'VpcIdOutput', 'VpcCidrIpv4Output',
+      'VpcIdOutput', 'VpcCidrIpv4Output', 'VpcCidrIpv6Output',
       'SubnetPublicAOutput', 'SubnetPublicBOutput', 'SubnetPrivateAOutput', 'SubnetPrivateBOutput',
       'EcsArnOutput', 'EcrArnOutput', 'KmsArnOutput', 'ConfigBucketArnOutput',
       'CertificateArnOutput', 'HostedZoneIdOutput'

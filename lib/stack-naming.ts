@@ -73,19 +73,19 @@ export function getBaseInfraStackName(deployment: string = 'DevTest'): string {
  */
 export const EXPORT_NAMES = {
   VPC_ID: 'VPC-ID',
-  VPC_CIDR_IPV4: 'VPC-CIDR-IPv4',
-  VPC_CIDR_IPV6: 'vpc-cidr-ipv6',
-  SUBNET_PUBLIC_A: 'SUBNET-PUBLIC-A',
-  SUBNET_PUBLIC_B: 'SUBNET-PUBLIC-B',
-  SUBNET_PRIVATE_A: 'SUBNET-PRIVATE-A',
-  SUBNET_PRIVATE_B: 'SUBNET-PRIVATE-B',
-  ECS_CLUSTER: 'ecs',
-  ECR_REPO: 'ecr',
-  KMS_KEY: 'kms',
-  KMS_ALIAS: 'kms-alias',
-  S3_BUCKET: 's3',
-  CERTIFICATE_ARN: 'CERTIFICATE-ARN',
-  HOSTED_ZONE_ID: 'HOSTED-ZONE-ID',
+  VPC_CIDR_IPV4: 'VpcIPv4CIDR',
+  VPC_CIDR_IPV6: 'VpcIPv6CIDR',
+  SUBNET_PUBLIC_A: 'SubnetPublicA',
+  SUBNET_PUBLIC_B: 'SubnetPublicB',
+  SUBNET_PRIVATE_A: 'SubnetPrivateA',
+  SUBNET_PRIVATE_B: 'SubnetPrivateB',
+  ECS_CLUSTER: 'Ecs-ARN',
+  ECR_REPO: 'Ecr-ARN',
+  KMS_KEY: 'Kms-ARN',
+  KMS_ALIAS: 'Kms-Alias',
+  S3_BUCKET: 'S3ConfBucket-ARN',
+  CERTIFICATE_ARN: 'AcmCert-ARN',
+  HOSTED_ZONE_ID: 'R53Zone-ID',
 } as const;
 
 /**

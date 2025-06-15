@@ -1,21 +1,6 @@
 <h1 align=center>TAK VPC</h1>
 
-<p align=center>TAK Base Layer (VPC, ECS, ECR, S3, KMS### 4. Set required environment variables:
-
-[!IMPORTANT]
-**Why Environment Variables Are Required**: Even when using AWS profiles, CDK requires explicit account/region specification for context providers (like Route 53 hosted zone lookups). The profile handles authentication, but CDK needs these values for CloudFormation template generation.
-
-```bash
-# Set AWS account and region for CDK deployment (using your profile)
-export CDK_DEFAULT_ACCOUNT=$(aws sts get-caller-identity --query Account --output text --profile tak)
-export CDK_DEFAULT_REGION=$(aws configure get region --profile tak || echo "ap-southeast-4")
-
-# Verify the values
-echo "Account: $CDK_DEFAULT_ACCOUNT"
-echo "Region: $CDK_DEFAULT_REGION"
-```
-
-### 5. Deploy the stack:</p>
+<p align=center>TAK Base Layer (VPC, ECS, ECR, S3, KMS, ACM)
 
 ## Background
 

@@ -6,6 +6,8 @@ export interface OutputParams {
   stack: cdk.Stack;
   stackName: string;
   vpc: import('aws-cdk-lib/aws-ec2').Vpc;
+  ipv6CidrBlock?: import('aws-cdk-lib/aws-ec2').CfnVPCCidrBlock;
+  vpcLogicalId?: string;
   ecsCluster: any;
   ecrRepo: any;
   kmsKey: any;
@@ -16,7 +18,7 @@ export interface OutputParams {
   hostedZone?: any;
 }
 
-export function registerOutputs({ stack, stackName, vpc, ecsCluster, ecrRepo, kmsKey, kmsAlias, configBucket, vpcEndpoints, certificate, hostedZone }: OutputParams) {
+export function registerOutputs({ stack, stackName, vpc, ipv6CidrBlock, vpcLogicalId, ecsCluster, ecrRepo, kmsKey, kmsAlias, configBucket, vpcEndpoints, certificate, hostedZone }: OutputParams) {
   new cdk.CfnOutput(stack, 'VpcIdOutput', {
     description: 'VPC ID',
     value: vpc.vpcId,
@@ -31,6 +33,27 @@ export function registerOutputs({ stack, stackName, vpc, ecsCluster, ecrRepo, km
       StackName: stackName,
     }),
   });
+  
+  // IPv6 CIDR output - using VPC's Ipv6CidrBlocks attribute
+  if (ipv6CidrBlock && vpcLogicalId) {
+    new cdk.CfnOutput(stack, 'VpcCidrIpv6Output', {
+      description: 'VPC IPv6 CIDR Block',
+      value: {
+        "Fn::Select": [
+          0,
+          {
+            "Fn::GetAtt": [
+              vpcLogicalId,
+              "Ipv6CidrBlocks"
+            ]
+          }
+        ]
+      } as any,
+      exportName: Fn.sub(createDynamicExportName(EXPORT_NAMES.VPC_CIDR_IPV6), {
+        StackName: stackName,
+      }),
+    });
+  }
   // Subnet outputs (explicit for A/B only)
   // Subnet outputs (static, L2 VPC)
   new cdk.CfnOutput(stack, 'SubnetPublicAOutput', {

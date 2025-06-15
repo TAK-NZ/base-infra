@@ -24,6 +24,7 @@ export function getParameters() {
 
 /**
  * Resolves all stack parameters using cascading resolution
+ * Priority: 1. Environment Variables, 2. CDK Context, 3. Default Values
  */
 export function resolveStackParameters(stack: cdk.Stack): {
   envType: string;
@@ -35,7 +36,10 @@ export function resolveStackParameters(stack: cdk.Stack): {
   createVpcEndpoints: boolean;
   certificateTransparency: boolean;
 } {
-  // Check context first, then use environment variables for fallback
+  // Environment variables (first priority)
+  const STACK_NAME = process.env.STACK_NAME;
+  
+  // Context values (second priority)
   const envTypeFromContext = stack.node.tryGetContext('envType');
   const vpcMajorIdFromContext = stack.node.tryGetContext('vpcMajorId');
   const vpcMinorIdFromContext = stack.node.tryGetContext('vpcMinorId');
@@ -45,36 +49,37 @@ export function resolveStackParameters(stack: cdk.Stack): {
   const createVpcEndpointsFromContext = stack.node.tryGetContext('createVpcEndpoints');
   const certificateTransparencyFromContext = stack.node.tryGetContext('certificateTransparency');
 
-  const envType = envTypeFromContext || ENV_TYPE;
+  // Resolution with environment variables taking precedence
+  const envType = ENV_TYPE || envTypeFromContext || 'dev-test';
 
-  const stackName = stackNameFromContext || `${envType}-stack`;
+  const stackName = STACK_NAME || stackNameFromContext || `${envType}-stack`;
 
-  const vpcMajorId = (vpcMajorIdFromContext !== undefined ? Number(vpcMajorIdFromContext) : VPC_MAJOR_ID);
+  const vpcMajorId = VPC_MAJOR_ID || (vpcMajorIdFromContext !== undefined ? Number(vpcMajorIdFromContext) : 0);
 
-  const vpcMinorId = (vpcMinorIdFromContext !== undefined ? Number(vpcMinorIdFromContext) : VPC_MINOR_ID);
+  const vpcMinorId = VPC_MINOR_ID || (vpcMinorIdFromContext !== undefined ? Number(vpcMinorIdFromContext) : 0);
 
-  const r53ZoneName = r53ZoneNameFromContext || R53_ZONE_NAME;
+  const r53ZoneName = R53_ZONE_NAME || r53ZoneNameFromContext;
 
   // Get environment-specific configuration
   const envConfig = getEnvironmentConfig(envType);
 
-  // Individual parameters override environment config defaults
-  const createNatGateways = createNatGatewaysFromContext !== undefined 
-    ? Boolean(createNatGatewaysFromContext)
-    : CREATE_NAT_GATEWAYS !== undefined
+  // Boolean parameters: Environment variables override context, which overrides environment config defaults
+  const createNatGateways = CREATE_NAT_GATEWAYS !== undefined 
     ? Boolean(CREATE_NAT_GATEWAYS === 'true')
+    : createNatGatewaysFromContext !== undefined
+    ? Boolean(createNatGatewaysFromContext)
     : envConfig.networking.createNatGateways;
 
-  const createVpcEndpoints = createVpcEndpointsFromContext !== undefined
-    ? Boolean(createVpcEndpointsFromContext)
-    : CREATE_VPC_ENDPOINTS !== undefined
+  const createVpcEndpoints = CREATE_VPC_ENDPOINTS !== undefined
     ? Boolean(CREATE_VPC_ENDPOINTS === 'true')
+    : createVpcEndpointsFromContext !== undefined
+    ? Boolean(createVpcEndpointsFromContext)
     : envConfig.networking.createVpcEndpoints;
 
-  const certificateTransparency = certificateTransparencyFromContext !== undefined
-    ? Boolean(certificateTransparencyFromContext)
-    : CERTIFICATE_TRANSPARENCY !== undefined
+  const certificateTransparency = CERTIFICATE_TRANSPARENCY !== undefined
     ? Boolean(CERTIFICATE_TRANSPARENCY === 'true')
+    : certificateTransparencyFromContext !== undefined
+    ? Boolean(certificateTransparencyFromContext)
     : envConfig.certificate.transparencyLoggingEnabled;
 
   // Validate that R53 zone name is provided

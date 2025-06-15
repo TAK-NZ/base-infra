@@ -11,10 +11,17 @@ export function createEcrResources(scope: Construct, stackName: string) {
     repositoryName: repoName,
     lifecycleRules: [
       {
-        description: 'Expire untagged images older than 8 days',
+        description: 'Expire untagged images older than 1 day',
         rulePriority: 1,
         tagStatus: ecr.TagStatus.UNTAGGED,
-        maxImageAge: cdk.Duration.days(8),
+        maxImageAge: cdk.Duration.days(1),
+      },
+      {
+        description: 'Keep only the last 5 versions of tagged images',
+        rulePriority: 2,
+        tagStatus: ecr.TagStatus.TAGGED,
+        tagPatternList: ['*'],
+        maxImageCount: 5,
       },
     ],
     // ECR will not be retained after stack deletion

@@ -1,18 +1,11 @@
 # TAK Base Infrastructure - Quick Reference
 
-## Architecture Diagrams
-
-This folder contains AWS ## Related Documentation
-
-- [`README.md`](README.md) - Detailed architecture documentation with comprehensive cost analysis
-- [`../README.md`](../README.md) - Main project documentationtecture diagrams for the TAK Base Infrastructure project showing both deployment configurations.
-
 ## Quick Comparison
 
 ### Production Configuration
 ```bash
-# Deploy production
-npx cdk deploy --app "prod"
+# Deploy production (requires Route 53 zone)
+ROUTE53_ZONE_NAME=your-domain.com npx cdk deploy --app "prod" --profile tak
 ```
 - ✅ High availability (dual NAT Gateways)
 - ✅ Private VPC endpoints for AWS services
@@ -21,8 +14,8 @@ npx cdk deploy --app "prod"
 
 ### Dev-Test Configuration  
 ```bash
-# Deploy dev-test (default)
-npx cdk deploy
+# Deploy dev-test (default, requires Route 53 zone)
+ROUTE53_ZONE_NAME=your-domain.com npx cdk deploy --profile tak
 ```
 - ✅ Cost optimized (~$35/month)
 - ✅ Same core functionality
@@ -60,7 +53,7 @@ npx cdk deploy
 Choose **Dev-Test** if:
 - 💰 Cost is primary concern
 - 🧪 Development/testing workloads
-- 📚 Learning AWS/CDK
+- 📚 Learning about TAK on AWS
 - ⏰ Occasional downtime acceptable
 
 Choose **Production** if:
@@ -68,25 +61,3 @@ Choose **Production** if:
 - 🔒 Security compliance required
 - ⚡ High availability needed
 - 👥 Serving real users
-
-## Getting Started
-
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-2. **Deploy dev-test (default):**
-   ```bash
-   npx cdk deploy
-   ```
-
-3. **Deploy production:**
-   ```bash
-   npx cdk deploy --app "prod"
-   ```
-## Related Documentation
-
-- [`README.md`](README.md) - Detailed architecture documentation
-- [`../COST_ESTIMATION.md`](../COST_ESTIMATION.md) - Complete cost analysis
-- [`../README.md`](../README.md) - Main project documentation

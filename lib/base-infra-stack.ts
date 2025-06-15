@@ -38,11 +38,15 @@ export class BaseInfraStack extends cdk.Stack {
     const enableVpcEndpoints = params.createVpcEndpoints;
     const certificateTransparency = params.certificateTransparency;
 
+    // Add Environment Type tag to the stack
+    const environmentLabel = envType === 'prod' ? 'Prod' : 'Dev-Test';
+    cdk.Tags.of(this).add('Environment Type', environmentLabel);
+
     const stackName = Fn.ref('AWS::StackName');
     const region = cdk.Stack.of(this).region;
 
     // Create L2 VPC and subnets directly
-    const vpc = createVpcL2Resources(this, vpcMajorId, vpcMinorId, createNatGateways);
+    const { vpc, ipv6CidrBlock, vpcLogicalId } = createVpcL2Resources(this, vpcMajorId, vpcMinorId, createNatGateways);
 
     // ECS
     const { ecsCluster } = createEcsResources(this, this.stackName, vpc);
@@ -93,6 +97,8 @@ export class BaseInfraStack extends cdk.Stack {
       stack: this,
       stackName,
       vpc,
+      ipv6CidrBlock,
+      vpcLogicalId,
       ecsCluster,
       ecrRepo,
       kmsKey,

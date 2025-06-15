@@ -1,21 +1,17 @@
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Construct } from 'constructs';
-export interface VpcResources {
-    vpc: ec2.CfnVPC;
-    vpcCidrV6: ec2.CfnVPCCidrBlock;
-    subnetPublicA: ec2.CfnSubnet;
-    subnetPublicB: ec2.CfnSubnet;
-    subnetPrivateA: ec2.CfnSubnet;
-    subnetPrivateB: ec2.CfnSubnet;
-    igw: ec2.CfnInternetGateway;
-    egressOnlyIgw: ec2.CfnEgressOnlyInternetGateway;
-    natEipA: ec2.CfnEIP;
-    natEipB?: ec2.CfnEIP;
-    natGatewayA: ec2.CfnNatGateway;
-    natGatewayB?: ec2.CfnNatGateway;
-    publicRouteTable: ec2.CfnRouteTable;
-    privateRouteTableA: ec2.CfnRouteTable;
-    privateRouteTableB: ec2.CfnRouteTable;
-}
-export declare function createVpcResources(scope: Construct, envType: string, createNatGateways: boolean): VpcResources;
-export declare function createVpcL2Resources(scope: Construct, vpcMajorId: number, vpcMinorId: number, createNatGateways: boolean): ec2.Vpc;
+/**
+ * Creates a VPC using L2 constructs with IPv6 support.
+ *
+ * Uses a hybrid approach:
+ * - L2 VPC construct (ec2.Vpc) for standard VPC setup and best practices
+ * - L1 constructs (CfnVPCCidrBlock, CfnEgressOnlyInternetGateway) for IPv6 support
+ *   since the L2 VPC construct doesn't natively support IPv6
+ *
+ * @returns Object containing the VPC, IPv6 CIDR block, and VPC logical ID for use in outputs
+ */
+export declare function createVpcL2Resources(scope: Construct, vpcMajorId: number, vpcMinorId: number, createNatGateways: boolean): {
+    vpc: ec2.Vpc;
+    ipv6CidrBlock: ec2.CfnVPCCidrBlock;
+    vpcLogicalId: string;
+};
