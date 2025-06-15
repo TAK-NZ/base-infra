@@ -7,7 +7,7 @@
  * Common export names for base infrastructure resources
  * These are used to create CloudFormation exports that other stacks can import
  */
-export const EXPORT_NAMES = {
+export const BASE_EXPORT_NAMES = {
   VPC_ID: 'VPC-ID',
   VPC_CIDR_IPV4: 'VpcIPv4CIDR',
   VPC_CIDR_IPV6: 'VpcIPv6CIDR',

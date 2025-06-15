@@ -16,6 +16,9 @@ export interface BaseInfraStackProps extends StackProps {
   stackConfig: BaseInfraConfig;
 }
 
+/**
+ * Main CDK stack for the TAK Base Infrastructure
+ */
 export class BaseInfraStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BaseInfraStackProps) {
     super(scope, id, {
