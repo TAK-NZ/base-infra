@@ -164,5 +164,13 @@ export function registerOutputs({ stack, stackName, vpc, ipv6CidrBlock, vpcLogic
         StackName: stackName,
       }),
     });
+
+    new cdk.CfnOutput(stack, 'HostedZoneNameOutput', {
+      description: 'Route53 Public Hosted Zone Name',
+      value: hostedZone.zoneName,
+      exportName: Fn.sub(createDynamicExportName(BASE_EXPORT_NAMES.HOSTED_ZONE_NAME), {
+        StackName: stackName,
+      }),
+    });
   }
 }
