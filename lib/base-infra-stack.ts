@@ -1,15 +1,19 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import { RemovalPolicy, StackProps, Fn, CfnOutput } from 'aws-cdk-lib';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+
+// Construct imports
 import { createVpcL2Resources } from './constructs/vpc';
 import { createEcsResources } from './constructs/ecs';
 import { createEcrResources } from './constructs/ecr';
 import { createKmsResources } from './constructs/kms';
 import { createS3Resources } from './constructs/s3';
 import { createVpcEndpoints } from './constructs/endpoints';
-import { RemovalPolicy, StackProps, Fn, CfnOutput } from 'aws-cdk-lib';
-import { registerOutputs } from './outputs';
-import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { createAcmCertificate } from './constructs/acm';
+
+// Utility imports
+import { registerOutputs } from './outputs';
 import { BaseInfraConfig } from './stack-config';
 
 export interface BaseInfraStackProps extends StackProps {

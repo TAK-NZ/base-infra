@@ -17,6 +17,10 @@ if (envType !== 'prod' && envType !== 'dev-test') {
 }
 
 // Validate required parameters
+if (!customStackName) {
+  throw new Error('stackName is required. Use --context stackName=YourStackName');
+}
+
 if (!r53ZoneName) {
   throw new Error('r53ZoneName is required. Use --context r53ZoneName=your.domain.com');
 }
@@ -37,6 +41,9 @@ const overrides = {
   }),
 };
 
+// Create the stack name using the required customStackName
+const stackName = `TAK-${customStackName}-BaseInfra`; // Always use TAK prefix
+
 // Create configuration
 const config = createStackConfig(
   envType as 'prod' | 'dev-test',
@@ -46,9 +53,6 @@ const config = createStackConfig(
   'BaseInfra'
 );
 
-// Create the stack with environment configuration for AWS API calls only
-const environmentName = customStackName || (config.envType === 'prod' ? 'Prod' : 'Dev');
-const stackName = `TAK-${environmentName}-BaseInfra`; // Always use TAK prefix
 
 const stack = new BaseInfraStack(app, stackName, {
   stackConfig: config,
@@ -58,9 +62,8 @@ const stack = new BaseInfraStack(app, stackName, {
   },
   tags: {
     Project: ProjectName || 'TAK',
-    'Environment Name': environmentName,
+    Environment: customStackName,
     Component: 'BaseInfra',
-    ManagedBy: 'CDK',
-    'DNS Zone': r53ZoneName,
+    ManagedBy: 'CDK'
   }
 });
