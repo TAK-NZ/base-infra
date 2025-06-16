@@ -2,6 +2,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { BaseInfraStack } from '../lib/base-infra-stack';
 import { createStackConfig } from '../lib/stack-config';
+import { validateCdkContextParams } from '../lib/utils';
 
 const app = new cdk.App();
 
@@ -11,19 +12,12 @@ const customStackName = app.node.tryGetContext('stackName');
 const envType = app.node.tryGetContext('envType') || 'dev-test';
 const r53ZoneName = app.node.tryGetContext('r53ZoneName');
 
-// Validate envType
-if (envType !== 'prod' && envType !== 'dev-test') {
-  throw new Error(`Invalid envType: ${envType}. Must be 'prod' or 'dev-test'`);
-}
-
-// Validate required parameters
-if (!customStackName) {
-  throw new Error('stackName is required. Use --context stackName=YourStackName');
-}
-
-if (!r53ZoneName) {
-  throw new Error('r53ZoneName is required. Use --context r53ZoneName=your.domain.com');
-}
+// Validate all required parameters using utils
+validateCdkContextParams({
+  envType,
+  stackName: customStackName,
+  r53ZoneName
+});
 
 // Read optional context overrides
 const overrides = {
@@ -44,8 +38,8 @@ const overrides = {
 // Create the stack name using the required customStackName
 const stackName = `TAK-${customStackName}-BaseInfra`; // Always use TAK prefix
 
-// Create configuration
-const config = createStackConfig(
+// Create complete configuration
+const configResult = createStackConfig(
   envType as 'prod' | 'dev-test',
   r53ZoneName,
   Object.keys(overrides).length > 0 ? overrides : undefined,
@@ -53,9 +47,9 @@ const config = createStackConfig(
   'BaseInfra'
 );
 
-
+// Create the stack with environment configuration
 const stack = new BaseInfraStack(app, stackName, {
-  stackConfig: config,
+  configResult: configResult,
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: process.env.CDK_DEFAULT_REGION || 'ap-southeast-2',

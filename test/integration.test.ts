@@ -17,7 +17,7 @@ describe('Integration Tests', () => {
     
     const config = createStackConfig('prod', 'example.com');
     const stack = new BaseInfraStack(app, 'TestStack', { 
-      stackConfig: config,
+      configResult: config,
       env: { account: '123456789012', region: 'us-east-1' }
     });
     expect(() => stack).not.toThrow();

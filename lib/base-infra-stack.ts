@@ -14,10 +14,10 @@ import { createAcmCertificate } from './constructs/acm';
 
 // Utility imports
 import { registerOutputs } from './outputs';
-import { BaseInfraConfig } from './stack-config';
+import { BaseInfraConfigResult } from './stack-config';
 
 export interface BaseInfraStackProps extends StackProps {
-  stackConfig: BaseInfraConfig;
+  configResult: BaseInfraConfigResult;
 }
 
 /**
@@ -30,26 +30,25 @@ export class BaseInfraStack extends cdk.Stack {
       description: 'TAK Base Layer - VPC, ECS, ECR, KMS, S3, ACM',
     });
 
-    const config = props.stackConfig;
+    // Destructure the complete configuration result
+    const { 
+      stackConfig, 
+      environmentConfig, 
+      isHighAvailability,
+      environmentLabel,
+      createNatGateways,
+      enableVpcEndpoints,
+      certificateTransparency 
+    } = props.configResult;
     
-    // Extract configuration values
-    const envType = config.envType;
-    const vpcMajorId = config.overrides?.networking?.vpcMajorId ?? 0;
-    const vpcMinorId = config.overrides?.networking?.vpcMinorId ?? 0;
+    // Extract basic configuration values
+    const envType = stackConfig.envType;
+    const vpcMajorId = stackConfig.overrides?.networking?.vpcMajorId ?? 0;
+    const vpcMinorId = stackConfig.overrides?.networking?.vpcMinorId ?? 0;
     const resolvedStackName = id;
-    const r53ZoneName = config.r53ZoneName;
+    const r53ZoneName = stackConfig.r53ZoneName;
     
-    // Get environment-specific defaults
-    const envConfig = config.envType === 'prod' ? 
-      { createNatGateways: true, createVpcEndpoints: true, certificateTransparency: true } :
-      { createNatGateways: false, createVpcEndpoints: false, certificateTransparency: false };
-    
-    const createNatGateways = config.overrides?.networking?.createNatGateways ?? envConfig.createNatGateways;
-    const enableVpcEndpoints = config.overrides?.networking?.createVpcEndpoints ?? envConfig.createVpcEndpoints;
-    const certificateTransparency = config.overrides?.certificate?.transparencyLoggingEnabled ?? envConfig.certificateTransparency;
-
     // Add Environment Type tag to the stack
-    const environmentLabel = envType === 'prod' ? 'Prod' : 'Dev-Test';
     cdk.Tags.of(this).add('Environment Type', environmentLabel);
 
     const stackName = Fn.ref('AWS::StackName');

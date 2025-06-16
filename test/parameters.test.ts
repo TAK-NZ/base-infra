@@ -1,21 +1,25 @@
-import { createStackConfig, BaseInfraConfig, ConfigValidator } from '../lib/stack-config';
+import { createStackConfig, BaseInfraConfig, BaseInfraConfigResult, ConfigValidator } from '../lib/stack-config';
 
 describe('Stack Configuration', () => {
   describe('createStackConfig', () => {
     it('creates valid config with required parameters', () => {
-      const config = createStackConfig('prod', 'example.com');
+      const configResult = createStackConfig('prod', 'example.com');
       
-      expect(config.envType).toBe('prod');
-      expect(config.r53ZoneName).toBe('example.com');
-      expect(config.projectName).toBe('TAK');
-      expect(config.componentName).toBe('BaseInfra');
+      expect(configResult.stackConfig.envType).toBe('prod');
+      expect(configResult.stackConfig.r53ZoneName).toBe('example.com');
+      expect(configResult.stackConfig.projectName).toBe('TAK');
+      expect(configResult.stackConfig.componentName).toBe('BaseInfra');
+      expect(configResult.isHighAvailability).toBe(true);
+      expect(configResult.environmentLabel).toBe('Prod');
     });
 
     it('creates config with custom project and component names', () => {
-      const config = createStackConfig('dev-test', 'test.example.com', undefined, 'MyProject', 'MyComponent');
+      const configResult = createStackConfig('dev-test', 'test.example.com', undefined, 'MyProject', 'MyComponent');
       
-      expect(config.projectName).toBe('MyProject');
-      expect(config.componentName).toBe('MyComponent');
+      expect(configResult.stackConfig.projectName).toBe('MyProject');
+      expect(configResult.stackConfig.componentName).toBe('MyComponent');
+      expect(configResult.isHighAvailability).toBe(false);
+      expect(configResult.environmentLabel).toBe('Dev-Test');
     });
 
     it('throws error for empty r53ZoneName', () => {
@@ -40,9 +44,11 @@ describe('Stack Configuration', () => {
         certificate: { transparencyLoggingEnabled: false }
       };
       
-      const config = createStackConfig('dev-test', 'example.com', overrides);
+      const configResult = createStackConfig('dev-test', 'example.com', overrides);
       
-      expect(config.overrides).toEqual(overrides);
+      expect(configResult.stackConfig.overrides).toEqual(overrides);
+      expect(configResult.createNatGateways).toBe(true); // Override applied
+      expect(configResult.certificateTransparency).toBe(false); // Override applied
     });
   });
 
