@@ -1,7 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
 import { BaseInfraStack } from '../lib/base-infra-stack';
-import { createStackConfig } from '../lib/stack-config';
+import { createTestApp } from './utils';
 
 describe('ACM Certificate', () => {
   it('creates ACM certificate with correct domain names when R53 zone is provided', () => {
@@ -11,15 +11,29 @@ describe('ACM Certificate', () => {
         'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
           Id: '/hostedzone/Z1PA6795UKMFR9',
           Name: 'example.com.'
-        }
+        },
+        'prod': {
+          stackName: 'Prod',
+          r53ZoneName: 'example.com',
+          vpcMajorId: 1,
+          vpcMinorId: 0,
+          networking: { createNatGateways: true, createVpcEndpoints: true },
+          certificate: { transparencyLoggingEnabled: true },
+          general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
+          kms: { enableKeyRotation: true },
+          s3: { enableVersioning: true, lifecycleRules: true },
+          ecr: { imageRetentionCount: 20, scanOnPush: true }
+        },
+        'tak-defaults': { project: 'TAK', component: 'BaseInfra', region: 'ap-southeast-2' }
       }
     });
     
-    const configResult = createStackConfig('prod', 'example.com');
+    const envConfig = app.node.tryGetContext('prod');
     
     // Specify env to enable context lookups
     const stack = new BaseInfraStack(app, 'TestStack', { 
-      configResult: configResult,
+      environment: 'prod',
+      envConfig: envConfig,
       env: { account: '123456789012', region: 'us-east-1' }
     });
     const template = Template.fromStack(stack);
@@ -39,13 +53,39 @@ describe('ACM Certificate', () => {
   });
 
   it('throws error when zone name is empty string', () => {
-    // Test config creation with empty zone name
+    const app1 = new cdk.App();
+    
+    // Test stack creation with empty zone name
     expect(() => {
-      createStackConfig('prod', '');
+      new BaseInfraStack(app1, 'TestStack', {
+        environment: 'prod',
+        envConfig: {
+          stackName: 'Test',
+          r53ZoneName: '', // Empty zone name
+          networking: { createNatGateways: true, createVpcEndpoints: true },
+          certificate: { transparencyLoggingEnabled: true },
+          general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
+          kms: { enableKeyRotation: true },
+          s3: { enableVersioning: true, lifecycleRules: true },
+          ecr: { imageRetentionCount: 20, scanOnPush: true }
+        }
+      });
     }).toThrow('r53ZoneName is required and cannot be empty');
 
     expect(() => {
-      createStackConfig('prod', '   ');
+      new BaseInfraStack(app1, 'TestStack2', {
+        environment: 'prod',
+        envConfig: {
+          stackName: 'Test',
+          r53ZoneName: '   ', // Whitespace zone name
+          networking: { createNatGateways: true, createVpcEndpoints: true },
+          certificate: { transparencyLoggingEnabled: true },
+          general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
+          kms: { enableKeyRotation: true },
+          s3: { enableVersioning: true, lifecycleRules: true },
+          ecr: { imageRetentionCount: 20, scanOnPush: true }
+        }
+      });
     }).toThrow('r53ZoneName is required and cannot be empty');
     
     // Test direct function call with empty zone name
@@ -65,27 +105,54 @@ describe('ACM Certificate', () => {
   });
 
   it('throws error when R53 zone name is not provided', () => {
-    // Test that config creation throws error when no R53 zone name is provided
+    // Test that stack creation throws error when undefined zone name is provided
+    const app2 = new cdk.App();
     expect(() => {
-      createStackConfig('prod', undefined as any);
+      new BaseInfraStack(app2, 'TestStack', {
+        environment: 'prod',
+        envConfig: {
+          stackName: 'Test',
+          r53ZoneName: undefined as any, // Undefined zone name
+          networking: { createNatGateways: true, createVpcEndpoints: true },
+          certificate: { transparencyLoggingEnabled: true },
+          general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
+          kms: { enableKeyRotation: true },
+          s3: { enableVersioning: true, lifecycleRules: true },
+          ecr: { imageRetentionCount: 20, scanOnPush: true }
+        }
+      });
     }).toThrow('r53ZoneName is required and cannot be empty');
   });
 
   it('creates certificate ARN output when certificate is created', () => {
-    const app = new cdk.App({
+    const app3 = new cdk.App({
       context: {
         // Mock the hosted zone lookup to avoid AWS calls
         'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
           Id: '/hostedzone/Z1PA6795UKMFR9',
           Name: 'example.com.'
-        }
+        },
+        'prod': {
+          stackName: 'Prod',
+          r53ZoneName: 'example.com',
+          vpcMajorId: 1,
+          vpcMinorId: 0,
+          networking: { createNatGateways: true, createVpcEndpoints: true },
+          certificate: { transparencyLoggingEnabled: true },
+          general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
+          kms: { enableKeyRotation: true },
+          s3: { enableVersioning: true, lifecycleRules: true },
+          ecr: { imageRetentionCount: 20, scanOnPush: true }
+        },
+        'tak-defaults': { project: 'TAK', component: 'BaseInfra', region: 'ap-southeast-2' }
       }
     });
     
-    const config = createStackConfig('prod', 'example.com');
+    const envConfig = app3.node.tryGetContext('prod');
     
-    const stack = new BaseInfraStack(app, 'TestStack', { 
-      configResult: config,
+    const stack = new BaseInfraStack(app3, 'TestStack', { 
+      environment: 'prod',
+      envConfig: envConfig,
       env: { account: '123456789012', region: 'us-east-1' }
     });
     const template = Template.fromStack(stack);
@@ -97,20 +164,34 @@ describe('ACM Certificate', () => {
   });
 
   it('configures certificate transparency based on environment type', () => {
-    const app = new cdk.App({
+    const app4 = new cdk.App({
       context: {
         // Mock the hosted zone lookup
         'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
           Id: '/hostedzone/Z1PA6795UKMFR9',
           Name: 'example.com.'
-        }
+        },
+        'dev-test': {
+          stackName: 'Dev',
+          r53ZoneName: 'example.com',
+          vpcMajorId: 0,
+          vpcMinorId: 1,
+          networking: { createNatGateways: false, createVpcEndpoints: false },
+          certificate: { transparencyLoggingEnabled: false },
+          general: { removalPolicy: 'DESTROY', enableDetailedLogging: true, enableContainerInsights: false },
+          kms: { enableKeyRotation: false },
+          s3: { enableVersioning: false, lifecycleRules: true },
+          ecr: { imageRetentionCount: 5, scanOnPush: false }
+        },
+        'tak-defaults': { project: 'TAK', component: 'BaseInfra', region: 'ap-southeast-2' }
       }
     });
     
-    const config = createStackConfig('dev-test', 'example.com');
+    const envConfig = app4.node.tryGetContext('dev-test');
     
-    const stack = new BaseInfraStack(app, 'TestStack', { 
-      configResult: config,
+    const stack = new BaseInfraStack(app4, 'TestStack', { 
+      environment: 'dev-test',
+      envConfig: envConfig,
       env: { account: '123456789012', region: 'us-east-1' }
     });
     const template = Template.fromStack(stack);
@@ -122,22 +203,34 @@ describe('ACM Certificate', () => {
   });
 
   it('allows certificate transparency override via context', () => {
-    const app = new cdk.App({
+    const app5 = new cdk.App({
       context: {
         // Mock the hosted zone lookup
         'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
           Id: '/hostedzone/Z1PA6795UKMFR9',
           Name: 'example.com.'
-        }
+        },
+        'tak-defaults': { project: 'TAK', component: 'BaseInfra', region: 'ap-southeast-2' }
       }
     });
     
-    const config = createStackConfig('dev-test', 'example.com', {
-      certificate: { transparencyLoggingEnabled: true } // Override dev-test default
-    });
+    // Create custom envConfig with override (normally dev-test has transparency disabled)
+    const envConfig = {
+      stackName: 'Dev',
+      r53ZoneName: 'example.com',
+      vpcMajorId: 0,
+      vpcMinorId: 1,
+      networking: { createNatGateways: false, createVpcEndpoints: false },
+      certificate: { transparencyLoggingEnabled: true }, // Override dev-test default
+      general: { removalPolicy: 'DESTROY', enableDetailedLogging: true, enableContainerInsights: false },
+      kms: { enableKeyRotation: false },
+      s3: { enableVersioning: false, lifecycleRules: true },
+      ecr: { imageRetentionCount: 5, scanOnPush: false }
+    };
     
-    const stack = new BaseInfraStack(app, 'TestStack', { 
-      configResult: config,
+    const stack = new BaseInfraStack(app5, 'TestStack', { 
+      environment: 'dev-test',
+      envConfig: envConfig,
       env: { account: '123456789012', region: 'us-east-1' }
     });
     const template = Template.fromStack(stack);

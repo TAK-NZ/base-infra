@@ -1,216 +1,230 @@
-# Parameters Management
+# Configuration Management
 
-The TAK Base Infrastructure project uses a **CDK context-driven configuration system** for all stack parameters. This approach provides clean separation between AWS credentials (via environment variables) and stack configuration (via CDK context).
+The TAK Base Infrastructure uses **AWS CDK best practices** with a context-based configuration system stored in `cdk.json`. This eliminates complex command-line parameters and provides a single source of truth for all environment configurations.
 
-## Parameter Resolution
+## Quick Start
 
-Parameters are resolved through the **config-driven system** in the following order:
+```bash
+# Deploy development environment
+npx cdk deploy --context env=dev-test
 
-1. **CDK Context** - Explicit parameters passed via `--context` flag
-2. **Environment Defaults** - Automatic defaults based on `envType` (prod vs dev-test)
-3. **Built-in Defaults** - Hardcoded fallback values for optional parameters
+# Deploy production environment  
+npx cdk deploy --context env=prod
+```
 
-## Available Parameters
+## Configuration System
 
-### Core Infrastructure Parameters
+### Environment-Based Configuration
+All configurations are stored in [`cdk.json`](../cdk.json) under the `context` section:
 
-| Parameter | Required | Default | Description |
-|-----------|----------|---------|-------------|
-| `envType` | No | `'dev-test'` | Environment type: `'prod'` or `'dev-test'` |
-| `r53ZoneName` | **Yes** | N/A | Route 53 zone name ⚠️ **Required** |
-| `project` | No | `'TAK'` | Project name for resource tagging (does not affect stack name) |
-| `stackName` | No | Auto-generated | Environment name for stack (forms `TAK-{stackName}-BaseInfra`) |
-| `vpcMajorId` | No | `0` | VPC CIDR major ID (10.{major}.0.0/16) |
-| `vpcMinorId` | No | `0` | VPC CIDR minor ID (10.{major}.{minor}.0/16) |
+```json
+{
+  "context": {
+    "dev-test": {
+      "stackName": "Dev",
+      "r53ZoneName": "dev.tak.nz",
+      "vpcMajorId": 0,
+      "vpcMinorId": 1,
+      "networking": {
+        "createNatGateways": false,
+        "createVpcEndpoints": false
+      },
+      "certificate": {
+        "transparencyLoggingEnabled": false
+      },
+      "general": {
+        "removalPolicy": "DESTROY"
+      }
+    },
+    "prod": {
+      "stackName": "Prod", 
+      "r53ZoneName": "tak.nz",
+      "vpcMajorId": 1,
+      "vpcMinorId": 0,
+      "networking": {
+        "createNatGateways": true,
+        "createVpcEndpoints": true
+      },
+      "certificate": {
+        "transparencyLoggingEnabled": true
+      },
+      "general": {
+        "removalPolicy": "RETAIN"
+      }
+    }
+  }
+}
+```
 
-### Networking Parameters
+### Available Environments
 
-| Parameter | Required | Default | Description |
-|-----------|----------|---------|-------------|
-| `createNatGateways` | No | Environment-specific | Create redundant NAT Gateways (`true`/`false`) |
-| `createVpcEndpoints` | No | Environment-specific | Create VPC interface endpoints (`true`/`false`) |
+| Environment | Stack Name | Description | Cost/Month |
+|-------------|------------|-------------|------------|
+| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized for development | ~$35 |
+| `prod` | `TAK-Prod-BaseInfra` | High availability for production | ~$91 |
 
-### Security Parameters
+### Key Configuration Differences
 
-| Parameter | Required | Default | Description |
-|-----------|----------|---------|-------------|
-| `certificateTransparency` | No | Environment-specific | Enable certificate transparency logging (`true`/`false`) |
+| Setting | dev-test | prod | Impact |
+|---------|----------|------|--------|
+| **NAT Gateways** | Single | Redundant (2x) | Cost & availability |
+| **VPC Endpoints** | S3 only | Full suite (5x) | Cost & security |
+| **Certificate Transparency** | Disabled | Enabled | Compliance |
+| **Container Insights** | Disabled | Enabled | Monitoring |
+| **KMS Key Rotation** | Disabled | Enabled | Security |
+| **S3 Versioning** | Disabled | Enabled | Data protection |
+| **Removal Policy** | DESTROY | RETAIN | Data safety |
 
-## Stack Naming
+## Runtime Configuration Overrides
 
-### Default Stack Names
+Use CDK's built-in `--context` flag to override any configuration value:
+
+### Common Override Examples
+
+#### **Custom Domain Name:**
+```bash
+npx cdk deploy --context env=dev-test --context dev-test.r53ZoneName=custom.tak.nz
+```
+
+#### **Disable High Availability for Cost Savings:**
+```bash
+npx cdk deploy --context env=prod --context prod.networking.createNatGateways=false
+```
+
+#### **Custom VPC Configuration:**
+```bash
+npx cdk deploy --context env=dev-test \
+  --context dev-test.vpcMajorId=2 \
+  --context dev-test.vpcMinorId=1
+```
+
+#### **Override Multiple Settings:**
+```bash
+npx cdk deploy --context env=dev-test \
+  --context dev-test.ecr.imageRetentionCount=10 \
+  --context dev-test.ecr.scanOnPush=true \
+  --context dev-test.networking.createVpcEndpoints=true
+```
+
+### Override Syntax
+- Use **dot notation** for nested properties: `environment.section.property=value`
+- **Command-line context always takes precedence** over `cdk.json` values
+- Can override **any configuration property** defined in the environment config
+
+## Stack Naming and Tagging
+
+### Stack Names
 - **dev-test**: `TAK-Dev-BaseInfra`
 - **prod**: `TAK-Prod-BaseInfra`
 
-### Custom Environment Names
-You can override the environment name (middle part) using the `stackName` context parameter:
+### Custom Stack Names
+Override the `stackName` property for custom deployments:
 
 ```bash
-# Custom environment name: Results in "TAK-MyEnv-BaseInfra"
-npx cdk deploy --context r53ZoneName=example.com \
-               --context stackName=MyEnv
+# Results in "TAK-Staging-BaseInfra"
+npx cdk deploy --context env=prod --context prod.stackName=Staging
 
-# Multiple environments: Results in "TAK-Staging-BaseInfra"
-npx cdk deploy --context envType=prod \
-               --context r53ZoneName=example.com \
-               --context stackName=Staging
-```
-
-**Note**: Stack naming parameters:
-- Stack name format is **always**: `TAK-{stackName}-BaseInfra`
-- `stackName`: Replaces the default environment name (Dev/Prod based on `envType`)
-- The "TAK" prefix and "BaseInfra" suffix are fixed and cannot be changed
-
-### Project Tagging
-The `project` parameter is used for resource tagging only (does not affect stack name):
-
-```bash
-# Custom project tagging: Stack name still "TAK-Dev-BaseInfra" but tagged with "MyCompany"
-npx cdk deploy --context r53ZoneName=example.com \
-               --context project=MyCompany
-
-# Combined: Stack name "TAK-Staging-BaseInfra" but tagged with "MyCompany"
-npx cdk deploy --context project=MyCompany \
-               --context stackName=Staging \
-               --context r53ZoneName=example.com
+# Results in "TAK-FeatureBranch-BaseInfra"
+npx cdk deploy --context env=dev-test --context dev-test.stackName=FeatureBranch
 ```
 
 ### Resource Tagging
-All AWS resources created by the stack are automatically tagged with:
-- **Project**: The project name (from `project` parameter or "TAK" default)
-- **Environment**: The environment name (from `stackName` parameter or auto-generated)
-- **Component**: Always "BaseInfra"
-- **ManagedBy**: Always "CDK"
+All AWS resources are automatically tagged with:
+- **Project**: "TAK" (from `tak-defaults.project`)
+- **Component**: "BaseInfra" (from `tak-defaults.component`)
+- **Environment**: The environment name (from `stackName`)
+- **ManagedBy**: "CDK"
 
-These tags help with:
-- Cost allocation and tracking
-- Resource organization and filtering
-- Compliance and governance
-- Automated resource management
+## Configuration Structure
 
-## Environment-Specific Default Values
+### Core Settings
+- `stackName`: Used in stack name (`TAK-{stackName}-BaseInfra`)
+- `r53ZoneName`: Route 53 hosted zone for ACM certificate
+- `vpcMajorId`: VPC CIDR major ID (10.{major}.0.0/16)
+- `vpcMinorId`: VPC CIDR minor ID (10.{major}.{minor}.0/16)
 
-### dev-test (Default)
-- **Cost-optimized configuration**
-- `createNatGateways`: `false` (single NAT Gateway)
-- `createVpcEndpoints`: `false` (S3 gateway endpoint only)
-- `certificateTransparency`: `false`
-- **Estimated cost**: ~$35/month
+### Networking Configuration
+- `networking.createNatGateways`: Redundant NAT Gateways for HA
+- `networking.createVpcEndpoints`: VPC interface endpoints for AWS services
 
-### prod
-- **High availability configuration**
-- `createNatGateways`: `true` (redundant NAT Gateways)
-- `createVpcEndpoints`: `true` (full VPC endpoints suite)
-- `certificateTransparency`: `true`
-- **Estimated cost**: ~$91/month
+### Certificate Configuration
+- `certificate.transparencyLoggingEnabled`: Certificate transparency logging
 
-## Setting Parameters
+### General Configuration
+- `general.removalPolicy`: CloudFormation removal policy (DESTROY/RETAIN)
+- `general.enableContainerInsights`: ECS Container Insights
+- `general.enableDetailedLogging`: Detailed CloudWatch logging
 
-### Required AWS Environment Variables
+### Security Configuration
+- `kms.enableKeyRotation`: Automatic KMS key rotation
+- `s3.enableVersioning`: S3 bucket versioning
+- `ecr.scanOnPush`: ECR vulnerability scanning
+
+## Deployment Examples
+
+### Basic Deployments
+```bash
+# Development environment
+npx cdk deploy --context env=dev-test
+
+# Production environment
+npx cdk deploy --context env=prod
+```
+
+### Advanced Deployments
+```bash
+# Production with custom domain
+npx cdk deploy --context env=prod --context prod.r53ZoneName=company.com
+
+# Development with production-like networking
+npx cdk deploy --context env=dev-test \
+  --context dev-test.networking.createNatGateways=true \
+  --context dev-test.networking.createVpcEndpoints=true
+
+# Custom environment for feature testing
+npx cdk deploy --context env=dev-test \
+  --context dev-test.stackName=FeatureX \
+  --context dev-test.r53ZoneName=feature.tak.nz
+```
+
+## Required Environment Variables
 
 ```bash
-# Option 1: Set manually
-export CDK_DEFAULT_ACCOUNT=123456789012
-export CDK_DEFAULT_REGION=us-east-1
-
-# Option 2: Auto-detect from AWS CLI configuration
+# Set AWS credentials and region
 export CDK_DEFAULT_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
-export CDK_DEFAULT_REGION=$(aws configure get region)
+export CDK_DEFAULT_REGION=$(aws configure get region || echo "ap-southeast-2")
 
-# Option 3: One-liner deployment (auto-detects account/region)
-CDK_DEFAULT_ACCOUNT=$(aws sts get-caller-identity --query Account --output text) \
-CDK_DEFAULT_REGION=$(aws configure get region) \
-npx cdk deploy --context r53ZoneName=example.com --context envType=dev-test
-
-# Option 4: Use AWS Profile (CDK auto-detects account/region from profile)
-npx cdk deploy --context r53ZoneName=example.com --context envType=dev-test --profile your-aws-profile
+# Deploy with environment variables set
+npx cdk deploy --context env=prod
 ```
 
-### CDK Context Method
+## Benefits of Context-Based Configuration
 
+- **90% fewer command-line parameters**
+- **Single source of truth** in `cdk.json`
+- **Version controlled** configuration
+- **Consistent deployments** across team members
+- **Easy environment management**
+- **Built-in CDK override support**
+
+## Migration from Legacy Parameter System
+
+### Before (Legacy)
 ```bash
-# Deploy with custom parameters
-npx cdk deploy --context envType=prod \
-               --context r53ZoneName=example.com \
-               --context vpcMajorId=5 \
-               --context createNatGateways=true \
-               --context createVpcEndpoints=false
+npx cdk deploy \
+  --context envType=prod \
+  --context stackName=Prod \
+  --context r53ZoneName=tak.nz \
+  --context vpcMajorId=1 \
+  --context createNatGateways=true \
+  --context createVpcEndpoints=true
 ```
 
-# Example Deployment Commands
-
+### After (Current)
 ```bash
-# Minimal deployment (dev-test with defaults)
-npx cdk deploy --context r53ZoneName=example.com
+# Simple deployment with all settings from cdk.json
+npx cdk deploy --context env=prod
 
-# Custom environment name deployment: Results in "TAK-MyEnv-BaseInfra"
-npx cdk deploy --context r53ZoneName=example.com \
-               --context stackName=MyEnv
-
-# Custom project tagging: Stack name "TAK-Dev-BaseInfra", tagged with "MyCompany"
-npx cdk deploy --context r53ZoneName=example.com \
-               --context project=MyCompany
-
-# Production deployment with custom VPC
-npx cdk deploy --context envType=prod \
-               --context r53ZoneName=example.com \
-               --context vpcMajorId=5 \
-               --context createNatGateways=true \
-               --context createVpcEndpoints=true \
-               --context certificateTransparency=true
-
-# Custom project and environment: Stack name "TAK-ProdOptimized-BaseInfra", tagged with "MyCompany"
-npx cdk deploy --context envType=prod \
-               --context r53ZoneName=example.com \
-               --context project=MyCompany \
-               --context stackName=ProdOptimized \
-               --context createNatGateways=false \
-               --context createVpcEndpoints=false
-```
-
-## Environment-Specific Deployment
-
-### Development Deployment
-```bash
-# Custom VPC CIDR: 10.5.2.0/16
-npx cdk deploy --context envType=prod \
-               --context r53ZoneName=example.com \
-               --context vpcMajorId=5 \
-               --context vpcMinorId=2
-```
-
-## Common Deployment Scenarios
-
-### Development Deployment
-```bash
-# Cost-optimized (default)
-npx cdk deploy --context r53ZoneName=dev.example.com
-```
-
-### Production Deployment
-```bash
-# High availability
-npx cdk deploy --context envType=prod --context r53ZoneName=example.com
-```
-
-## Parameter Override Examples
-
-### Override Specific Parameters
-
-```bash
-# Use prod environment but disable VPC endpoints for cost savings
-npx cdk deploy --context envType=prod \
-               --context createVpcEndpoints=false \
-               --context r53ZoneName=example.com
-```
-
-### Custom VPC CIDR
-
-The VPC CIDR block is calculated as `10.{vpcMajorId}.{vpcMinorId}.0/16`:
-
-```bash
-# Use custom VPC CIDR: 10.100.200.0/16
-npx cdk deploy --context vpcMajorId=100 \
-               --context vpcMinorId=200 \
-               --context r53ZoneName=example.com
+# Override specific settings if needed
+npx cdk deploy --context env=prod --context prod.r53ZoneName=custom.tak.nz
 ```

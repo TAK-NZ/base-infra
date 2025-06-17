@@ -1,4 +1,5 @@
 // Utility functions for CDK tests
+import * as cdk from 'aws-cdk-lib';
 
 // CloudFormation template interfaces
 export interface CloudFormationResource {
@@ -27,4 +28,78 @@ export function getResourceByType(template: CloudFormationTemplate, type: string
 
 export function getOutputByName(template: CloudFormationTemplate, name: string): CloudFormationOutput | undefined {
   return template.Outputs?.[name];
+}
+
+/**
+ * Creates a CDK App with context values needed for testing
+ */
+export function createTestApp(): cdk.App {
+  const app = new cdk.App({
+    context: {
+      'dev-test': {
+        stackName: 'Dev',
+        r53ZoneName: 'dev.tak.nz',
+        vpcMajorId: 0,
+        vpcMinorId: 1,
+        networking: {
+          createNatGateways: false,
+          createVpcEndpoints: false
+        },
+        certificate: {
+          transparencyLoggingEnabled: false
+        },
+        general: {
+          removalPolicy: 'DESTROY',
+          enableDetailedLogging: true,
+          enableContainerInsights: false
+        },
+        kms: {
+          enableKeyRotation: false
+        },
+        s3: {
+          enableVersioning: false,
+          lifecycleRules: true
+        },
+        ecr: {
+          imageRetentionCount: 5,
+          scanOnPush: false
+        }
+      },
+      'prod': {
+        stackName: 'Prod',
+        r53ZoneName: 'tak.nz',
+        vpcMajorId: 1,
+        vpcMinorId: 0,
+        networking: {
+          createNatGateways: true,
+          createVpcEndpoints: true
+        },
+        certificate: {
+          transparencyLoggingEnabled: true
+        },
+        general: {
+          removalPolicy: 'RETAIN',
+          enableDetailedLogging: true,
+          enableContainerInsights: true
+        },
+        kms: {
+          enableKeyRotation: true
+        },
+        s3: {
+          enableVersioning: true,
+          lifecycleRules: true
+        },
+        ecr: {
+          imageRetentionCount: 20,
+          scanOnPush: true
+        }
+      },
+      'tak-defaults': {
+        project: 'TAK',
+        component: 'BaseInfra',
+        region: 'ap-southeast-2'
+      }
+    }
+  });
+  return app;
 }

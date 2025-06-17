@@ -1,26 +1,39 @@
 # TAK Base Infrastructure - Quick Reference
 
-## Quick Comparison
+## Quick Deployment
 
-### Production Configuration
+### Development Environment
 ```bash
-# Deploy production (requires Route 53 zone)
-ROUTE53_ZONE_NAME=your-domain.com npx cdk deploy --app "prod" --profile tak
+# Deploy development (cost-optimized)
+npx cdk deploy --context env=dev-test --profile tak
+```
+- ✅ Cost optimized (~$35/month)
+- ✅ Same core functionality  
+- ✅ Perfect for development
+- ❌ Single point of failure (shared NAT Gateway)
+
+### Production Environment
+```bash
+# Deploy production (high availability)
+npx cdk deploy --context env=prod --profile tak
 ```
 - ✅ High availability (dual NAT Gateways)
 - ✅ Private VPC endpoints for AWS services
 - ✅ Fault tolerant across AZs
 - ❌ Higher cost (~$91/month)
 
-### Dev-Test Configuration  
+## Configuration Override Examples
+
 ```bash
-# Deploy dev-test (default, requires Route 53 zone)
-ROUTE53_ZONE_NAME=your-domain.com npx cdk deploy --profile tak
+# Deploy dev-test with custom domain
+npx cdk deploy --context env=dev-test --context dev-test.r53ZoneName=custom.tak.nz
+
+# Deploy production with cost optimization
+npx cdk deploy --context env=prod --context prod.networking.createNatGateways=false
+
+# Deploy with custom VPC settings
+npx cdk deploy --context env=dev-test --context dev-test.vpcMajorId=2
 ```
-- ✅ Cost optimized (~$35/month)
-- ✅ Same core functionality
-- ✅ Perfect for development
-- ❌ Single point of failure (shared NAT Gateway)
 
 ## Key Resources Deployed
 

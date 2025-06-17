@@ -1,63 +1,50 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
 import { BaseInfraStack } from '../lib/base-infra-stack';
-import { createStackConfig } from '../lib/stack-config';
-import { validateCdkContextParams } from '../lib/utils';
 
 const app = new cdk.App();
 
-// Read configuration from CDK context only (command line --context parameters)
-const ProjectName = app.node.tryGetContext('project');
-const customStackName = app.node.tryGetContext('stackName');
-const envType = app.node.tryGetContext('envType') || 'dev-test';
-const r53ZoneName = app.node.tryGetContext('r53ZoneName');
+// Get environment from context (defaults to dev-test)
+const envName = app.node.tryGetContext('env') || 'dev-test';
 
-// Validate all required parameters using utils
-validateCdkContextParams({
-  envType,
-  stackName: customStackName,
-  r53ZoneName
-});
+// Get the environment configuration from context
+// CDK automatically handles context overrides via --context flag
+const envConfig = app.node.tryGetContext(envName);
+const defaults = app.node.tryGetContext('tak-defaults');
 
-// Read optional context overrides
-const overrides = {
-  ...(app.node.tryGetContext('vpcMajorId') && {
-    networking: { vpcMajorId: parseInt(app.node.tryGetContext('vpcMajorId'), 10) }
-  }),
-  ...(app.node.tryGetContext('vpcMinorId') && {
-    networking: { vpcMinorId: parseInt(app.node.tryGetContext('vpcMinorId'), 10) }
-  }),
-  ...(app.node.tryGetContext('createNatGateways') !== undefined && {
-    networking: { createNatGateways: app.node.tryGetContext('createNatGateways') === 'true' }
-  }),
-  ...(app.node.tryGetContext('createVpcEndpoints') !== undefined && {
-    networking: { createVpcEndpoints: app.node.tryGetContext('createVpcEndpoints') === 'true' }
-  }),
-};
+if (!envConfig) {
+  throw new Error(`
+❌ Environment configuration for '${envName}' not found in cdk.json
 
-// Create the stack name using the required customStackName
-const stackName = `TAK-${customStackName}-BaseInfra`; // Always use TAK prefix
+Usage:
+  npx cdk deploy --context env=dev-test
+  npx cdk deploy --context env=prod
 
-// Create complete configuration
-const configResult = createStackConfig(
-  envType as 'prod' | 'dev-test',
-  r53ZoneName,
-  Object.keys(overrides).length > 0 ? overrides : undefined,
-  'TAK', // Always use TAK as project prefix
-  'BaseInfra'
-);
+Expected cdk.json structure:
+{
+  "context": {
+    "dev-test": { ... },
+    "prod": { ... }
+  }
+}
+  `);
+}
 
-// Create the stack with environment configuration
+// Create stack name
+const stackName = `TAK-${envConfig.stackName}-BaseInfra`;
+
+// Create the stack
 const stack = new BaseInfraStack(app, stackName, {
-  configResult: configResult,
+  environment: envName as 'prod' | 'dev-test',
+  envConfig: envConfig,
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: process.env.CDK_DEFAULT_REGION || 'ap-southeast-2',
+    region: process.env.CDK_DEFAULT_REGION || defaults?.region || 'ap-southeast-2',
   },
   tags: {
-    Project: ProjectName || 'TAK',
-    Environment: customStackName,
-    Component: 'BaseInfra',
+    Project: defaults?.project || 'TAK',
+    Environment: envConfig.stackName,
+    Component: defaults?.component || 'BaseInfra',
     ManagedBy: 'CDK'
   }
 });

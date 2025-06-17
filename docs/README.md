@@ -2,11 +2,31 @@
 
 This folder contains the architecture documentation for the TAK Base Infrastructure project.
 
-## Files
+## Documentation Files
 
-### Documentation
+- **`QUICK_REFERENCE.md`** - Quick deployment commands and environment comparison
+- **`PARAMETERS.md`** - Complete configuration management guide  
+- **`ARCHITECTURE.md`** - Detailed technical architecture documentation
 
-- **`QUICK_REFERENCE.md`** - Summary and decision guide for choosing configurations
+## Configuration System
+
+The TAK Base Infrastructure uses **AWS CDK best practices** with a context-based configuration system:
+
+### Quick Deployment
+```bash
+# Development environment (cost-optimized)
+npx cdk deploy --context env=dev-test
+
+# Production environment (high availability)
+npx cdk deploy --context env=prod
+```
+
+### Environment Configurations
+All settings are stored in [`cdk.json`](../cdk.json) under the `context` section, providing:
+- **Single source of truth** for all configurations
+- **Version controlled** settings with Git
+- **Consistent deployments** across team members  
+- **Easy runtime overrides** using CDK's built-in `--context` flag
 
 ## Production Architecture Overview
 

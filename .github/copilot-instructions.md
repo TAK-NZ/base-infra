@@ -68,3 +68,22 @@
     - Ensure all CDK code is version controlled
     - Use AWS CDK best practices for security and compliance
     - Ensure all CDK code is well-documented
+	- Organize code for large-scale projects
+	- Use consistent naming conventions
+	- Structure code into modules and packages
+	- Use reusable patterns such as Abstract Factory and Chain of Responsibility
+	- Extend L2 constructs for custom resources
+	- Follow TypeScript best practices
+	- Use a test-driven development approach with unit tests and integration tests
+
+## TypeScript
+	- Use TypeScript 4.0 or later
+	- Follow TypeScript best practices for type safety and maintainability
+	- Use interfaces and types to define data structures
+	- Use async/await for asynchronous code
+	- Ensure all TypeScript code is properly linted and formatted
+	- Use modern ES6+ features where appropriate
+	- Ensure all TypeScript code is compatible with the latest Node.js versions
+	- Use TypeScript decorators for metadata and configuration
+	- Ensure all TypeScript code is well-documented
+

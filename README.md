@@ -85,117 +85,67 @@ echo "Region: $CDK_DEFAULT_REGION"
 
 ### 5. Deploy the stack:
 
-The stack supports flexible parameter configuration through multiple methods with cascading priority:
+The stack uses a modern context-based configuration system with predefined environments:
 
-#### Method 1: CDK Context (Primary Method)
+#### Method 1: Deploy with Default Environment Configuration
 ```bash
-# Deploy with all parameters via context
-npx cdk deploy \
-  --context stackName=Primary \
-  --context envType=prod \
-  --context r53ZoneName=tak.nz \
-  --context vpcMajorId=5 \
-  --context vpcMinorId=0 \
-  --context createNatGateways=true \
-  --context createVpcEndpoints=true \
-  --context certificateTransparency=true \
+# Deploy development environment (cost-optimized)
+npx cdk deploy --context env=dev-test --profile tak
+
+# Deploy production environment (high availability)
+npx cdk deploy --context env=prod --profile tak
+```
+
+#### Method 2: Override Specific Configuration Values
+```bash
+# Deploy dev-test with custom domain
+npx cdk deploy --context env=dev-test \
+  --context dev-test.r53ZoneName=custom.tak.nz \
+  --profile tak
+
+# Deploy production with custom VPC settings
+npx cdk deploy --context env=prod \
+  --context prod.vpcMajorId=5 \
+  --context prod.networking.createNatGateways=false \
   --profile tak
 ```
 
-#### Method 2: Minimal Context (Uses Environment Defaults)
+#### Available Environments
+
+| Environment | Stack Name | Description | Default Domain |
+|-------------|------------|-------------|----------------|
+| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized for development/testing | `dev.tak.nz` |
+| `prod` | `TAK-Prod-BaseInfra` | High availability for production | `tak.nz` |
+
+#### Configuration Override Examples
+
+All configuration is stored in `cdk.json` under the `context` section. You can override any value using CDK's built-in `--context` flag with dot notation:
+
 ```bash
-# Deploy with only required parameters (other parameters use environment-based defaults)
-npx cdk deploy \
-  --context stackName=Primary \
-  --context envType=dev-test \
-  --context r53ZoneName=tak.nz \
-  --profile tak
+# Override domain name
+npx cdk deploy --context env=dev-test --context dev-test.r53ZoneName=custom.tak.nz
+
+# Override VPC settings  
+npx cdk deploy --context env=prod --context prod.vpcMajorId=2 --context prod.vpcMinorId=1
+
+# Disable high availability features for cost savings
+npx cdk deploy --context env=prod --context prod.networking.createNatGateways=false
+
+# Override multiple ECR settings
+npx cdk deploy --context env=dev-test \
+  --context dev-test.ecr.imageRetentionCount=10 \
+  --context dev-test.ecr.scanOnPush=true
 ```
 
-#### Available Context Parameters
+**Required AWS Environment Variables:**
+```bash
+# Set AWS account and region for CDK deployment
+export CDK_DEFAULT_ACCOUNT=$(aws sts get-caller-identity --query Account --output text --profile tak)
+export CDK_DEFAULT_REGION=$(aws configure get region --profile tak || echo "ap-southeast-2")
 
-| Parameter | Required | Default | Description |
-|-----------|----------|---------|-------------|
-| `project` | No | `'TAK'` | Project name for resource tagging (does not affect stack name) |
-| `stackName` | No | Auto-generated | Environment name for stack (forms `TAK-{stackName}-BaseInfra`) |
-| `envType` | No | `dev-test` | Environment type: `prod` or `dev-test` |
-| `r53ZoneName` | **Yes** | None | Route 53 hosted zone domain name |
-| `vpcMajorId` | No | `0` | VPC CIDR major ID (10.{major}.0.0/16) |
-| `vpcMinorId` | No | `0` | VPC CIDR minor ID (10.{major}.{minor}.0/16) |
-| `createNatGateways` | No | env-based* | Create NAT Gateways: `true` or `false` |
-| `createVpcEndpoints` | No | env-based* | Create VPC endpoints: `true` or `false` |
-| `certificateTransparency` | No | env-based* | Enable ACM cert transparency: `true` or `false` |
+# Verify the values
+echo "Account: $CDK_DEFAULT_ACCOUNT"
+echo "Region: $CDK_DEFAULT_REGION"
+```
 
-*Environment-based defaults: `prod` = `true`, `dev-test` = `false`
-
-**Parameters:**
-- `envType`: Environment type (`prod` or `dev-test`). Default: `dev-test`
-  - `prod`: Includes redundant NAT Gateways, VPC endpoints, and production-grade resources
-  - `dev-test`: Cost-optimized for development/testing
-- `vpcMajorId`: Major VPC network ID (0-255) - selects /16 block from 10.0.0.0/8. Default: 0
-- `vpcMinorId`: Minor VPC network ID (0-15) - selects /20 subnet within the /16 block. Default: 0
-  - Combined creates CIDR: `10.{vpcMajorId}.{vpcMinorId*16}.0/20`
-  - Provides 4,096 IP addresses per VPC
-  - Allows for thousands of unique VPC configurations
-- `stackName`: Environment/deployment identifier used in stack naming. Default: `MyFirstStack`
-  - Creates stack name: `TAK-<name>-BaseInfra` (e.g., "TAK-Primary-BaseInfra")
-  - Also used in CloudFormation export names for cross-stack references
-- `r53ZoneName`: **(Required)** Existing public hosted zone name for ACM certificate creation (e.g., `tak.nz`)
-  - An ACM certificate is automatically created with DNS validation
-  - Certificate covers: `example.com`, `*.example.com`, `*.map.example.com`
-  - Certificate ARN is exported as: `{StackName}-CERTIFICATE-ARN`
-- `createNatGateways`: Create redundant NAT Gateway for high availability. Default: `true` for prod, `false` for dev-test
-  - `true`: Creates NAT Gateways in both availability zones for redundancy
-  - `false`: Creates single NAT Gateway in AZ-A only (cost-optimized)
-  - **Note**: At least one NAT Gateway is always created for private subnet internet access
-- `createVpcEndpoints`: Create VPC interface endpoints for AWS services. Default: `true` for prod, `false` for dev-test
-  - `true`: Creates interface endpoints for ECR, KMS, Secrets Manager, CloudWatch Logs
-  - `false`: Creates S3 gateway endpoint only (always created)
-  - Interface endpoints reduce data transfer costs and improve security by keeping traffic within the VPC
-- `certificateTransparency`: Enable certificate transparency logging for ACM certificate. Default: `true` for prod, `false` for dev-test
-  - `true`: Certificate is logged to public Certificate Transparency logs (recommended for production)
-  - `false`: Certificate transparency logging is disabled (useful for development/testing)
-
-**Hierarchical Parameter System:**
-The stack uses a cascading configuration system:
-1. **Environment Type** (`envType`) provides defaults for resource creation:
-   - `prod`: `createNatGateways=true`, `createVpcEndpoints=true`, `certificateTransparency=true`
-   - `dev-test`: `createNatGateways=false`, `createVpcEndpoints=false`, `certificateTransparency=false`
-2. **Individual context parameters** override environment defaults when specified
-3. **Example**: `--context envType=prod --context createNatGateways=false` creates production environment with cost-optimized NAT Gateway configuration
-
-**Required AWS Environment Variables (for AWS SDK only):**
-- `CDK_DEFAULT_ACCOUNT` - Your AWS account ID (auto-set with: `aws sts get-caller-identity --query Account --output text --profile tak`)
-- `CDK_DEFAULT_REGION` - Your AWS region (auto-set with: `aws configure get region --profile tak`)
-
-## Environment Configuration System
-
-The base infrastructure uses a structured environment configuration system defined in `lib/environment-config.ts`. This provides opinionated defaults for different environment types while maintaining the ability to override individual settings.
-
-### Environment Types
-
-#### **dev-test** (Default)
-- **Focus**: Cost optimization and development efficiency
-- **NAT Gateways**: Single NAT Gateway only
-- **VPC Endpoints**: S3 gateway endpoint only (no interface endpoints)
-- **Certificate Transparency**: Disabled (prevents public certificate logs)
-- **Container Insights**: Disabled
-- **KMS Key Rotation**: Disabled
-- **S3 Versioning**: Disabled
-
-#### **prod**
-- **Focus**: High availability, security, and production readiness
-- **NAT Gateways**: Redundant NAT Gateways in both AZs
-- **VPC Endpoints**: Interface endpoints for ECR, KMS, Secrets Manager, CloudWatch
-- **Certificate Transparency**: Enabled (compliance requirement)
-- **Container Insights**: Enabled
-- **KMS Key Rotation**: Enabled
-- **S3 Versioning**: Enabled
-
-### Configuration Override System
-
-The environment configuration can be overridden at multiple levels:
-
-1. **Environment Type** (`envType`) sets the base configuration
-2. **Individual Parameters** override specific settings via CDK context
-3. **Code-level Overrides** using `mergeEnvironmentConfig()` for advanced customization
+For detailed configuration options and advanced deployment scenarios, see the [Deployment Guide](DEPLOYMENT_GUIDE.md).

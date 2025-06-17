@@ -180,11 +180,11 @@ The TAK Base Infrastructure provides foundational AWS resources for containerize
 - **S3 Versioning**: Enabled (test data protection)
 - **Resource Removal**: DESTROY policy (allows staging cleanup)
 
-### 2. Parameter Configuration System
-- **CDK Context**: Primary configuration mechanism via `--context` CLI parameters
-- **Environment Defaults**: Automatic configuration based on `envType` (prod vs dev-test)
-- **Built-in Defaults**: Hardcoded fallback values for optional parameters
-- **Hierarchical Resolution**: CDK Context → Environment Defaults → Built-in Defaults
+### 2. Configuration System
+- **Context-Based Configuration**: Environment settings stored in `cdk.json` under `context` section
+- **Environment Selection**: Simple `--context env=dev-test|prod` for environment selection
+- **Runtime Overrides**: CDK's built-in `--context` flag with dot notation for specific overrides
+- **Single Source of Truth**: All configuration centralized in version-controlled `cdk.json`
 
 ## Security Architecture
 

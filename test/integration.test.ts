@@ -1,23 +1,16 @@
 import * as cdk from 'aws-cdk-lib';
 import { BaseInfraStack } from '../lib/base-infra-stack';
-import { createStackConfig } from '../lib/stack-config';
+import { createTestApp } from './utils';
 
 describe('Integration Tests', () => {
   it('synthesizes without errors when R53 zone is provided', () => {
-    // Always create a new App for each stack in this test
-    const app = new cdk.App({
-      context: {
-        // Mock the hosted zone lookup to avoid AWS calls
-        'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
-          Id: '/hostedzone/Z1PA6795UKMFR9',
-          Name: 'example.com.'
-        }
-      }
-    });
+    // Use the test app utility with proper context
+    const app = createTestApp();
+    const envConfig = app.node.tryGetContext('prod');
     
-    const config = createStackConfig('prod', 'example.com');
     const stack = new BaseInfraStack(app, 'TestStack', { 
-      configResult: config,
+      environment: 'prod',
+      envConfig: envConfig,
       env: { account: '123456789012', region: 'us-east-1' }
     });
     expect(() => stack).not.toThrow();
@@ -25,8 +18,22 @@ describe('Integration Tests', () => {
 
   it('throws error when R53 zone is not provided', () => {
     const app = new cdk.App();
+    const invalidEnvConfig = {
+      stackName: 'Test',
+      r53ZoneName: '', // Empty zone name should cause validation error
+      networking: { createNatGateways: false, createVpcEndpoints: false },
+      certificate: { transparencyLoggingEnabled: false },
+      general: { removalPolicy: 'DESTROY', enableDetailedLogging: true, enableContainerInsights: false },
+      kms: { enableKeyRotation: false },
+      s3: { enableVersioning: false, lifecycleRules: true },
+      ecr: { imageRetentionCount: 5, scanOnPush: false }
+    };
+    
     expect(() => {
-      createStackConfig('prod', ''); // Empty zone name should cause validation error
+      new BaseInfraStack(app, 'TestStack', {
+        environment: 'dev-test',
+        envConfig: invalidEnvConfig
+      });
     }).toThrow('r53ZoneName is required');
   });
 });

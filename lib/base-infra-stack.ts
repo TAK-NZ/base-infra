@@ -16,10 +16,11 @@ import { createAcmCertificate } from './constructs/acm';
 
 // Utility imports
 import { registerOutputs } from './outputs';
-import { BaseInfraConfigResult } from './stack-config';
+import { createStackConfigFromContext, BaseInfraConfigResult, ContextEnvironmentConfig } from './stack-config';
 
 export interface BaseInfraStackProps extends StackProps {
-  configResult: BaseInfraConfigResult;
+  environment: 'prod' | 'dev-test';
+  envConfig: ContextEnvironmentConfig; // Environment configuration from context
 }
 
 /**
@@ -32,44 +33,38 @@ export class BaseInfraStack extends cdk.Stack {
       description: 'TAK Base Layer - VPC, ECS, ECR, KMS, S3, ACM',
     });
 
-    // Destructure the complete configuration result
+    // Create configuration from context
+    const configResult: BaseInfraConfigResult = createStackConfigFromContext(props.environment, props.envConfig);
+
+    // Apply tags
+    const defaults = this.node.tryGetContext('tak-defaults');
+    cdk.Tags.of(this).add('Project', defaults?.project || 'TAK');
+    cdk.Tags.of(this).add('Environment', props.envConfig.stackName);
+    cdk.Tags.of(this).add('Component', defaults?.component || 'BaseInfra');
+    cdk.Tags.of(this).add('ManagedBy', 'CDK');
+
+    // Extract configuration values
     const { 
       stackConfig, 
-      environmentConfig, 
-      isHighAvailability,
+      isHighAvailability, 
       environmentLabel,
       createNatGateways,
       enableVpcEndpoints,
       certificateTransparency 
-    } = props.configResult;
-    
-    // Extract basic configuration values
-    const envType = stackConfig.envType;
+    } = configResult;
     const vpcMajorId = stackConfig.overrides?.networking?.vpcMajorId ?? 0;
     const vpcMinorId = stackConfig.overrides?.networking?.vpcMinorId ?? 0;
-    const resolvedStackName = id;
     const r53ZoneName = stackConfig.r53ZoneName;
 
-    // Add Environment Type tag to the stack
+    // Add Environment Type tag
     cdk.Tags.of(this).add('Environment Type', environmentLabel);
 
-    const stackName = Fn.ref('AWS::StackName');
-    const region = cdk.Stack.of(this).region;
-
-    // Create L2 VPC and subnets directly
+    // Create AWS resources
     const { vpc, ipv6CidrBlock, vpcLogicalId } = createVpcL2Resources(this, vpcMajorId, vpcMinorId, createNatGateways);
-
-    // ECS
     const { ecsCluster } = createEcsResources(this, this.stackName, vpc);
-
-    // ECR
     const { ecrRepo } = createEcrResources(this, this.stackName);
-
-    // KMS
     const { kmsKey, kmsAlias } = createKmsResources(this, this.stackName);
-
-    // S3
-    const { configBucket } = createS3Resources(this, this.stackName, region, kmsKey);
+    const { configBucket } = createS3Resources(this, this.stackName, cdk.Stack.of(this).region, kmsKey);
 
     // Endpoint Security Group (for interface endpoints)
     let endpointSg: ec2.SecurityGroup | undefined = undefined;
@@ -104,7 +99,7 @@ export class BaseInfraStack extends cdk.Stack {
     // Outputs
     registerOutputs({
       stack: this,
-      stackName,
+      stackName: this.stackName,
       vpc,
       ipv6CidrBlock,
       vpcLogicalId,
