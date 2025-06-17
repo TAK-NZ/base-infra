@@ -46,87 +46,17 @@ export interface BaseInfraEnvironmentConfig {
 }
 
 /**
- * Legacy environment configuration support (for backward compatibility)
+ * Complete configuration result with computed values
+ * This contains everything the stack needs without additional processing
  */
-function getEnvironmentConfig(envType: string): BaseInfraEnvironmentConfig {
-  if (envType === 'prod' || envType === 'production') {
-    return {
-      networking: {
-        createNatGateways: true,
-        createVpcEndpoints: true,
-      },
-      certificate: {
-        transparencyLoggingEnabled: true,
-      },
-      general: {
-        removalPolicy: cdk.RemovalPolicy.RETAIN,
-        enableDetailedLogging: true,
-        enableContainerInsights: true,
-      },
-      kms: {
-        enableKeyRotation: true,
-      },
-      s3: {
-        enableVersioning: true,
-        lifecycleRules: true,
-      },
-      ecr: {
-        imageRetentionCount: 20,
-        scanOnPush: true,
-      },
-    };
-  } else {
-    // dev-test default
-    return {
-      networking: {
-        createNatGateways: false,
-        createVpcEndpoints: false,
-      },
-      certificate: {
-        transparencyLoggingEnabled: false,
-      },
-      general: {
-        removalPolicy: cdk.RemovalPolicy.DESTROY,
-        enableDetailedLogging: true,
-        enableContainerInsights: false,
-      },
-      kms: {
-        enableKeyRotation: false,
-      },
-      s3: {
-        enableVersioning: false,
-        lifecycleRules: true,
-      },
-      ecr: {
-        imageRetentionCount: 5,
-        scanOnPush: false,
-      },
-    };
-  }
-}
-
-/**
- * Merge environment config with custom overrides
- */
-function mergeEnvironmentConfig(
-  baseConfig: BaseInfraEnvironmentConfig,
-  overrides: {
-    networking?: Partial<BaseInfraEnvironmentConfig['networking']>;
-    certificate?: Partial<BaseInfraEnvironmentConfig['certificate']>;
-    general?: Partial<BaseInfraEnvironmentConfig['general']>;
-    kms?: Partial<BaseInfraEnvironmentConfig['kms']>;
-    s3?: Partial<BaseInfraEnvironmentConfig['s3']>;
-    ecr?: Partial<BaseInfraEnvironmentConfig['ecr']>;
-  }
-): BaseInfraEnvironmentConfig {
-  return {
-    networking: { ...baseConfig.networking, ...overrides.networking },
-    certificate: { ...baseConfig.certificate, ...overrides.certificate },
-    general: { ...baseConfig.general, ...overrides.general },
-    kms: { ...baseConfig.kms, ...overrides.kms },
-    s3: { ...baseConfig.s3, ...overrides.s3 },
-    ecr: { ...baseConfig.ecr, ...overrides.ecr },
-  };
+export interface BaseInfraConfigResult {
+  stackConfig: BaseInfraConfig;
+  environmentConfig: BaseInfraEnvironmentConfig;
+  isHighAvailability: boolean;
+  environmentLabel: string;
+  createNatGateways: boolean;
+  enableVpcEndpoints: boolean;
+  certificateTransparency: boolean;
 }
 
 export interface BaseInfraConfig {
@@ -169,82 +99,6 @@ export interface BaseInfraConfig {
 }
 
 /**
- * Complete configuration result with computed values
- * This contains everything the stack needs without additional processing
- */
-export interface BaseInfraConfigResult {
-  stackConfig: BaseInfraConfig;
-  environmentConfig: BaseInfraEnvironmentConfig;
-  isHighAvailability: boolean;
-  environmentLabel: string;
-  createNatGateways: boolean;
-  enableVpcEndpoints: boolean;
-  certificateTransparency: boolean;
-}
-
-/**
- * Factory function to create complete stack configuration
- * This function consolidates all configuration logic into a single source of truth
- */
-export function createStackConfig(
-  envType: 'prod' | 'dev-test',
-  r53ZoneName: string,
-  overrides?: BaseInfraConfig['overrides'],
-  projectName: string = 'TAK',
-  componentName: string = 'BaseInfra'
-): BaseInfraConfigResult {
-  // Validate required parameters
-  if (!r53ZoneName || r53ZoneName.trim() === '') {
-    throw new Error('r53ZoneName is required and cannot be empty');
-  }
-  
-  if (!['prod', 'dev-test'].includes(envType)) {
-    throw new Error('Environment type must be one of: prod, dev-test');
-  }
-  
-  // Create basic stack config
-  const stackConfig: BaseInfraConfig = {
-    projectName,
-    componentName,
-    envType,
-    r53ZoneName,
-    overrides,
-  };
-
-  // Get environment-specific defaults
-  const baseEnvironmentConfig = getEnvironmentConfig(envType);
-  
-  // Merge with any overrides provided
-  const environmentConfig = overrides ? mergeEnvironmentConfig(baseEnvironmentConfig, {
-    networking: overrides.networking,
-    certificate: overrides.certificate,
-    general: overrides.general,
-    kms: overrides.kms,
-    s3: overrides.s3,
-    ecr: overrides.ecr,
-  }) : baseEnvironmentConfig;
-
-  // Compute derived values
-  const isHighAvailability = envType === 'prod';
-  const environmentLabel = envType === 'prod' ? 'Prod' : 'Dev-Test';
-  
-  // Final configuration values (environment + overrides)
-  const createNatGateways = environmentConfig.networking.createNatGateways;
-  const enableVpcEndpoints = environmentConfig.networking.createVpcEndpoints;
-  const certificateTransparency = environmentConfig.certificate.transparencyLoggingEnabled;
-
-  return {
-    stackConfig,
-    environmentConfig,
-    isHighAvailability,
-    environmentLabel,
-    createNatGateways,
-    enableVpcEndpoints,
-    certificateTransparency,
-  };
-}
-
-/**
  * Context-based configuration interface matching cdk.context.json structure
  */
 export interface ContextEnvironmentConfig {
@@ -279,7 +133,7 @@ export interface ContextEnvironmentConfig {
 
 /**
  * Create stack configuration from context-based configuration
- * This replaces the complex parameter parsing with direct context configuration
+ * This is the modern approach that replaces complex parameter parsing with direct context configuration
  */
 export function createStackConfigFromContext(
   envType: 'prod' | 'dev-test',
@@ -358,39 +212,4 @@ export function createStackConfigFromContext(
     enableVpcEndpoints,
     certificateTransparency,
   };
-}
-
-/**
- * Config validator utility
- */
-export class ConfigValidator {
-  static validate(config: BaseInfraConfig): void {
-    if (!config.r53ZoneName || config.r53ZoneName.trim() === '') {
-      throw new Error('r53ZoneName is required and cannot be empty');
-    }
-    
-    if (!['prod', 'dev-test'].includes(config.envType)) {
-      throw new Error('Environment type must be one of: prod, dev-test');
-    }
-    
-    if (!config.projectName || config.projectName.trim() === '') {
-      throw new Error('projectName is required and cannot be empty');
-    }
-    
-    if (!config.componentName || config.componentName.trim() === '') {
-      throw new Error('componentName is required and cannot be empty');
-    }
-  }
-
-  static validateResult(configResult: BaseInfraConfigResult): void {
-    this.validate(configResult.stackConfig);
-    
-    if (!configResult.environmentConfig) {
-      throw new Error('environmentConfig is required in configuration result');
-    }
-    
-    if (typeof configResult.isHighAvailability !== 'boolean') {
-      throw new Error('isHighAvailability must be a boolean');
-    }
-  }
 }
