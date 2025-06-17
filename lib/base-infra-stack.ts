@@ -52,15 +52,14 @@ export class BaseInfraStack extends cdk.Stack {
       enableVpcEndpoints,
       certificateTransparency 
     } = configResult;
-    const vpcMajorId = stackConfig.overrides?.networking?.vpcMajorId ?? 0;
-    const vpcMinorId = stackConfig.overrides?.networking?.vpcMinorId ?? 0;
+    const vpcCidr = stackConfig.overrides?.networking?.vpcCidr ?? props.envConfig.vpcCidr ?? '10.0.0.0/20';
     const r53ZoneName = stackConfig.r53ZoneName;
 
     // Add Environment Type tag
     cdk.Tags.of(this).add('Environment Type', environmentLabel);
 
     // Create AWS resources
-    const { vpc, ipv6CidrBlock, vpcLogicalId } = createVpcL2Resources(this, vpcMajorId, vpcMinorId, createNatGateways);
+    const { vpc, ipv6CidrBlock, vpcLogicalId } = createVpcL2Resources(this, vpcCidr, createNatGateways);
     const { ecsCluster } = createEcsResources(this, this.stackName, vpc);
     const { ecrRepo } = createEcrResources(this, this.stackName);
     const { kmsKey, kmsAlias } = createKmsResources(this, this.stackName);

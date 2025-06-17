@@ -5,8 +5,7 @@ describe('Stack Configuration', () => {
     const prodContextConfig: ContextEnvironmentConfig = {
       stackName: 'Prod',
       r53ZoneName: 'example.com',
-      vpcMajorId: 1,
-      vpcMinorId: 0,
+      vpcCidr: '10.1.0.0/20',
       networking: { createNatGateways: true, createVpcEndpoints: true },
       certificate: { transparencyLoggingEnabled: true },
       general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
@@ -18,8 +17,7 @@ describe('Stack Configuration', () => {
     const devTestContextConfig: ContextEnvironmentConfig = {
       stackName: 'Dev',
       r53ZoneName: 'dev.example.com',
-      vpcMajorId: 0,
-      vpcMinorId: 1,
+      vpcCidr: '10.0.0.0/20',
       networking: { createNatGateways: false, createVpcEndpoints: false },
       certificate: { transparencyLoggingEnabled: false },
       general: { removalPolicy: 'DESTROY', enableDetailedLogging: true, enableContainerInsights: false },

@@ -10,11 +10,14 @@ import { Construct } from 'constructs';
  * - L1 constructs (CfnVPCCidrBlock, CfnEgressOnlyInternetGateway) for IPv6 support
  *   since the L2 VPC construct doesn't natively support IPv6
  * 
+ * @param scope - The construct scope
+ * @param vpcCidr - The IPv4 CIDR block for the VPC (defaults to 10.0.0.0/20)
+ * @param createNatGateways - Whether to create NAT gateways for high availability
  * @returns Object containing the VPC, IPv6 CIDR block, and VPC logical ID for use in outputs
  */
-export function createVpcL2Resources(scope: Construct, vpcMajorId: number, vpcMinorId: number, createNatGateways: boolean): { vpc: ec2.Vpc; ipv6CidrBlock: ec2.CfnVPCCidrBlock; vpcLogicalId: string } {
+export function createVpcL2Resources(scope: Construct, vpcCidr: string = '10.0.0.0/20', createNatGateways: boolean): { vpc: ec2.Vpc; ipv6CidrBlock: ec2.CfnVPCCidrBlock; vpcLogicalId: string } {
   const vpc = new ec2.Vpc(scope, 'Vpc', {
-    ipAddresses: ec2.IpAddresses.cidr(`10.${vpcMajorId}.0.0/16`),
+    ipAddresses: ec2.IpAddresses.cidr(vpcCidr),
     maxAzs: 2,
     natGateways: createNatGateways ? 2 : 1, // 1 NAT Gateway always, 2 for redundancy
     subnetConfiguration: [

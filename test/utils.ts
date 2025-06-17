@@ -39,8 +39,7 @@ export function createTestApp(): cdk.App {
       'dev-test': {
         stackName: 'Dev',
         r53ZoneName: 'dev.tak.nz',
-        vpcMajorId: 0,
-        vpcMinorId: 1,
+        vpcCidr: '10.0.0.0/20',
         networking: {
           createNatGateways: false,
           createVpcEndpoints: false
@@ -68,8 +67,7 @@ export function createTestApp(): cdk.App {
       'prod': {
         stackName: 'Prod',
         r53ZoneName: 'tak.nz',
-        vpcMajorId: 1,
-        vpcMinorId: 0,
+        vpcCidr: '10.1.0.0/20',
         networking: {
           createNatGateways: true,
           createVpcEndpoints: true

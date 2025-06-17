@@ -74,8 +74,6 @@ export interface BaseInfraConfig {
   overrides?: {
     networking?: {
       vpcCidr?: string;
-      vpcMajorId?: number;
-      vpcMinorId?: number;
       createNatGateways?: boolean;
       createVpcEndpoints?: boolean;
     };
@@ -104,8 +102,7 @@ export interface BaseInfraConfig {
 export interface ContextEnvironmentConfig {
   stackName: string;
   r53ZoneName: string;
-  vpcMajorId?: number;
-  vpcMinorId?: number;
+  vpcCidr?: string;
   networking: {
     createNatGateways: boolean;
     createVpcEndpoints: boolean;
@@ -185,11 +182,8 @@ export function createStackConfigFromContext(
     envType,
     r53ZoneName: contextConfig.r53ZoneName,
     overrides: {
-      ...(contextConfig.vpcMajorId !== undefined && {
-        networking: { vpcMajorId: contextConfig.vpcMajorId }
-      }),
-      ...(contextConfig.vpcMinorId !== undefined && {
-        networking: { ...contextConfig.vpcMajorId !== undefined ? { vpcMajorId: contextConfig.vpcMajorId } : {}, vpcMinorId: contextConfig.vpcMinorId }
+      ...(contextConfig.vpcCidr && {
+        networking: { vpcCidr: contextConfig.vpcCidr }
       }),
     },
   };

@@ -35,7 +35,7 @@ export function registerOutputs({ stack, stackName, vpc, ipv6CidrBlock, vpcLogic
   });
   new cdk.CfnOutput(stack, 'VpcCidrIpv4Output', {
     description: 'VPC IPv4 CIDR Block',
-    value: `10.${stack.node.tryGetContext('vpcMajorId') ?? 0}.0.0/16`,
+    value: vpc.vpcCidrBlock,
     exportName: Fn.sub(createDynamicExportName(BASE_EXPORT_NAMES.VPC_CIDR_IPV4), {
       StackName: stackName,
     }),
