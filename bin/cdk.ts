@@ -30,20 +30,30 @@ Expected cdk.json structure:
   `);
 }
 
+// Apply context overrides for individual parameters
+// This allows --context r53ZoneName=custom.domain.com to override the config
+const finalEnvConfig = {
+  ...envConfig,
+  // Override individual parameters if provided via --context
+  r53ZoneName: app.node.tryGetContext('r53ZoneName') || envConfig.r53ZoneName,
+  vpcCidr: app.node.tryGetContext('vpcCidr') || envConfig.vpcCidr,
+  stackName: app.node.tryGetContext('stackName') || envConfig.stackName,
+};
+
 // Create stack name
-const stackName = `TAK-${envConfig.stackName}-BaseInfra`;
+const stackName = `TAK-${finalEnvConfig.stackName}-BaseInfra`;
 
 // Create the stack
 const stack = new BaseInfraStack(app, stackName, {
   environment: envName as 'prod' | 'dev-test',
-  envConfig: envConfig,
+  envConfig: finalEnvConfig,
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: process.env.CDK_DEFAULT_REGION || defaults?.region || 'ap-southeast-2',
   },
   tags: {
     Project: defaults?.project || 'TAK',
-    Environment: envConfig.stackName,
+    Environment: finalEnvConfig.stackName,
     Component: defaults?.component || 'BaseInfra',
     ManagedBy: 'CDK'
   }
