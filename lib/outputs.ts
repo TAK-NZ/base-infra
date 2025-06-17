@@ -1,21 +1,28 @@
 import * as cdk from 'aws-cdk-lib';
 import { Fn } from 'aws-cdk-lib';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as ecs from 'aws-cdk-lib/aws-ecs';
+import * as ecr from 'aws-cdk-lib/aws-ecr';
+import * as kms from 'aws-cdk-lib/aws-kms';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
+import * as route53 from 'aws-cdk-lib/aws-route53';
 import { createDynamicExportName, BASE_EXPORT_NAMES } from './cloudformation-exports.js';
 
 export interface OutputParams {
   stack: cdk.Stack;
   stackName: string;
-  vpc: import('aws-cdk-lib/aws-ec2').Vpc;
-  ipv6CidrBlock?: import('aws-cdk-lib/aws-ec2').CfnVPCCidrBlock;
+  vpc: ec2.Vpc;
+  ipv6CidrBlock?: ec2.CfnVPCCidrBlock;
   vpcLogicalId?: string;
-  ecsCluster: any;
-  ecrRepo: any;
-  kmsKey: any;
-  kmsAlias: any;
-  configBucket: any;
-  vpcEndpoints?: Record<string, any>;
-  certificate?: any;
-  hostedZone?: any;
+  ecsCluster: ecs.Cluster;
+  ecrRepo: ecr.Repository;
+  kmsKey: kms.Key;
+  kmsAlias: kms.Alias;
+  configBucket: s3.Bucket;
+  vpcEndpoints?: Record<string, ec2.GatewayVpcEndpoint | ec2.InterfaceVpcEndpoint>;
+  certificate?: acm.Certificate;
+  hostedZone?: route53.IHostedZone;
 }
 
 export function registerOutputs({ stack, stackName, vpc, ipv6CidrBlock, vpcLogicalId, ecsCluster, ecrRepo, kmsKey, kmsAlias, configBucket, vpcEndpoints, certificate, hostedZone }: OutputParams) {
@@ -127,16 +134,6 @@ export function registerOutputs({ stack, stackName, vpc, ipv6CidrBlock, vpcLogic
         new cdk.CfnOutput(stack, `${key}IdOutput`, {
           description: `${key} VPC Endpoint ID`,
           value: endpoint.vpcEndpointId,
-          exportName: Fn.sub(createDynamicExportName(exportKey), {
-            StackName: stackName,
-          }),
-        });
-      }
-      if (endpoint && endpoint.vpcEndpointType) {
-        const exportKey = `${key.toUpperCase()}-ENDPOINT-TYPE`;
-        new cdk.CfnOutput(stack, `${key}TypeOutput`, {
-          description: `${key} VPC Endpoint Type`,
-          value: endpoint.vpcEndpointType,
           exportName: Fn.sub(createDynamicExportName(exportKey), {
             StackName: stackName,
           }),

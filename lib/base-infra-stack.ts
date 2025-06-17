@@ -2,6 +2,8 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { RemovalPolicy, StackProps, Fn, CfnOutput } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
+import * as route53 from 'aws-cdk-lib/aws-route53';
 
 // Construct imports
 import { createVpcL2Resources } from './constructs/vpc';
@@ -47,7 +49,7 @@ export class BaseInfraStack extends cdk.Stack {
     const vpcMinorId = stackConfig.overrides?.networking?.vpcMinorId ?? 0;
     const resolvedStackName = id;
     const r53ZoneName = stackConfig.r53ZoneName;
-    
+
     // Add Environment Type tag to the stack
     cdk.Tags.of(this).add('Environment Type', environmentLabel);
 
@@ -88,8 +90,8 @@ export class BaseInfraStack extends cdk.Stack {
     });
 
     // ACM Certificate
-    let certificate: any = undefined;
-    let hostedZone: any = undefined;
+    let certificate: acm.Certificate | undefined = undefined;
+    let hostedZone: route53.IHostedZone | undefined = undefined;
     
     // Always create certificate with R53 zone 
     const acmResources = createAcmCertificate(this, { 

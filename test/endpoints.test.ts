@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
 import { BaseInfraStack } from '../lib/base-infra-stack';
 import { createStackConfig } from '../lib/stack-config';
-import { getResourceByType } from './utils';
+import { getResourceByType, CloudFormationResource } from './utils';
 
 describe('VPC Endpoints', () => {
   it('creates S3 gateway endpoint and prod interface endpoints', () => {
@@ -31,7 +31,7 @@ describe('VPC Endpoints', () => {
     // Interface endpoints (prod)
     const endpoints = getResourceByType(template.toJSON(), 'AWS::EC2::VPCEndpoint');
     // At least one interface endpoint should exist
-    expect(endpoints.some((ep: any) => ep.Properties.VpcEndpointType === 'Interface')).toBe(true);
+    expect(endpoints.some((ep: CloudFormationResource) => ep.Properties?.VpcEndpointType === 'Interface')).toBe(true);
   });
 
   it('does not create interface endpoints in dev-test', () => {
@@ -55,7 +55,7 @@ describe('VPC Endpoints', () => {
     const template = Template.fromStack(stack);
     const endpoints = getResourceByType(template.toJSON(), 'AWS::EC2::VPCEndpoint');
     // No interface endpoints should exist in dev-test
-    const interfaceEndpoints = endpoints.filter((ep: any) => ep.Properties.VpcEndpointType === 'Interface');
+    const interfaceEndpoints = endpoints.filter((ep: CloudFormationResource) => ep.Properties?.VpcEndpointType === 'Interface');
     expect(interfaceEndpoints.length).toBe(0);
     expect(interfaceEndpoints.length).toBe(0);
   });
@@ -84,6 +84,6 @@ describe('VPC Endpoints', () => {
     const template = Template.fromStack(stack);
     const endpoints = getResourceByType(template.toJSON(), 'AWS::EC2::VPCEndpoint');
     // Interface endpoints should exist due to override
-    expect(endpoints.some((ep: any) => ep.Properties.VpcEndpointType === 'Interface')).toBe(true);
+    expect(endpoints.some((ep: CloudFormationResource) => ep.Properties?.VpcEndpointType === 'Interface')).toBe(true);
   });
 });

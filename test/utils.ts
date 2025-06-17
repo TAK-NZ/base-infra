@@ -1,8 +1,30 @@
 // Utility functions for CDK tests
-export function getResourceByType(template: any, type: string) {
-  return Object.values(template.Resources).filter((r: any) => r.Type === type);
+
+// CloudFormation template interfaces
+export interface CloudFormationResource {
+  Type: string;
+  Properties?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
-export function getOutputByName(template: any, name: string) {
-  return template.Outputs[name];
+export interface CloudFormationOutput {
+  Value: unknown;
+  Description?: string;
+  Export?: { Name: string };
+  [key: string]: unknown;
+}
+
+export interface CloudFormationTemplate {
+  Resources?: Record<string, CloudFormationResource>;
+  Outputs?: Record<string, CloudFormationOutput>;
+  Parameters?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export function getResourceByType(template: CloudFormationTemplate, type: string): CloudFormationResource[] {
+  return Object.values(template.Resources || {}).filter((r: CloudFormationResource) => r.Type === type);
+}
+
+export function getOutputByName(template: CloudFormationTemplate, name: string): CloudFormationOutput | undefined {
+  return template.Outputs?.[name];
 }
