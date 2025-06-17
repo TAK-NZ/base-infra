@@ -8,7 +8,6 @@ node_modules
 !*.config.js
 !eslint.config.js
 !jest.config.js
-!bin/cdk.js
 
 # CDK asset staging directory
 .cdk.staging
