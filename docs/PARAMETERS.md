@@ -304,34 +304,3 @@ export CDK_DEFAULT_REGION=$(aws configure get region || echo "ap-southeast-2")
 # Deploy with environment variables set
 npx cdk deploy --context env=prod
 ```
-
-## Benefits of Context-Based Configuration
-
-- **90% fewer command-line parameters**
-- **Single source of truth** in `cdk.json`
-- **Version controlled** configuration
-- **Consistent deployments** across team members
-- **Easy environment management**
-- **Built-in CDK override support**
-
-## Migration from Legacy Parameter System
-
-### Before (Legacy)
-```bash
-npx cdk deploy \
-  --context envType=prod \
-  --context stackName=Prod \
-  --context r53ZoneName=tak.nz \
-  --context vpcMajorId=1 \
-  --context createNatGateways=true \
-  --context createVpcEndpoints=true
-```
-
-### After (Current)
-```bash
-# Simple deployment with all settings from cdk.json
-npx cdk deploy --context env=prod
-
-# Override specific settings if needed
-npx cdk deploy --context env=prod --context prod.r53ZoneName=custom.tak.nz
-```

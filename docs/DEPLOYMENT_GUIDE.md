@@ -4,7 +4,7 @@
 
 ### **Prerequisites**
 - AWS Account with configured credentials
-- Public Route 53 hosted zone for your domain
+- Public Route 53 hosted zone for your domain in the same account
 - Node.js 18+ and npm installed
 
 ### **One-Command Deployment**
@@ -254,8 +254,6 @@ After successful base infrastructure deployment:
 
 1. **Deploy Authentication Layer** - [auth-infra repository](https://github.com/TAK-NZ/auth-infra)
 2. **Deploy TAK Server Layer** - [tak-infra repository](https://github.com/TAK-NZ/tak-infra)
-3. **Configure DNS records** for your applications
-4. **Set up monitoring and alerting** as needed
 
 ### **Cleanup**
 ```bash
@@ -279,84 +277,6 @@ npx cdk deploy --context env=dev-test \
   --context networking.createNatGateways=true \
   --context vpcCidr=10.2.0.0/20
 ```
-
----
-
-## **📁 Configuration System Details**
-
-### **Environment Configuration Storage**
-All environment settings are stored in [`cdk.json`](../cdk.json) under the `context` section, following AWS CDK best practices:
-
-```json
-{
-  "app": "npx ts-node --prefer-ts-exts bin/cdk.ts",
-  "context": {
-    "dev-test": {
-      "stackName": "Dev",
-      "r53ZoneName": "dev.tak.nz",
-      "vpcCidr": "10.0.0.0/20",
-      "networking": {
-        "createNatGateways": false,
-        "createVpcEndpoints": false
-      },
-      "certificate": {
-        "transparencyLoggingEnabled": false
-      },
-      "general": {
-        "removalPolicy": "DESTROY",
-        "enableDetailedLogging": true,
-        "enableContainerInsights": false
-      },
-      "kms": {
-        "enableKeyRotation": false
-      },
-      "s3": {
-        "enableVersioning": false,
-        "lifecycleRules": true
-      },
-      "ecr": {
-        "imageRetentionCount": 5,
-        "scanOnPush": false
-      }
-    },
-    "prod": {
-      "stackName": "Prod",
-      "r53ZoneName": "tak.nz",
-      "vpcCidr": "10.0.0.0/20",
-      "networking": {
-        "createNatGateways": true,
-        "createVpcEndpoints": true
-      },
-      "certificate": {
-        "transparencyLoggingEnabled": true
-      },
-      "general": {
-        "removalPolicy": "RETAIN",
-        "enableDetailedLogging": true,
-        "enableContainerInsights": true
-      },
-      "kms": {
-        "enableKeyRotation": true
-      },
-      "s3": {
-        "enableVersioning": true,
-        "lifecycleRules": true
-      },
-      "ecr": {
-        "imageRetentionCount": 20,
-        "scanOnPush": true
-      }
-    },
-    "tak-defaults": {
-      "project": "TAK",
-      "component": "BaseInfra",
-      "region": "ap-southeast-2"
-    }
-  }
-}
-```
-
-The system **automatically loads** this configuration at deployment time and applies any command-line overrides.
 
 ---
 
@@ -405,17 +325,3 @@ export CDK_DEFAULT_ACCOUNT=123456789012
 export CDK_DEFAULT_REGION=ap-southeast-2
 npx cdk deploy --context env=prod
 ```
-
----
-
-## **🎯 Benefits**
-
-- **🚀 95% simpler command-line syntax**
-- **🎯 Environment-agnostic overrides**
-- **📝 Single source of truth** for all configuration
-- **🔄 Git-tracked settings** with version control
-- **🤝 Consistent deployments** across team members
-- **⚡ Easy environment management**
-- **🔧 Flexible runtime customization**
-
-The new system transforms complex, error-prone deployments into simple, reliable commands that anyone on the team can use confidently! 🚀

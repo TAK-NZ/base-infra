@@ -6,7 +6,7 @@
 
 The [Team Awareness Kit (TAK)](https://tak.gov/solutions/emergency) provides Fire, Emergency Management, and First Responders an operationally agnostic tool for improved situational awareness and a common operational picture. 
 
-This repository deploys the foundational AWS infrastructure required for a complete TAK server deployment, including networking, compute, storage, and security services.
+This repository deploys the foundational AWS infrastructure required for a complete TAK server deployment, including networking, compute, storage, and security services - all while using [free and open source software](https://en.wikipedia.org/wiki/Free_and_open-source_software).
 
 It is specifically targeted at the deployment of [TAK.NZ](https://tak.nz) via a CI/CD pipeline. Nevertheless others interested in deploying a similar infrastructure can do so by adapting the configuration items.
 
@@ -132,11 +132,6 @@ npm run deploy:prod -- --context prod.networking.createNatGateways=false
 - **🛡️ Network Security** - Private subnets with controlled internet access
 - **🔒 IAM Policies** - Least-privilege access patterns throughout
 - **📋 VPC Endpoints** - Private connectivity to AWS services (production)
-
-### Recent Security Enhancements
-- ✅ **Fixed ECR vulnerability** - Replaced overly permissive `AnyPrincipal` with account-specific access
-- ✅ **Enhanced network isolation** - VPC endpoints reduce internet traffic
-- ✅ **Improved key management** - Centralized KMS key usage
 
 ## Getting Help
 
