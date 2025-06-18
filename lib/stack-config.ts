@@ -3,8 +3,6 @@
  * This makes the stack reusable across different projects and environments
  */
 
-import * as cdk from 'aws-cdk-lib';
-
 /**
  * Context-based configuration interface matching cdk.context.json structure
  * This is used directly by the stack without complex transformations

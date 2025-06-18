@@ -1,6 +1,6 @@
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import { Fn, Tags } from 'aws-cdk-lib';
+import * as cdk from 'aws-cdk-lib';
 
 export interface VpcResources {
   vpc: ec2.Vpc;
@@ -49,7 +49,7 @@ export class BaseInfraVpc extends ec2.Vpc {
       ],
     });
 
-    Tags.of(this).add('Name', this.node.path);
+    cdk.Tags.of(this).add('Name', this.node.path);
 
     // Set up IPv6 dual-stack networking
     this.ipv6CidrBlockResource = this.setupIpv6();
@@ -68,10 +68,10 @@ export class BaseInfraVpc extends ec2.Vpc {
     const vpcLogicalId = (this.node.defaultChild as ec2.CfnVPC).logicalId;
     
     // Get the IPv6 CIDR block using clean CDK utilities
-    const vpcIpv6CidrBlock = Fn.select(0, this.vpcIpv6CidrBlocks);
+    const vpcIpv6CidrBlock = cdk.Fn.select(0, this.vpcIpv6CidrBlocks);
     
     // Slice our ::/56 CIDR block into 256 chunks of ::/64 CIDRs
-    const subnetIpv6CidrBlocks = Fn.cidr(vpcIpv6CidrBlock, 256, "64");
+    const subnetIpv6CidrBlocks = cdk.Fn.cidr(vpcIpv6CidrBlock, 256, "64");
 
     // Associate an IPv6 CIDR sub-block to each subnet
     [
@@ -81,7 +81,7 @@ export class BaseInfraVpc extends ec2.Vpc {
     ].forEach((subnet, i) => {
       subnet.node.addDependency(ipv6CidrBlock);
       const cfnSubnet = subnet.node.defaultChild as ec2.CfnSubnet;
-      cfnSubnet.ipv6CidrBlock = Fn.select(i, subnetIpv6CidrBlocks);
+      cfnSubnet.ipv6CidrBlock = cdk.Fn.select(i, subnetIpv6CidrBlocks);
       cfnSubnet.assignIpv6AddressOnCreation = true;
     });
 

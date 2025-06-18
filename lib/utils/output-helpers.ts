@@ -4,7 +4,6 @@
  */
 
 import * as cdk from 'aws-cdk-lib';
-import { Fn } from 'aws-cdk-lib';
 import { createDynamicExportName } from '../cloudformation-exports';
 
 /**
@@ -32,7 +31,7 @@ export function createOutput(
   return new cdk.CfnOutput(stack, config.id, {
     description: config.description,
     value: config.value,
-    exportName: Fn.sub(createDynamicExportName(config.exportKey)),
+    exportName: cdk.Fn.sub(createDynamicExportName(config.exportKey)),
   });
 }
 
