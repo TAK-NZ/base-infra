@@ -1,5 +1,4 @@
 import * as cdk from 'aws-cdk-lib';
-import { Fn } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
@@ -7,7 +6,8 @@ import * as kms from 'aws-cdk-lib/aws-kms';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
-import { createDynamicExportName, BASE_EXPORT_NAMES } from './cloudformation-exports.js';
+import { createOutputs, createConditionalOutputs } from './utils/output-helpers';
+import { getOutputConfigs, getConditionalOutputConfigs } from './utils/constants';
 
 export interface OutputParams {
   stack: cdk.Stack;
@@ -25,149 +25,18 @@ export interface OutputParams {
   hostedZone?: route53.IHostedZone;
 }
 
-export function registerOutputs({ stack, stackName, vpc, ipv6CidrBlock, vpcLogicalId, ecsCluster, ecrRepo, kmsKey, kmsAlias, configBucket, vpcEndpoints, certificate, hostedZone }: OutputParams) {
-  new cdk.CfnOutput(stack, 'VpcIdOutput', {
-    description: 'VPC ID',
-    value: vpc.vpcId,
-    exportName: Fn.sub(createDynamicExportName(BASE_EXPORT_NAMES.VPC_ID), {
-      StackName: stackName,
-    }),
-  });
-  new cdk.CfnOutput(stack, 'VpcCidrIpv4Output', {
-    description: 'VPC IPv4 CIDR Block',
-    value: vpc.vpcCidrBlock,
-    exportName: Fn.sub(createDynamicExportName(BASE_EXPORT_NAMES.VPC_CIDR_IPV4), {
-      StackName: stackName,
-    }),
-  });
+/**
+ * Registers all CloudFormation outputs for the base infrastructure stack
+ * Uses helper functions to create outputs with consistent naming and structure
+ */
+export function registerOutputs(params: OutputParams): void {
+  const { stack, stackName } = params;
   
-  // IPv6 CIDR output - using VPC's Ipv6CidrBlocks attribute
-  if (ipv6CidrBlock && vpcLogicalId) {
-    new cdk.CfnOutput(stack, 'VpcCidrIpv6Output', {
-      description: 'VPC IPv6 CIDR Block',
-      value: {
-        "Fn::Select": [
-          0,
-          {
-            "Fn::GetAtt": [
-              vpcLogicalId,
-              "Ipv6CidrBlocks"
-            ]
-          }
-        ]
-      } as any,
-      exportName: Fn.sub(createDynamicExportName(BASE_EXPORT_NAMES.VPC_CIDR_IPV6), {
-        StackName: stackName,
-      }),
-    });
-  }
-  // Subnet outputs (explicit for A/B only)
-  // Subnet outputs (static, L2 VPC)
-  new cdk.CfnOutput(stack, 'SubnetPublicAOutput', {
-    description: 'Subnet Public A',
-    value: vpc.publicSubnets[0].subnetId,
-    exportName: Fn.sub(createDynamicExportName(BASE_EXPORT_NAMES.SUBNET_PUBLIC_A), {
-      StackName: stackName,
-    }),
-  });
-  new cdk.CfnOutput(stack, 'SubnetPublicBOutput', {
-    description: 'Subnet Public B',
-    value: vpc.publicSubnets[1].subnetId,
-    exportName: Fn.sub(createDynamicExportName(BASE_EXPORT_NAMES.SUBNET_PUBLIC_B), {
-      StackName: stackName,
-    }),
-  });
-  new cdk.CfnOutput(stack, 'SubnetPrivateAOutput', {
-    description: 'Subnet Private A',
-    value: vpc.privateSubnets[0].subnetId,
-    exportName: Fn.sub(createDynamicExportName(BASE_EXPORT_NAMES.SUBNET_PRIVATE_A), {
-      StackName: stackName,
-    }),
-  });
-  new cdk.CfnOutput(stack, 'SubnetPrivateBOutput', {
-    description: 'Subnet Private B',
-    value: vpc.privateSubnets[1].subnetId,
-    exportName: Fn.sub(createDynamicExportName(BASE_EXPORT_NAMES.SUBNET_PRIVATE_B), {
-      StackName: stackName,
-    }),
-  });
-  new cdk.CfnOutput(stack, 'EcsArnOutput', {
-    description: 'ECS ARN',
-    value: ecsCluster.clusterArn,
-    exportName: Fn.sub(createDynamicExportName(BASE_EXPORT_NAMES.ECS_CLUSTER), {
-      StackName: stackName,
-    }),
-  });
-  new cdk.CfnOutput(stack, 'EcrArnOutput', {
-    description: 'ECR ARN',
-    value: ecrRepo.repositoryArn,
-    exportName: Fn.sub(createDynamicExportName(BASE_EXPORT_NAMES.ECR_REPO), {
-      StackName: stackName,
-    }),
-  });
-  new cdk.CfnOutput(stack, 'KmsArnOutput', {
-    description: 'KMS ARN',
-    value: kmsKey.keyArn,
-    exportName: Fn.sub(createDynamicExportName(BASE_EXPORT_NAMES.KMS_KEY), {
-      StackName: stackName,
-    }),
-  });
-  new cdk.CfnOutput(stack, 'KmsAliasOutput', {
-    description: 'KMS Alias Name',
-    value: kmsAlias.aliasName,
-    exportName: Fn.sub(createDynamicExportName(BASE_EXPORT_NAMES.KMS_ALIAS), {
-      StackName: stackName,
-    }),
-  });
-  new cdk.CfnOutput(stack, 'ConfigBucketArnOutput', {
-    description: 'S3 Config Bucket ARN',
-    value: configBucket.bucketArn,
-    exportName: Fn.sub(createDynamicExportName(BASE_EXPORT_NAMES.S3_BUCKET), {
-      StackName: stackName,
-    }),
-  });
-  if (vpcEndpoints) {
-    Object.entries(vpcEndpoints).forEach(([key, endpoint]) => {
-      if (endpoint && endpoint.vpcEndpointId) {
-        // Replace underscores with hyphens for export name
-        const exportKey = `${key.toUpperCase()}-ID`;
-        new cdk.CfnOutput(stack, `${key}IdOutput`, {
-          description: `${key} VPC Endpoint ID`,
-          value: endpoint.vpcEndpointId,
-          exportName: Fn.sub(createDynamicExportName(exportKey), {
-            StackName: stackName,
-          }),
-        });
-      }
-    });
-  }
-  // ACM Certificate output (if certificate exists)
-  if (certificate) {
-    new cdk.CfnOutput(stack, 'CertificateArnOutput', {
-      description: 'ACM Certificate ARN for public hosted zone',
-      value: certificate.certificateArn,
-      exportName: Fn.sub(createDynamicExportName(BASE_EXPORT_NAMES.CERTIFICATE_ARN), {
-        StackName: stackName,
-      }),
-    });
-  }
-
-  // Hosted Zone output (if hosted zone exists)
-  if (hostedZone) {
-    new cdk.CfnOutput(stack, 'HostedZoneIdOutput', {
-      description: 'Route53 Public Hosted Zone ID',
-      value: hostedZone.hostedZoneId,
-      exportName: Fn.sub(createDynamicExportName(BASE_EXPORT_NAMES.HOSTED_ZONE_ID), {
-        StackName: stackName,
-      }),
-    });
-
-    new cdk.CfnOutput(stack, 'HostedZoneNameOutput', {
-      description: 'Route53 Public Hosted Zone Name',
-      value: hostedZone.zoneName,
-      exportName: Fn.sub(createDynamicExportName(BASE_EXPORT_NAMES.HOSTED_ZONE_NAME), {
-        StackName: stackName,
-      }),
-    });
-  }
+  // Create standard outputs
+  const standardOutputs = getOutputConfigs(params);
+  createOutputs(stack, stackName, standardOutputs);
+  
+  // Create conditional outputs (only if resources exist)
+  const conditionalOutputs = getConditionalOutputConfigs(params);
+  createConditionalOutputs(stack, stackName, conditionalOutputs);
 }

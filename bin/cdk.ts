@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
 import { BaseInfraStack } from '../lib/base-infra-stack';
+import { applyContextOverrides } from '../lib/utils/context-overrides';
+import { DEFAULT_AWS_REGION } from '../lib/utils/constants';
+import { generateStandardTags } from '../lib/utils/tag-helpers';
 
 const app = new cdk.App();
 
@@ -35,44 +38,7 @@ Expected cdk.json structure:
 // --context r53ZoneName=custom.domain.com
 // --context networking.createNatGateways=true
 // --context certificate.transparencyLoggingEnabled=false
-const finalEnvConfig = {
-  ...envConfig,
-  // Override top-level parameters
-  r53ZoneName: app.node.tryGetContext('r53ZoneName') || envConfig.r53ZoneName,
-  vpcCidr: app.node.tryGetContext('vpcCidr') || envConfig.vpcCidr,
-  stackName: app.node.tryGetContext('stackName') || envConfig.stackName,
-  
-  // Override nested parameters
-  networking: {
-    ...envConfig.networking,
-    createNatGateways: app.node.tryGetContext('networking.createNatGateways') ?? envConfig.networking.createNatGateways,
-    createVpcEndpoints: app.node.tryGetContext('networking.createVpcEndpoints') ?? envConfig.networking.createVpcEndpoints,
-  },
-  certificate: {
-    ...envConfig.certificate,
-    transparencyLoggingEnabled: app.node.tryGetContext('certificate.transparencyLoggingEnabled') ?? envConfig.certificate.transparencyLoggingEnabled,
-  },
-  general: {
-    ...envConfig.general,
-    removalPolicy: app.node.tryGetContext('general.removalPolicy') || envConfig.general.removalPolicy,
-    enableDetailedLogging: app.node.tryGetContext('general.enableDetailedLogging') ?? envConfig.general.enableDetailedLogging,
-    enableContainerInsights: app.node.tryGetContext('general.enableContainerInsights') ?? envConfig.general.enableContainerInsights,
-  },
-  kms: {
-    ...envConfig.kms,
-    enableKeyRotation: app.node.tryGetContext('kms.enableKeyRotation') ?? envConfig.kms.enableKeyRotation,
-  },
-  s3: {
-    ...envConfig.s3,
-    enableVersioning: app.node.tryGetContext('s3.enableVersioning') ?? envConfig.s3.enableVersioning,
-    lifecycleRules: app.node.tryGetContext('s3.lifecycleRules') ?? envConfig.s3.lifecycleRules,
-  },
-  ecr: {
-    ...envConfig.ecr,
-    imageRetentionCount: app.node.tryGetContext('ecr.imageRetentionCount') ?? envConfig.ecr.imageRetentionCount,
-    scanOnPush: app.node.tryGetContext('ecr.scanOnPush') ?? envConfig.ecr.scanOnPush,
-  },
-};
+const finalEnvConfig = applyContextOverrides(app, envConfig);
 
 // Create stack name
 const stackName = `TAK-${finalEnvConfig.stackName}-BaseInfra`;
@@ -83,12 +49,7 @@ const stack = new BaseInfraStack(app, stackName, {
   envConfig: finalEnvConfig,
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: process.env.CDK_DEFAULT_REGION || defaults?.region || 'ap-southeast-2',
+    region: process.env.CDK_DEFAULT_REGION || defaults?.region || DEFAULT_AWS_REGION,
   },
-  tags: {
-    Project: defaults?.project || 'TAK',
-    Environment: finalEnvConfig.stackName,
-    Component: defaults?.component || 'BaseInfra',
-    ManagedBy: 'CDK'
-  }
+  tags: generateStandardTags(finalEnvConfig, envName as 'prod' | 'dev-test', defaults)
 });

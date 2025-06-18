@@ -17,6 +17,7 @@ import { createAcmCertificate } from './constructs/acm';
 // Utility imports
 import { registerOutputs } from './outputs';
 import { ContextEnvironmentConfig } from './stack-config';
+import { DEFAULT_VPC_CIDR } from './utils/constants';
 
 export interface BaseInfraStackProps extends StackProps {
   environment: 'prod' | 'dev-test';
@@ -36,24 +37,14 @@ export class BaseInfraStack extends cdk.Stack {
     // Use environment configuration directly (no complex transformations needed)
     const { envConfig } = props;
     
-    // Apply tags
-    const defaults = this.node.tryGetContext('tak-defaults');
-    cdk.Tags.of(this).add('Project', defaults?.project || 'TAK');
-    cdk.Tags.of(this).add('Environment', envConfig.stackName);
-    cdk.Tags.of(this).add('Component', defaults?.component || 'BaseInfra');
-    cdk.Tags.of(this).add('ManagedBy', 'CDK');
-
     // Extract configuration values directly from envConfig
-    const vpcCidr = envConfig.vpcCidr ?? '10.0.0.0/20';
+    const vpcCidr = envConfig.vpcCidr ?? DEFAULT_VPC_CIDR;
     const r53ZoneName = envConfig.r53ZoneName;
     const createNatGateways = envConfig.networking.createNatGateways;
     const enableVpcEndpoints = envConfig.networking.createVpcEndpoints;
     const certificateTransparency = envConfig.certificate.transparencyLoggingEnabled;
     const isHighAvailability = props.environment === 'prod';
     const environmentLabel = props.environment === 'prod' ? 'Prod' : 'Dev-Test';
-
-    // Add Environment Type tag
-    cdk.Tags.of(this).add('Environment Type', environmentLabel);
 
     // Create AWS resources
     const { vpc, ipv6CidrBlock, vpcLogicalId } = createVpcL2Resources(this, vpcCidr, createNatGateways);
