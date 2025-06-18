@@ -26,7 +26,7 @@
         "createVpcEndpoints": false
       },
       "certificate": {
-        "transparencyLoggingEnabled": false
+        "transparencyLoggingEnabled": true
       },
       "general": {
         "removalPolicy": "DESTROY",
@@ -74,7 +74,7 @@
       }
     },
     "tak-defaults": {
-      "project": "TAK",
+      "project": "TAK.NZ",
       "component": "BaseInfra",
       "region": "ap-southeast-2"
     },
