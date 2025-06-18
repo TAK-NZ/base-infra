@@ -131,10 +131,9 @@ The TAK Base Infrastructure provides foundational AWS resources for containerize
 ### Network Architecture
 
 #### 1. Subnet Design
-- **Public Subnets**: 10.x.0.0/24, 10.x.1.0/24 (NAT Gateways, Internet Gateway)
-- **Private Subnets**: 10.x.2.0/24, 10.x.3.0/24 (Application workloads)
-- **CIDR Calculation**: `10.{vpcMajorId}.{vpcMinorId + subnet_offset}.0/24`
-- **Flexibility**: Supports thousands of unique VPC configurations
+- **VPC CIDR**: 10.0.0.0/20
+- **Public Subnets**: 10.0.0.0/24, 10.0.1.0/24 (NAT Gateways, Internet Gateway)
+- **Private Subnets**: 10.0.2.0/24, 10.0.3.0/24 (Application workloads)
 
 #### 2. Internet Connectivity
 - **Internet Gateway**: Bidirectional internet access for public subnets

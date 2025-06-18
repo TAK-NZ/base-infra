@@ -1,76 +1,129 @@
 # TAK Base Infrastructure - Quick Reference
 
-## Quick Deployment
+## Quick Deployment Commands
 
-### Development Environment
+### Using Enhanced NPM Scripts (Recommended)
 ```bash
-# Deploy development (cost-optimized)
-npx cdk deploy --context env=dev-test --profile tak
-```
-- ✅ Cost optimized (~$35/month)
-- ✅ Same core functionality  
-- ✅ Perfect for development
-- ❌ Single point of failure (shared NAT Gateway)
+# Development environment (cost-optimized)
+npm run deploy:dev
 
-### Production Environment
-```bash
-# Deploy production (high availability)
-npx cdk deploy --context env=prod --profile tak
+# Production environment (high availability)  
+npm run deploy:prod
 ```
-- ✅ High availability (dual NAT Gateways)
-- ✅ Private VPC endpoints for AWS services
-- ✅ Fault tolerant across AZs
-- ❌ Higher cost (~$91/month)
+
+### Using Direct CDK Commands
+```bash
+# Development environment
+npx cdk deploy --context env=dev-test --profile your-aws-profile
+
+# Production environment
+npx cdk deploy --context env=prod --profile your-aws-profile
+```
+
+## Environment Comparison
+
+### Development Environment (`dev-test`)
+- ✅ **Cost optimized** (~$45/month)
+- ✅ **Same core functionality** as production
+- ✅ **Perfect for development** and testing
+- ✅ **Quick deployment** and teardown
+- ❌ **Single NAT Gateway** (potential single point of failure)
+- ❌ **No VPC endpoints** (internet-routed AWS API calls)
+
+### Production Environment (`prod`) 
+- ✅ **High availability** (dual NAT Gateways across AZs)
+- ✅ **Private VPC endpoints** for AWS services
+- ✅ **Enhanced security** features enabled
+- ✅ **Monitoring and logging** enabled
+- ❌ **Higher cost** (~$144/month)
 
 ## Configuration Override Examples
 
 ```bash
-# Deploy dev-test with custom domain
-npx cdk deploy --context env=dev-test --context dev-test.r53ZoneName=custom.tak.nz
+# Custom domain deployment
+npm run deploy:dev -- --context dev-test.r53ZoneName=custom.tak.nz
 
-# Deploy production with cost optimization
-npx cdk deploy --context env=prod --context prod.networking.createNatGateways=false
+# Cost-optimized production deployment
+npm run deploy:prod -- --context prod.networking.createNatGateways=false
 
-# Deploy with custom VPC settings
-npx cdk deploy --context env=dev-test --context dev-test.vpcMajorId=2
+# Custom VPC CIDR
+npm run deploy:dev -- --context dev-test.vpcCidr=10.5.0.0/20
+
+# Enable features in development
+npm run deploy:dev -- --context dev-test.networking.createVpcEndpoints=true
 ```
 
-## Key Resources Deployed
+## Infrastructure Resources
 
 | Resource | Dev-Test | Production | Notes |
 |----------|----------|------------|-------|
-| VPC | 1 | 1 | /20 CIDR (4,096 IPs) |
-| Subnets | 4 | 4 | 2 public + 2 private |
-| NAT Gateways | **1** | **2** | Major cost difference |
-| VPC Endpoints | **1** | **6** | S3 only vs full suite |
-| ECS Cluster | 1 | 1 | Fargate-enabled |
-| ECR Repository | 1 | 1 | Container images |
-| S3 Bucket | 1 | 1 | Config storage |
-| KMS Key | 1 | 1 | Encryption |
+| **VPC** | 1 | 1 | IPv4/IPv6 dual-stack, /20 CIDR |
+| **Subnets** | 4 | 4 | 2 public + 2 private across 2 AZs |
+| **NAT Gateways** | **1** | **2** | Major cost difference |
+| **VPC Endpoints** | **1** | **6** | S3 Gateway vs full interface suite |
+| **ECS Cluster** | 1 | 1 | Fargate-enabled |
+| **ECR Repository** | 1 | 1 | Lifecycle policies configured |
+| **S3 Bucket** | 1 | 1 | KMS encrypted, config storage |
+| **KMS Key + Alias** | 1 | 1 | Customer-managed encryption |
+| **ACM Certificate** | 1 | 1 | Wildcard + SAN domains |
 
-## Cost Breakdown
+## Cost Breakdown (Estimated for ap-southeast-2)
 
-### Dev-Test (~$35/month)
-- NAT Gateway: $32.40
-- Storage (ECR+S3): $1.52  
-- Data Transfer: $0.90
+### Development Environment (~$45/month)
+- **VPC**: Free
+- **Subnets**: Free  
+- **NAT Gateway**: $42.48/month (1 gateway × $0.059/hour)
+- **VPC Endpoints**: $0 (S3 Gateway is free)
+- **ECS**: $0 (Fargate pay-per-use)
+- **ECR**: ~$1/month (minimal images)
+- **S3**: ~$1/month (config storage)
+- **KMS**: $1/month (customer-managed key)
+- **ACM**: Free
+- **Data Processing**: Variable (depends on usage)
 
-### Production (~$91/month)
-- NAT Gateways (2x): $64.80
-- VPC Endpoints (5x): $22.50
-- Storage (ECR+S3): $1.52
-- Data Transfer: $1.95
+### Production Environment (~$144/month)
+- **NAT Gateways**: $84.96/month (2 × $42.48)
+- **VPC Endpoints**: $50.40/month (5 × $10.08)
+- **Storage**: ~$2/month (ECR + S3)
+- **KMS**: $1/month
+- **Data Processing**: Variable (reduced via endpoints)
+
+## Development Workflow
+
+### Available NPM Scripts
+```bash
+# Development and Testing
+npm run dev                   # Build and test
+npm run test:watch           # Run tests in watch mode
+npm run test:coverage        # Generate coverage report
+
+# Infrastructure Management
+npm run synth:dev            # Preview dev infrastructure
+npm run synth:prod           # Preview prod infrastructure
+npm run cdk:diff:dev         # Show changes for dev
+npm run cdk:diff:prod        # Show changes for prod
+npm run cdk:bootstrap        # Bootstrap CDK
+```
 
 ## Decision Matrix
 
-Choose **Dev-Test** if:
-- 💰 Cost is primary concern
-- 🧪 Development/testing workloads
-- 📚 Learning about TAK on AWS
-- ⏰ Occasional downtime acceptable
+### Choose Development Environment if:
+- 💰 **Cost is primary concern**
+- 🧪 **Development/testing workloads**
+- 📚 **Learning TAK on AWS**
+- ⏰ **Occasional downtime acceptable**
+- 🚀 **Rapid iteration needed**
 
-Choose **Production** if:
-- 🚀 Production workloads
-- 🔒 Security compliance required
-- ⚡ High availability needed
-- 👥 Serving real users
+### Choose Production Environment if:
+- 🏢 **Production workloads**
+- 🔒 **Security compliance required**
+- ⚡ **High availability needed**
+- 👥 **Serving real users**
+- 📊 **Monitoring/insights required**
+
+## Quick Links
+
+- **[Main README](../README.md)** - Complete project overview
+- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Detailed deployment instructions
+- **[Configuration Guide](PARAMETERS.md)** - Complete configuration reference
+- **[Architecture Guide](ARCHITECTURE.md)** - Technical architecture details

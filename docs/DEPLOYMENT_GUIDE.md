@@ -1,38 +1,76 @@
-# 🚀 **TAK Base Infrastructure - Deployment Guide**
+# 🚀 TAK Base Infrastructure - Deployment Guide
 
-## **CDK Context-Based Configuration System**
+## **Quick Start (Recommended)**
 
-The TAK Base Infrastructure uses a context-based configuration system for streamlined environment management.
+### **Prerequisites**
+- AWS Account with configured credentials
+- Public Route 53 hosted zone for your domain
+- Node.js 18+ and npm installed
 
-### **✅ Quick Start**
-
-#### **Deploy Development Environment:**
+### **One-Command Deployment**
 ```bash
-npx cdk deploy --context env=dev-test
+# Install dependencies
+npm install
+
+# Deploy development environment
+npm run deploy:dev
+
+# Deploy production environment  
+npm run deploy:prod
 ```
 
-#### **Deploy Production Environment:**
-```bash
-npx cdk deploy --context env=prod
-```
-
-That's it! 🎉
+**That's it!** 🎉 The enhanced npm scripts handle building, context configuration, and deployment.
 
 ---
 
-## **📋 Available Environments**
+## **📋 Environment Configurations**
 
-| Environment | Stack Name | Domain | Description |
-|-------------|------------|--------|-------------|
-| `dev-test` | `TAK-Dev-BaseInfra` | `dev.tak.nz` | Development/testing environment with cost optimization |
-| `prod` | `TAK-Prod-BaseInfra` | `tak.nz` | Production environment with high availability |
+| Environment | Stack Name | Domain | Cost/Month* | Features |
+|-------------|------------|--------|-------------|----------|
+| **dev-test** | `TAK-Dev-BaseInfra` | `dev.tak.nz` | ~$35 | Cost-optimized, single NAT gateway |
+| **prod** | `TAK-Prod-BaseInfra` | `tak.nz` | ~$91 | High availability, dual NAT gateways, VPC endpoints |
+
+*Estimated AWS costs excluding data transfer and usage
 
 ---
 
-## **🔧 Configuration System**
+## **🔧 Advanced Configuration**
 
-### **Environment Configuration**
-All environment-specific configurations are stored in `cdk.json` under the `context` section:
+### **Custom Domain Deployment**
+```bash
+# Deploy with custom domain
+npm run deploy:dev -- --context dev-test.r53ZoneName=custom.tak.nz
+npm run deploy:prod -- --context prod.r53ZoneName=enterprise.tak.nz
+```
+
+### **Network Configuration Overrides**
+```bash
+# Custom VPC CIDR
+npm run deploy:dev -- --context dev-test.vpcCidr=10.5.0.0/20
+
+# Disable NAT gateways for cost savings
+npm run deploy:prod -- --context prod.networking.createNatGateways=false
+
+# Enable VPC endpoints in development
+npm run deploy:dev -- --context dev-test.networking.createVpcEndpoints=true
+```
+
+### **Infrastructure Preview**
+```bash
+# Preview changes before deployment
+npm run synth:dev     # Development environment
+npm run synth:prod    # Production environment
+
+# Show what would change
+npm run cdk:diff:dev  # Development diff
+npm run cdk:diff:prod # Production diff
+```
+---
+
+## **⚙️ Configuration System Deep Dive**
+
+### **Environment Configuration Structure**
+All settings are stored in [`cdk.json`](../cdk.json) under the `context` section:
 
 ```json
 {
@@ -45,145 +83,197 @@ All environment-specific configurations are stored in `cdk.json` under the `cont
         "createNatGateways": false,
         "createVpcEndpoints": false
       },
-      "general": {
-        "removalPolicy": "DESTROY"
-      }
-    },
-    "prod": {
-      "stackName": "Prod", 
-      "r53ZoneName": "tak.nz",
-      "vpcCidr": "10.1.0.0/20",
-      "networking": {
-        "createNatGateways": true,
-        "createVpcEndpoints": true
+      "certificate": {
+        "transparencyLoggingEnabled": true  
       },
       "general": {
-        "removalPolicy": "RETAIN"
+        "removalPolicy": "DESTROY",
+        "enableDetailedLogging": true,
+        "enableContainerInsights": false
       }
     }
   }
 }
 ```
-If deploying this stack outside of TAK.NZ, the values need to be adjusted. 
 
-### **Development Environment (`dev-test`):**
-- **Cost Optimized:** Single NAT Gateway, no VPC endpoints
-- **Flexible:** `DESTROY` removal policy for easy cleanup
-- **Simplified:** Reduced ECR image retention, no container insights
+### **Runtime Configuration Overrides**
+Override any configuration value using CDK's built-in `--context` flag with dot notation:
 
-### **Production Environment (`prod`):**
-- **High Availability:** Redundant NAT Gateways, full VPC endpoints
-- **Secure:** `RETAIN` removal policy, certificate transparency logging
-- **Monitored:** Container insights enabled, vulnerability scanning
+### **Configuration Override Examples**
 
----
-
-## **⚙️ Runtime Configuration Overrides**
-
-The stack supports **simplified context overrides** that work for **any environment** without needing environment prefixes.
-
-### **🎯 Simple Override Examples:**
-
-#### **Custom Domain Name (works for any environment):**
+#### **Domain and Networking**
 ```bash
-npx cdk deploy --context env=dev-test --context r53ZoneName=custom.tak.nz
-npx cdk deploy --context env=prod --context r53ZoneName=production.example.com
+# Custom domain for any environment
+npm run deploy:dev -- --context dev-test.r53ZoneName=custom.tak.nz
+npm run deploy:prod -- --context prod.r53ZoneName=enterprise.example.com
+
+# VPC configuration
+npm run deploy:dev -- --context dev-test.vpcCidr=10.2.0.0/20
+npm run deploy:prod -- --context prod.vpcCidr=10.5.0.0/16
+
+# Networking features
+npm run deploy:dev -- --context dev-test.networking.createNatGateways=true
+npm run deploy:prod -- --context prod.networking.createVpcEndpoints=false
 ```
 
-#### **Override VPC CIDR:**
+#### **Resource Configuration**
 ```bash
-npx cdk deploy --context env=dev-test --context vpcCidr=10.2.0.0/20
-npx cdk deploy --context env=prod --context vpcCidr=10.5.0.0/16
+# ECR settings
+npm run deploy:dev -- \
+  --context dev-test.ecr.imageRetentionCount=10 \
+  --context dev-test.ecr.scanOnPush=true
+
+# S3 and KMS
+npm run deploy:prod -- \
+  --context prod.s3.enableVersioning=false \
+  --context prod.kms.enableKeyRotation=false
+
+# Certificate settings
+npm run deploy:dev -- --context dev-test.certificate.transparencyLoggingEnabled=false
 ```
 
-#### **Enable NAT Gateways for Development Testing:**
-```bash
-npx cdk deploy --context env=dev-test --context networking.createNatGateways=true
-```
+### **🔧 Available Configuration Parameters**
 
-#### **Disable NAT Gateways for Production Cost Savings:**
-```bash
-npx cdk deploy --context env=prod --context networking.createNatGateways=false
-```
-
-#### **Custom Stack Name for Feature Branch:**
-```bash
-npx cdk deploy --context env=dev-test --context stackName=Dev-FeatureBranch
-```
-
-#### **Enable Certificate Transparency for Development:**
-```bash
-npx cdk deploy --context env=dev-test --context certificate.transparencyLoggingEnabled=true
-```
-
-#### **Override Multiple ECR Settings:**
-```bash
-npx cdk deploy --context env=dev-test \
-  --context ecr.imageRetentionCount=10 \
-  --context ecr.scanOnPush=true
-```
-
-#### **Disable Container Insights for Production Cost Control:**
-```bash
-npx cdk deploy --context env=prod --context general.enableContainerInsights=false
-```
-
-### **🔄 Available Override Parameters:**
-
-#### **Top-Level Parameters:**
+| Parameter | Description | Default (dev-test) | Default (prod) |
+|-----------|-------------|-------------------|----------------|
+| `stackName` | CloudFormation stack name | `Dev` | `Prod` |
+| `r53ZoneName` | Route 53 hosted zone | `dev.tak.nz` | `tak.nz` |
+| `vpcCidr` | VPC CIDR block | `10.0.0.0/20` | `10.0.0.0/20` |
+| `networking.createNatGateways` | Enable NAT gateways | `false` | `true` |
+| `networking.createVpcEndpoints` | Enable VPC endpoints | `false` | `true` |
+| `certificate.transparencyLoggingEnabled` | Certificate transparency | `true` | `true` |
+| `general.removalPolicy` | Resource cleanup policy | `DESTROY` | `RETAIN` |
+| `ecr.imageRetentionCount` | ECR image retention | `5` | `20` |
+| `ecr.scanOnPush` | ECR vulnerability scanning | `false` | `true` |
 - `r53ZoneName` - Route53 hosted zone name
 - `vpcCidr` - VPC IPv4 CIDR block (e.g., `10.0.0.0/20`)
 - `stackName` - Stack name suffix
 
-#### **Networking Configuration:**
-- `networking.createNatGateways` - Enable/disable NAT gateways (`true`/`false`)
-- `networking.createVpcEndpoints` - Enable/disable VPC endpoints (`true`/`false`)
+---
 
-#### **Certificate Configuration:**
-- `certificate.transparencyLoggingEnabled` - Enable certificate transparency (`true`/`false`)
+## **🚀 First-Time Setup**
 
-#### **General Configuration:**
-- `general.removalPolicy` - Resource removal policy (`DESTROY`/`RETAIN`)
-- `general.enableDetailedLogging` - Enable detailed CloudWatch logging (`true`/`false`)
-- `general.enableContainerInsights` - Enable ECS container insights (`true`/`false`)
+### **Prerequisites**
+1. **AWS Account** with appropriate permissions
+2. **Route 53 Public Hosted Zone** for your domain
+3. **Node.js 18+** and npm installed  
+4. **AWS CLI** configured with credentials
 
-#### **KMS Configuration:**
-- `kms.enableKeyRotation` - Enable automatic key rotation (`true`/`false`)
+### **Initial Setup Steps**
+```bash
+# 1. Clone and install
+git clone <repository-url>
+cd base-infra
+npm install
 
-#### **S3 Configuration:**
-- `s3.enableVersioning` - Enable S3 bucket versioning (`true`/`false`)
-- `s3.lifecycleRules` - Enable S3 lifecycle management (`true`/`false`)
+# 2. Set environment variables (if using AWS profiles)
+export CDK_DEFAULT_ACCOUNT=$(aws sts get-caller-identity --query Account --output text --profile your-profile)
+export CDK_DEFAULT_REGION=$(aws configure get region --profile your-profile)
 
-#### **ECR Configuration:**
-- `ecr.imageRetentionCount` - Number of images to retain (numeric value)
-- `ecr.scanOnPush` - Enable vulnerability scanning on push (`true`/`false`)
+# 3. Bootstrap CDK (first time only)
+npx cdk bootstrap --profile your-profile
 
-### **✨ Benefits of the New Override System:**
+# 4. Create ECS service-linked role (if first ECS deployment)
+aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com --profile your-profile
+```
 
-- **🎯 Environment Agnostic:** Same override syntax works for both `dev-test` and `prod`
-- **🚀 Simplified:** No need for environment prefixes (e.g., `dev-test.` or `prod.`)
-- **💡 Intuitive:** Direct property names match the configuration structure
-- **🔧 Flexible:** Override any configuration property at deployment time
-- **📝 Clean:** Command lines are shorter and more readable
+### **Deployment Commands**
+```bash
+# Deploy using enhanced npm scripts
+npm run deploy:dev    # Development environment
+npm run deploy:prod   # Production environment
+
+# Or use direct CDK commands
+npx cdk deploy --context env=dev-test --profile your-profile
+npx cdk deploy --context env=prod --profile your-profile
+```
 
 ---
 
-## **🏗️ What Changed from Legacy System**
+## **🛠️ Troubleshooting**
 
-### **Before: Complex Environment-Prefixed Overrides**
-Required environment-specific prefixes:
+### **Common Issues**
+
+#### **Missing Route 53 Hosted Zone**
+```
+Error: Cannot find hosted zone
+```
+**Solution:** Ensure your domain's public hosted zone exists in Route 53 before deployment.
+
+#### **Insufficient Permissions**
+```
+Error: User is not authorized to perform: cloudformation:*
+```
+**Solution:** Ensure your AWS credentials have sufficient permissions for CDK operations.
+
+#### **ECS Service-Linked Role Missing**
+```
+Error: Unable to create service-linked role
+```
+**Solution:** Create the ECS service-linked role manually:
 ```bash
-# Old complex approach (no longer needed)
-npx cdk deploy --context env=dev-test \
-  --context dev-test.r53ZoneName=custom.tak.nz \
-  --context dev-test.networking.createNatGateways=true \
-  --context dev-test.vpcCidr=10.2.0.0/20
+aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com
 ```
 
-### **After: Simple Universal Overrides**
-Clean, environment-agnostic syntax:
+#### **Context Environment Not Found**
+```
+Error: Environment configuration for 'dev-test' not found
+```
+**Solution:** Ensure you're using the correct environment name (`dev-test` or `prod`).
+
+### **Debug Commands**
 ```bash
-# New simplified approach
+# Check what would be deployed
+npm run synth:dev
+npm run synth:prod
+
+# See differences from current state
+npm run cdk:diff:dev
+npm run cdk:diff:prod
+
+# View CloudFormation events
+aws cloudformation describe-stack-events --stack-name TAK-Dev-BaseInfra --profile your-profile
+```
+
+---
+
+## **� Post-Deployment**
+
+### **Verify Deployment**
+```bash
+# Check stack status
+aws cloudformation describe-stacks --stack-name TAK-Dev-BaseInfra --profile your-profile
+
+# View outputs
+aws cloudformation describe-stacks --stack-name TAK-Dev-BaseInfra \
+  --query 'Stacks[0].Outputs' --profile your-profile
+```
+
+### **Next Steps**
+After successful base infrastructure deployment:
+
+1. **Deploy Authentication Layer** - [auth-infra repository](https://github.com/TAK-NZ/auth-infra)
+2. **Deploy TAK Server Layer** - [tak-infra repository](https://github.com/TAK-NZ/tak-infra)
+3. **Configure DNS records** for your applications
+4. **Set up monitoring and alerting** as needed
+
+### **Cleanup**
+```bash
+# Destroy development environment
+npx cdk destroy --context env=dev-test --profile your-profile
+
+# Destroy production environment (use with caution!)
+npx cdk destroy --context env=prod --profile your-profile
+```
+
+---
+
+## **🔗 Related Documentation**
+
+- **[Main README](../README.md)** - Project overview and quick start
+- **[Architecture Guide](ARCHITECTURE.md)** - Technical architecture details
+- **[Configuration Guide](PARAMETERS.md)** - Complete configuration reference
+- **[Quick Reference](QUICK_REFERENCE.md)** - Fast deployment commands
 npx cdk deploy --context env=dev-test \
   --context r53ZoneName=custom.tak.nz \
   --context networking.createNatGateways=true \
@@ -232,7 +322,7 @@ All environment settings are stored in [`cdk.json`](../cdk.json) under the `cont
     "prod": {
       "stackName": "Prod",
       "r53ZoneName": "tak.nz",
-      "vpcCidr": "10.1.0.0/20",
+      "vpcCidr": "10.0.0.0/20",
       "networking": {
         "createNatGateways": true,
         "createVpcEndpoints": true

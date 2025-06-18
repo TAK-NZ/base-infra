@@ -1,20 +1,23 @@
-# Configuration Management
+# Configuration Management Guide
 
-The TAK Base Infrastructure uses **AWS CDK best practices** with a context-based configuration system stored in `cdk.json`. This eliminates complex command-line parameters and provides a single source of truth for all environment configurations.
+The TAK Base Infrastructure uses **AWS CDK context-based configuration** with centralized settings in [`cdk.json`](../cdk.json). This provides a single source of truth for all environment configurations while supporting runtime overrides.
 
-## Quick Start
+## Quick Configuration Reference
 
+### **Environment-Specific Deployment**
 ```bash
-# Deploy development environment
-npx cdk deploy --context env=dev-test
+# Deploy with default configuration
+npm run deploy:dev     # Development environment
+npm run deploy:prod    # Production environment
 
-# Deploy production environment  
-npx cdk deploy --context env=prod
+# Deploy with configuration overrides
+npm run deploy:dev -- --context dev-test.r53ZoneName=custom.tak.nz
+npm run deploy:prod -- --context prod.vpcCidr=10.5.0.0/20
 ```
 
-## Configuration System
+## Configuration System Architecture
 
-### Environment-Based Configuration
+### **Context-Based Configuration**
 All configurations are stored in [`cdk.json`](../cdk.json) under the `context` section:
 
 ```json
@@ -22,135 +25,239 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
   "context": {
     "dev-test": {
       "stackName": "Dev",
-      "r53ZoneName": "dev.tak.nz",
-      "vpcMajorId": 0,
-      "vpcMinorId": 1,
+      "r53ZoneName": "dev.tak.nz", 
+      "vpcCidr": "10.0.0.0/20",
       "networking": {
         "createNatGateways": false,
         "createVpcEndpoints": false
-      },
-      "certificate": {
-        "transparencyLoggingEnabled": false
-      },
-      "general": {
-        "removalPolicy": "DESTROY"
       }
     },
     "prod": {
-      "stackName": "Prod", 
+      "stackName": "Prod",
       "r53ZoneName": "tak.nz",
-      "vpcMajorId": 1,
-      "vpcMinorId": 0,
+      "vpcCidr": "10.1.0.0/20", 
       "networking": {
         "createNatGateways": true,
         "createVpcEndpoints": true
-      },
-      "certificate": {
-        "transparencyLoggingEnabled": true
-      },
-      "general": {
-        "removalPolicy": "RETAIN"
       }
     }
   }
 }
 ```
+      },
+      "certificate": {
+        "transparencyLoggingEnabled": false
+      },
+### **Environment Comparison**
 
-### Available Environments
+| Environment | Stack Name | Description | Monthly Cost* |
+|-------------|------------|-------------|---------------|
+| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized development | ~$45 |
+| `prod` | `TAK-Prod-BaseInfra` | High-availability production | ~$144 |
 
-| Environment | Stack Name | Description | Cost/Month |
-|-------------|------------|-------------|------------|
-| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized for development | ~$35 |
-| `prod` | `TAK-Prod-BaseInfra` | High availability for production | ~$91 |
+*Estimated AWS costs for ap-southeast-2, excluding data processing and storage usage
 
-### Key Configuration Differences
+### **Key Configuration Differences**
 
 | Setting | dev-test | prod | Impact |
 |---------|----------|------|--------|
-| **NAT Gateways** | Single | Redundant (2x) | Cost & availability |
-| **VPC Endpoints** | S3 only | Full suite (5x) | Cost & security |
-| **Certificate Transparency** | Disabled | Enabled | Compliance |
-| **Container Insights** | Disabled | Enabled | Monitoring |
-| **KMS Key Rotation** | Disabled | Enabled | Security |
-| **S3 Versioning** | Disabled | Enabled | Data protection |
-| **Removal Policy** | DESTROY | RETAIN | Data safety |
+| **VPC CIDR** | `10.0.0.0/20` | `10.0.0.0/20` | Same network range |
+| **NAT Gateways** | `false` (cost savings) | `true` (redundancy) | High availability |
+| **VPC Endpoints** | `false` (cost savings) | `true` (security) | Private AWS access |
+| **Certificate Transparency** | `true` | `true` | Security compliance |
+| **Container Insights** | `false` | `true` | ECS monitoring |
+| **KMS Key Rotation** | `false` | `true` | Enhanced security |
+| **S3 Versioning** | `false` | `true` | Data protection |
+| **ECR Image Retention** | `5 images` | `20 images` | Storage management |
+| **ECR Vulnerability Scanning** | `false` | `true` | Security scanning |
+| **Removal Policy** | `DESTROY` | `RETAIN` | Resource cleanup |
 
-## Runtime Configuration Overrides
+---
 
-Use CDK's built-in `--context` flag to override any configuration value:
+## **Runtime Configuration Overrides**
 
-### Common Override Examples
+Use CDK's built-in `--context` flag with dot notation to override any configuration value:
 
-#### **Custom Domain Name:**
+### **Network Configuration**
+### **General Configuration**
+| Parameter | Description | dev-test | prod |
+|-----------|-------------|----------|------|
+| `general.removalPolicy` | Resource cleanup policy | `DESTROY` | `RETAIN` |
+| `general.enableDetailedLogging` | CloudWatch detailed logging | `true` | `true` |
+| `general.enableContainerInsights` | ECS container insights | `false` | `true` |
+
+### **KMS Configuration**
+| Parameter | Description | dev-test | prod |
+|-----------|-------------|----------|------|
+| `kms.enableKeyRotation` | Automatic key rotation | `false` | `true` |
+
+### **S3 Configuration**
+| Parameter | Description | dev-test | prod |
+|-----------|-------------|----------|------|
+| `s3.enableVersioning` | S3 bucket versioning | `false` | `true` |
+| `s3.lifecycleRules` | S3 lifecycle management | `true` | `true` |
+
+### **ECR Configuration**
+| Parameter | Description | dev-test | prod |
+|-----------|-------------|----------|------|
+| `ecr.imageRetentionCount` | Number of images to retain | `5` | `20` |
+| `ecr.scanOnPush` | Vulnerability scanning on push | `false` | `true` |
+
+---
+
+## **Security Considerations**
+
+### **Network Security**
+- **Private Subnets**: All compute resources deployed in private subnets
+- **NAT Gateways**: Controlled internet access from private subnets
+- **VPC Endpoints**: Private connectivity to AWS services (production)
+- **Security Groups**: Restrictive access controls throughout
+
+### **Data Security**
+- **KMS Encryption**: All data encrypted with customer-managed keys
+- **S3 Bucket Security**: Block all public access, enforce SSL
+- **ECR Repository**: Account-restricted access (no public pull permissions)
+
+### **Access Control**
+- **IAM Policies**: Least-privilege access patterns
+- **Service-Linked Roles**: Proper ECS service permissions
+- **Resource Policies**: Restrictive resource-level access
+
+---
+
+## **Cost Optimization**
+
+### **Development Environment Optimizations**
+- **Single NAT Gateway**: Reduces NAT gateway costs (~$45/month savings)
+- **No VPC Endpoints**: Eliminates interface endpoint costs (~$22/month savings)
+- **Reduced ECR Retention**: Lower storage costs
+- **Container Insights Disabled**: Reduces CloudWatch costs
+
+### **Production Environment Features**
+- **High Availability**: Dual NAT gateways across AZs
+- **Private AWS Access**: VPC endpoints for S3, ECR, KMS, Secrets Manager, CloudWatch
+- **Enhanced Security**: Key rotation, vulnerability scanning, versioning
+- **Monitoring**: Container insights and detailed logging
+
+---
+
+## **Troubleshooting Configuration**
+
+### **Common Configuration Issues**
+
+#### **Invalid VPC CIDR**
+```
+Error: Invalid CIDR block format
+```
+**Solution**: Ensure CIDR uses valid format (e.g., `10.0.0.0/20`)
+
+#### **Missing Route 53 Zone**
+```
+Error: Cannot find hosted zone
+```
+**Solution**: Verify the `r53ZoneName` matches an existing public hosted zone
+
+#### **Boolean Value Errors**
+```
+Error: Expected boolean value
+```
+**Solution**: Use lowercase `true`/`false` (not `True`/`False`)
+
+### **Configuration Validation**
 ```bash
-npx cdk deploy --context env=dev-test --context dev-test.r53ZoneName=custom.tak.nz
+# Preview configuration before deployment
+npm run synth:dev
+npm run synth:prod
+
+# Validate specific overrides
+npm run synth:dev -- --context dev-test.vpcCidr=10.5.0.0/20
+```
+```bash
+# Custom domain
+npm run deploy:dev -- --context dev-test.r53ZoneName=custom.tak.nz
+npm run deploy:prod -- --context prod.r53ZoneName=enterprise.example.com
+
+# Custom VPC CIDR  
+npm run deploy:dev -- --context dev-test.vpcCidr=10.5.0.0/20
+npm run deploy:prod -- --context prod.vpcCidr=10.1.0.0/20
+
+# Enable/disable NAT gateways
+npm run deploy:dev -- --context dev-test.networking.createNatGateways=true
+npm run deploy:prod -- --context prod.networking.createNatGateways=false
+
+# Enable/disable VPC endpoints
+npm run deploy:dev -- --context dev-test.networking.createVpcEndpoints=true
+npm run deploy:prod -- --context prod.networking.createVpcEndpoints=false
 ```
 
-#### **Disable High Availability for Cost Savings:**
+### **Resource Configuration**
 ```bash
-npx cdk deploy --context env=prod --context prod.networking.createNatGateways=false
-```
-
-#### **Custom VPC Configuration:**
-```bash
-npx cdk deploy --context env=dev-test \
-  --context dev-test.vpcMajorId=2 \
-  --context dev-test.vpcMinorId=1
-```
-
-#### **Override Multiple Settings:**
-```bash
-npx cdk deploy --context env=dev-test \
+# ECR settings
+npm run deploy:dev -- \
   --context dev-test.ecr.imageRetentionCount=10 \
-  --context dev-test.ecr.scanOnPush=true \
-  --context dev-test.networking.createVpcEndpoints=true
+  --context dev-test.ecr.scanOnPush=true
+
+# S3 and KMS settings
+npm run deploy:prod -- \
+  --context prod.s3.enableVersioning=false \
+  --context prod.kms.enableKeyRotation=false
+
+# Certificate settings
+npm run deploy:dev -- --context dev-test.certificate.transparencyLoggingEnabled=false
 ```
 
-### Override Syntax
+### **Override Syntax Rules**
 - Use **dot notation** for nested properties: `environment.section.property=value`
 - **Command-line context always takes precedence** over `cdk.json` values
 - Can override **any configuration property** defined in the environment config
+- Boolean values: `true`/`false` (not `True`/`False`)
+- Numeric values: Raw numbers (not quoted)
 
-## Stack Naming and Tagging
+---
 
-### Stack Names
-- **dev-test**: `TAK-Dev-BaseInfra`
+## **Stack Naming and Tagging**
+
+### **Stack Names**
+- **dev-test**: `TAK-Dev-BaseInfra`  
 - **prod**: `TAK-Prod-BaseInfra`
 
-### Custom Stack Names
-Override the `stackName` property for custom deployments:
-
+### **Custom Stack Names**
 ```bash
 # Results in "TAK-Staging-BaseInfra"
-npx cdk deploy --context env=prod --context prod.stackName=Staging
+npm run deploy:prod -- --context prod.stackName=Staging
 
-# Results in "TAK-FeatureBranch-BaseInfra"
-npx cdk deploy --context env=dev-test --context dev-test.stackName=FeatureBranch
+# Results in "TAK-FeatureBranch-BaseInfra"  
+npm run deploy:dev -- --context dev-test.stackName=FeatureBranch
 ```
 
-### Resource Tagging
+### **Resource Tagging**
 All AWS resources are automatically tagged with:
 - **Project**: "TAK" (from `tak-defaults.project`)
 - **Component**: "BaseInfra" (from `tak-defaults.component`)
 - **Environment**: The environment name (from `stackName`)
 - **ManagedBy**: "CDK"
 
-## Configuration Structure
+---
 
-### Core Settings
-- `stackName`: Used in stack name (`TAK-{stackName}-BaseInfra`)
-- `r53ZoneName`: Route 53 hosted zone for ACM certificate
-- `vpcMajorId`: VPC CIDR major ID (10.{major}.0.0/16)
-- `vpcMinorId`: VPC CIDR minor ID (10.{major}.{minor}.0/16)
+## **Complete Configuration Reference**
 
-### Networking Configuration
-- `networking.createNatGateways`: Redundant NAT Gateways for HA
-- `networking.createVpcEndpoints`: VPC interface endpoints for AWS services
+### **Core Settings**
+| Parameter | Description | dev-test | prod |
+|-----------|-------------|----------|------|
+| `stackName` | CloudFormation stack name | `Dev` | `Prod` |
+| `r53ZoneName` | Route 53 hosted zone | `dev.tak.nz` | `tak.nz` |
+| `vpcCidr` | VPC CIDR block | `10.0.0.0/20` | `10.0.0.0/20` |
 
-### Certificate Configuration
-- `certificate.transparencyLoggingEnabled`: Certificate transparency logging
+### **Networking Configuration**
+| Parameter | Description | dev-test | prod |
+|-----------|-------------|----------|------|
+| `networking.createNatGateways` | Enable redundant NAT gateways | `false` | `true` |
+| `networking.createVpcEndpoints` | Enable VPC interface endpoints | `false` | `true` |
 
-### General Configuration
+### **Certificate Configuration**
+| Parameter | Description | dev-test | prod |
+|-----------|-------------|----------|------|
+| `certificate.transparencyLoggingEnabled` | Certificate transparency logging | `true` | `true` |
 - `general.removalPolicy`: CloudFormation removal policy (DESTROY/RETAIN)
 - `general.enableContainerInsights`: ECS Container Insights
 - `general.enableDetailedLogging`: Detailed CloudWatch logging
