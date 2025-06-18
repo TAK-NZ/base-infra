@@ -48,7 +48,7 @@
     "prod": {
       "stackName": "Prod",
       "r53ZoneName": "tak.nz",
-      "vpcCidr": "10.1.0.0/20",
+      "vpcCidr": "10.0.0.0/20",
       "networking": {
         "createNatGateways": true,
         "createVpcEndpoints": true

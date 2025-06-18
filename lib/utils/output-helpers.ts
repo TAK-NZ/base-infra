@@ -32,9 +32,7 @@ export function createOutput(
   return new cdk.CfnOutput(stack, config.id, {
     description: config.description,
     value: config.value,
-    exportName: Fn.sub(createDynamicExportName(config.exportKey), {
-      StackName: stackName,
-    }),
+    exportName: Fn.sub(createDynamicExportName(config.exportKey)),
   });
 }
 

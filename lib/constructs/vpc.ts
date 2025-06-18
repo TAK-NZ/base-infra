@@ -54,7 +54,7 @@ export class BaseInfraVpc extends ec2.Vpc {
     // Set up IPv6 dual-stack networking
     this.ipv6CidrBlockResource = this.setupIpv6();
     this.vpcLogicalId = (this.node.defaultChild as ec2.CfnVPC).logicalId;
-    this.egressOnlyInternetGatewayId = this.setupIpv6Routing();
+    this.egressOnlyInternetGatewayId = this.setupIpv6Routing(this.ipv6CidrBlockResource);
   }
 
   private setupIpv6(): ec2.CfnVPCCidrBlock {
@@ -88,15 +88,17 @@ export class BaseInfraVpc extends ec2.Vpc {
     return ipv6CidrBlock;
   }
 
-  private setupIpv6Routing(): string {
+  private setupIpv6Routing(ipv6CidrBlock: ec2.CfnVPCCidrBlock): string {
     // Add IPv6 routes for public subnets via Internet Gateway
     if (this.internetGatewayId) {
       this.publicSubnets.forEach((subnet, index) => {
-        new ec2.CfnRoute(this, `PublicIpv6Route${index}`, {
+        const route = new ec2.CfnRoute(this, `PublicIpv6Route${index}`, {
           routeTableId: subnet.routeTable.routeTableId,
           destinationIpv6CidrBlock: '::/0',
           gatewayId: this.internetGatewayId,
         });
+        // Ensure route waits for IPv6 CIDR block to be associated
+        route.node.addDependency(ipv6CidrBlock);
       });
     }
 
@@ -118,11 +120,13 @@ export class BaseInfraVpc extends ec2.Vpc {
       if (this.privateSubnets.includes(subnet)) {
         const privateIndex = this.privateSubnets.indexOf(subnet);
         
-        new ec2.CfnRoute(this, `PrivateIpv6Route${privateIndex}`, {
+        const route = new ec2.CfnRoute(this, `PrivateIpv6Route${privateIndex}`, {
           routeTableId: subnet.routeTable.routeTableId,
           destinationIpv6CidrBlock: '::/0',
           egressOnlyInternetGatewayId: egressOnlyIgw.ref,
         });
+        // Ensure route waits for IPv6 CIDR block to be associated
+        route.node.addDependency(ipv6CidrBlock);
       }
     });
 

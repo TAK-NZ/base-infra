@@ -41,8 +41,8 @@ describe('Dynamic Stack Naming', () => {
           (v.Ref === 'AWS::StackName') ||
           (v['Fn::Join'] && v['Fn::Join'][1] && v['Fn::Join'][1].some((x:any) => x && x.Ref === 'AWS::StackName')) ||
           (v['Fn::Sub'] && (
-            (typeof v['Fn::Sub'] === 'string' && v['Fn::Sub'].includes('${StackName}')) ||
-            (Array.isArray(v['Fn::Sub']) && v['Fn::Sub'][0].includes('${StackName}'))
+            (typeof v['Fn::Sub'] === 'string' && (v['Fn::Sub'].includes('${StackName}') || v['Fn::Sub'].includes('${AWS::StackName}'))) ||
+            (Array.isArray(v['Fn::Sub']) && (v['Fn::Sub'][0].includes('${StackName}') || v['Fn::Sub'][0].includes('${AWS::StackName}')))
           ))
         ));
         expect(isDynamic || typeof v === 'string').toBe(true);

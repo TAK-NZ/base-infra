@@ -161,7 +161,7 @@ describe('ACM Certificate', () => {
     // Check that certificate ARN output exists
     const outputs = template.toJSON().Outputs;
     expect(outputs['CertificateArnOutput']).toBeDefined();
-    expect(outputs['CertificateArnOutput'].Description).toBe('ACM Certificate ARN for public hosted zone');
+    expect(outputs['CertificateArnOutput'].Description).toBe('ACM Certificate ARN');
   });
 
   it('configures certificate transparency based on environment type', () => {

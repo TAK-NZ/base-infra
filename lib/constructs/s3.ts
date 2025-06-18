@@ -8,6 +8,7 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
     bucketName: `${stackName.toLowerCase()}-${region}-env-config`,
     encryption: s3.BucketEncryption.KMS,
     encryptionKey: kmsKey,
+    bucketKeyEnabled: true,
     enforceSSL: true,
     blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
     removalPolicy: RemovalPolicy.DESTROY,

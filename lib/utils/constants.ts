@@ -4,7 +4,6 @@
  */
 
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import { BASE_EXPORT_NAMES } from '../cloudformation-exports';
 import { OutputConfig } from './output-helpers';
 import { OutputParams } from '../outputs';
 
@@ -21,6 +20,7 @@ export const DEFAULT_VPC_CIDR = '10.0.0.0/20';
 /**
  * Output configuration definitions
  * Defines all the outputs that should be created for the base infrastructure
+ * Export keys are now simple descriptive names that will be prefixed with stack name
  */
 export function getOutputConfigs(params: OutputParams): OutputConfig[] {
   const configs: OutputConfig[] = [
@@ -29,13 +29,13 @@ export function getOutputConfigs(params: OutputParams): OutputConfig[] {
       id: 'VpcIdOutput',
       description: 'VPC ID',
       value: params.vpc.vpcId,
-      exportKey: BASE_EXPORT_NAMES.VPC_ID,
+      exportKey: 'VpcId',
     },
     {
       id: 'VpcCidrIpv4Output',
       description: 'VPC IPv4 CIDR Block',
       value: params.vpc.vpcCidrBlock,
-      exportKey: BASE_EXPORT_NAMES.VPC_CIDR_IPV4,
+      exportKey: 'VpcCidrIpv4',
     },
     
     // Subnet Outputs
@@ -43,25 +43,25 @@ export function getOutputConfigs(params: OutputParams): OutputConfig[] {
       id: 'SubnetPublicAOutput',
       description: 'Subnet Public A',
       value: params.vpc.publicSubnets[0].subnetId,
-      exportKey: BASE_EXPORT_NAMES.SUBNET_PUBLIC_A,
+      exportKey: 'SubnetPublicA',
     },
     {
       id: 'SubnetPublicBOutput',
       description: 'Subnet Public B',
       value: params.vpc.publicSubnets[1].subnetId,
-      exportKey: BASE_EXPORT_NAMES.SUBNET_PUBLIC_B,
+      exportKey: 'SubnetPublicB',
     },
     {
       id: 'SubnetPrivateAOutput',
       description: 'Subnet Private A',
       value: params.vpc.privateSubnets[0].subnetId,
-      exportKey: BASE_EXPORT_NAMES.SUBNET_PRIVATE_A,
+      exportKey: 'SubnetPrivateA',
     },
     {
       id: 'SubnetPrivateBOutput',
       description: 'Subnet Private B',
       value: params.vpc.privateSubnets[1].subnetId,
-      exportKey: BASE_EXPORT_NAMES.SUBNET_PRIVATE_B,
+      exportKey: 'SubnetPrivateB',
     },
     
     // Service Outputs
@@ -69,31 +69,31 @@ export function getOutputConfigs(params: OutputParams): OutputConfig[] {
       id: 'EcsArnOutput',
       description: 'ECS Cluster ARN',
       value: params.ecsCluster.clusterArn,
-      exportKey: BASE_EXPORT_NAMES.ECS_CLUSTER,
+      exportKey: 'EcsClusterArn',
     },
     {
       id: 'EcrArnOutput',
       description: 'ECR Repository ARN',
       value: params.ecrRepo.repositoryArn,
-      exportKey: BASE_EXPORT_NAMES.ECR_REPO,
+      exportKey: 'EcrRepoArn',
     },
     {
       id: 'KmsArnOutput',
       description: 'KMS Key ARN',
       value: params.kmsKey.keyArn,
-      exportKey: BASE_EXPORT_NAMES.KMS_KEY,
+      exportKey: 'KmsKeyArn',
     },
     {
       id: 'KmsAliasOutput',
       description: 'KMS Key Alias',
       value: params.kmsAlias.aliasName,
-      exportKey: BASE_EXPORT_NAMES.KMS_ALIAS,
+      exportKey: 'KmsAlias',
     },
     {
       id: 'ConfigBucketArnOutput',
       description: 'S3 Configuration Bucket ARN',
       value: params.configBucket.bucketArn,
-      exportKey: BASE_EXPORT_NAMES.S3_BUCKET,
+      exportKey: 'S3BucketArn',
     },
   ];
 
@@ -121,16 +121,16 @@ export function getConditionalOutputConfigs(params: OutputParams): Array<OutputC
           }
         ]
       } : undefined,
-      exportKey: BASE_EXPORT_NAMES.VPC_CIDR_IPV6,
+      exportKey: 'VpcCidrIpv6',
       condition: !!(params.ipv6CidrBlock && params.vpcLogicalId),
     },
     
     // Certificate Outputs (only if certificate exists)
     {
       id: 'CertificateArnOutput',
-      description: 'ACM Certificate ARN for public hosted zone',
+      description: 'ACM Certificate ARN',
       value: params.certificate?.certificateArn,
-      exportKey: BASE_EXPORT_NAMES.CERTIFICATE_ARN,
+      exportKey: 'CertificateArn',
       condition: !!params.certificate,
     },
     
@@ -139,14 +139,14 @@ export function getConditionalOutputConfigs(params: OutputParams): Array<OutputC
       id: 'HostedZoneIdOutput',
       description: 'Route53 Hosted Zone ID',
       value: params.hostedZone?.hostedZoneId,
-      exportKey: BASE_EXPORT_NAMES.HOSTED_ZONE_ID,
+      exportKey: 'HostedZoneId',
       condition: !!params.hostedZone,
     },
     {
       id: 'HostedZoneNameOutput',
       description: 'Route53 Hosted Zone Name',
       value: params.hostedZone?.zoneName,
-      exportKey: BASE_EXPORT_NAMES.HOSTED_ZONE_NAME,
+      exportKey: 'HostedZoneName',
       condition: !!params.hostedZone,
     },
   ];
