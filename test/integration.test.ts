@@ -34,6 +34,6 @@ describe('Integration Tests', () => {
         environment: 'dev-test',
         envConfig: invalidEnvConfig
       });
-    }).toThrow('r53ZoneName is required');
+    }).toThrow('R53 zone name is required for ACM certificate creation');
   });
 });

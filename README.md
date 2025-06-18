@@ -105,7 +105,7 @@ npx cdk deploy --context env=dev-test \
 
 # Deploy production with custom VPC settings
 npx cdk deploy --context env=prod \
-  --context prod.vpcMajorId=5 \
+  --context prod.vpcCidr=10.5.0.0/20 \
   --context prod.networking.createNatGateways=false \
   --profile tak
 ```
@@ -126,7 +126,7 @@ All configuration is stored in `cdk.json` under the `context` section. You can o
 npx cdk deploy --context env=dev-test --context dev-test.r53ZoneName=custom.tak.nz
 
 # Override VPC settings  
-npx cdk deploy --context env=prod --context prod.vpcMajorId=2 --context prod.vpcMinorId=1
+npx cdk deploy --context env=prod --context prod.vpcCidr=10.2.0.0/20
 
 # Disable high availability features for cost savings
 npx cdk deploy --context env=prod --context prod.networking.createNatGateways=false
@@ -148,4 +148,4 @@ echo "Account: $CDK_DEFAULT_ACCOUNT"
 echo "Region: $CDK_DEFAULT_REGION"
 ```
 
-For detailed configuration options and advanced deployment scenarios, see the [Deployment Guide](DEPLOYMENT_GUIDE.md).
+For detailed configuration options and advanced deployment scenarios, see the [Deployment Guide](docs/DEPLOYMENT_GUIDE.md).

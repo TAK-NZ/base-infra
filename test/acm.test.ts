@@ -58,6 +58,7 @@ describe('ACM Certificate', () => {
     expect(() => {
       new BaseInfraStack(app1, 'TestStack', {
         environment: 'prod',
+        env: { account: '123456789012', region: 'us-east-1' },
         envConfig: {
           stackName: 'Test',
           r53ZoneName: '', // Empty zone name
@@ -69,11 +70,12 @@ describe('ACM Certificate', () => {
           ecr: { imageRetentionCount: 20, scanOnPush: true }
         }
       });
-    }).toThrow('r53ZoneName is required and cannot be empty');
+    }).toThrow('R53 zone name is required for ACM certificate creation');
 
     expect(() => {
       new BaseInfraStack(app1, 'TestStack2', {
         environment: 'prod',
+        env: { account: '123456789012', region: 'us-east-1' },
         envConfig: {
           stackName: 'Test',
           r53ZoneName: '   ', // Whitespace zone name
@@ -85,7 +87,7 @@ describe('ACM Certificate', () => {
           ecr: { imageRetentionCount: 20, scanOnPush: true }
         }
       });
-    }).toThrow('r53ZoneName is required and cannot be empty');
+    }).toThrow('R53 zone name is required for ACM certificate creation');
     
     // Test direct function call with empty zone name
     const { createAcmCertificate } = require('../lib/constructs/acm');
@@ -109,6 +111,7 @@ describe('ACM Certificate', () => {
     expect(() => {
       new BaseInfraStack(app2, 'TestStack', {
         environment: 'prod',
+        env: { account: '123456789012', region: 'us-east-1' },
         envConfig: {
           stackName: 'Test',
           r53ZoneName: undefined as any, // Undefined zone name
@@ -120,7 +123,7 @@ describe('ACM Certificate', () => {
           ecr: { imageRetentionCount: 20, scanOnPush: true }
         }
       });
-    }).toThrow('r53ZoneName is required and cannot be empty');
+    }).toThrow('R53 zone name is required for ACM certificate creation');
   });
 
   it('creates certificate ARN output when certificate is created', () => {

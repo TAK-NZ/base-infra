@@ -9,7 +9,7 @@ export interface AcmCertificateProps {
 }
 
 export function createAcmCertificate(scope: Construct, props: AcmCertificateProps) {
-  if (!props.zoneName) {
+  if (!props.zoneName || props.zoneName.trim() === '') {
     throw new Error('R53 zone name is required for ACM certificate creation');
   }
 

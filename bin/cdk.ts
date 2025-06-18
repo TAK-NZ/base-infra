@@ -30,14 +30,48 @@ Expected cdk.json structure:
   `);
 }
 
-// Apply context overrides for individual parameters
-// This allows --context r53ZoneName=custom.domain.com to override the config
+// Apply context overrides for non-prefixed parameters
+// This supports direct overrides that work for any environment:
+// --context r53ZoneName=custom.domain.com
+// --context networking.createNatGateways=true
+// --context certificate.transparencyLoggingEnabled=false
 const finalEnvConfig = {
   ...envConfig,
-  // Override individual parameters if provided via --context
+  // Override top-level parameters
   r53ZoneName: app.node.tryGetContext('r53ZoneName') || envConfig.r53ZoneName,
   vpcCidr: app.node.tryGetContext('vpcCidr') || envConfig.vpcCidr,
   stackName: app.node.tryGetContext('stackName') || envConfig.stackName,
+  
+  // Override nested parameters
+  networking: {
+    ...envConfig.networking,
+    createNatGateways: app.node.tryGetContext('networking.createNatGateways') ?? envConfig.networking.createNatGateways,
+    createVpcEndpoints: app.node.tryGetContext('networking.createVpcEndpoints') ?? envConfig.networking.createVpcEndpoints,
+  },
+  certificate: {
+    ...envConfig.certificate,
+    transparencyLoggingEnabled: app.node.tryGetContext('certificate.transparencyLoggingEnabled') ?? envConfig.certificate.transparencyLoggingEnabled,
+  },
+  general: {
+    ...envConfig.general,
+    removalPolicy: app.node.tryGetContext('general.removalPolicy') || envConfig.general.removalPolicy,
+    enableDetailedLogging: app.node.tryGetContext('general.enableDetailedLogging') ?? envConfig.general.enableDetailedLogging,
+    enableContainerInsights: app.node.tryGetContext('general.enableContainerInsights') ?? envConfig.general.enableContainerInsights,
+  },
+  kms: {
+    ...envConfig.kms,
+    enableKeyRotation: app.node.tryGetContext('kms.enableKeyRotation') ?? envConfig.kms.enableKeyRotation,
+  },
+  s3: {
+    ...envConfig.s3,
+    enableVersioning: app.node.tryGetContext('s3.enableVersioning') ?? envConfig.s3.enableVersioning,
+    lifecycleRules: app.node.tryGetContext('s3.lifecycleRules') ?? envConfig.s3.lifecycleRules,
+  },
+  ecr: {
+    ...envConfig.ecr,
+    imageRetentionCount: app.node.tryGetContext('ecr.imageRetentionCount') ?? envConfig.ecr.imageRetentionCount,
+    scanOnPush: app.node.tryGetContext('ecr.scanOnPush') ?? envConfig.ecr.scanOnPush,
+  },
 };
 
 // Create stack name

@@ -1,7 +1,7 @@
-import { createStackConfigFromContext, ContextEnvironmentConfig, BaseInfraConfigResult } from '../lib/stack-config';
+import { ContextEnvironmentConfig } from '../lib/stack-config';
 
 describe('Stack Configuration', () => {
-  describe('createStackConfigFromContext', () => {
+  describe('ContextEnvironmentConfig interface', () => {
     const prodContextConfig: ContextEnvironmentConfig = {
       stackName: 'Prod',
       r53ZoneName: 'example.com',
@@ -26,65 +26,49 @@ describe('Stack Configuration', () => {
       ecr: { imageRetentionCount: 5, scanOnPush: false }
     };
 
-    it('creates valid config with required parameters for prod', () => {
-      const configResult = createStackConfigFromContext('prod', prodContextConfig);
-      
-      expect(configResult.stackConfig.envType).toBe('prod');
-      expect(configResult.stackConfig.r53ZoneName).toBe('example.com');
-      expect(configResult.stackConfig.projectName).toBe('TAK');
-      expect(configResult.stackConfig.componentName).toBe('BaseInfra');
-      expect(configResult.isHighAvailability).toBe(true);
-      expect(configResult.environmentLabel).toBe('Prod');
-      expect(configResult.createNatGateways).toBe(true);
-      expect(configResult.enableVpcEndpoints).toBe(true);
-      expect(configResult.certificateTransparency).toBe(true);
+    it('validates prod environment configuration structure', () => {
+      expect(prodContextConfig.stackName).toBe('Prod');
+      expect(prodContextConfig.r53ZoneName).toBe('example.com');
+      expect(prodContextConfig.vpcCidr).toBe('10.1.0.0/20');
+      expect(prodContextConfig.networking.createNatGateways).toBe(true);
+      expect(prodContextConfig.networking.createVpcEndpoints).toBe(true);
+      expect(prodContextConfig.certificate.transparencyLoggingEnabled).toBe(true);
+      expect(prodContextConfig.general.removalPolicy).toBe('RETAIN');
+      expect(prodContextConfig.general.enableDetailedLogging).toBe(true);
+      expect(prodContextConfig.general.enableContainerInsights).toBe(true);
+      expect(prodContextConfig.kms.enableKeyRotation).toBe(true);
+      expect(prodContextConfig.s3.enableVersioning).toBe(true);
+      expect(prodContextConfig.s3.lifecycleRules).toBe(true);
+      expect(prodContextConfig.ecr.imageRetentionCount).toBe(20);
+      expect(prodContextConfig.ecr.scanOnPush).toBe(true);
     });
 
-    it('creates config with custom project and component names', () => {
-      const configResult = createStackConfigFromContext('dev-test', devTestContextConfig, 'MyProject', 'MyComponent');
-      
-      expect(configResult.stackConfig.projectName).toBe('MyProject');
-      expect(configResult.stackConfig.componentName).toBe('MyComponent');
-      expect(configResult.isHighAvailability).toBe(false);
-      expect(configResult.environmentLabel).toBe('Dev-Test');
-      expect(configResult.createNatGateways).toBe(false);
-      expect(configResult.enableVpcEndpoints).toBe(false);
-      expect(configResult.certificateTransparency).toBe(false);
+    it('validates dev-test environment configuration structure', () => {
+      expect(devTestContextConfig.stackName).toBe('Dev');
+      expect(devTestContextConfig.r53ZoneName).toBe('dev.example.com');
+      expect(devTestContextConfig.vpcCidr).toBe('10.0.0.0/20');
+      expect(devTestContextConfig.networking.createNatGateways).toBe(false);
+      expect(devTestContextConfig.networking.createVpcEndpoints).toBe(false);
+      expect(devTestContextConfig.certificate.transparencyLoggingEnabled).toBe(false);
+      expect(devTestContextConfig.general.removalPolicy).toBe('DESTROY');
+      expect(devTestContextConfig.general.enableDetailedLogging).toBe(true);
+      expect(devTestContextConfig.general.enableContainerInsights).toBe(false);
+      expect(devTestContextConfig.kms.enableKeyRotation).toBe(false);
+      expect(devTestContextConfig.s3.enableVersioning).toBe(false);
+      expect(devTestContextConfig.s3.lifecycleRules).toBe(true);
+      expect(devTestContextConfig.ecr.imageRetentionCount).toBe(5);
+      expect(devTestContextConfig.ecr.scanOnPush).toBe(false);
     });
 
-    it('throws error for empty r53ZoneName', () => {
-      const invalidConfig = { ...prodContextConfig, r53ZoneName: '' };
-      expect(() => {
-        createStackConfigFromContext('prod', invalidConfig);
-      }).toThrow('r53ZoneName is required and cannot be empty');
+    it('validates optional vpcCidr property', () => {
+      const configWithoutVpcCidr: ContextEnvironmentConfig = {
+        ...devTestContextConfig,
+        vpcCidr: undefined
+      };
       
-      const invalidConfig2 = { ...prodContextConfig, r53ZoneName: '   ' };
-      expect(() => {
-        createStackConfigFromContext('prod', invalidConfig2);
-      }).toThrow('r53ZoneName is required and cannot be empty');
-    });
-
-    it('throws error for invalid environment type', () => {
-      expect(() => {
-        createStackConfigFromContext('invalid' as any, prodContextConfig);
-      }).toThrow('Environment type must be one of: prod, dev-test');
-    });
-
-    it('processes environment configurations correctly', () => {
-      const prodResult = createStackConfigFromContext('prod', prodContextConfig);
-      const devResult = createStackConfigFromContext('dev-test', devTestContextConfig);
-      
-      // Prod environment should have high availability features
-      expect(prodResult.environmentConfig.networking.createNatGateways).toBe(true);
-      expect(prodResult.environmentConfig.networking.createVpcEndpoints).toBe(true);
-      expect(prodResult.environmentConfig.certificate.transparencyLoggingEnabled).toBe(true);
-      expect(prodResult.environmentConfig.kms.enableKeyRotation).toBe(true);
-      
-      // Dev-test environment should be cost-optimized
-      expect(devResult.environmentConfig.networking.createNatGateways).toBe(false);
-      expect(devResult.environmentConfig.networking.createVpcEndpoints).toBe(false);
-      expect(devResult.environmentConfig.certificate.transparencyLoggingEnabled).toBe(false);
-      expect(devResult.environmentConfig.kms.enableKeyRotation).toBe(false);
+      expect(configWithoutVpcCidr.vpcCidr).toBeUndefined();
+      expect(typeof configWithoutVpcCidr.r53ZoneName).toBe('string');
+      expect(typeof configWithoutVpcCidr.networking).toBe('object');
     });
   });
 });

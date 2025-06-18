@@ -16,7 +16,7 @@ import { createAcmCertificate } from './constructs/acm';
 
 // Utility imports
 import { registerOutputs } from './outputs';
-import { createStackConfigFromContext, BaseInfraConfigResult, ContextEnvironmentConfig } from './stack-config';
+import { ContextEnvironmentConfig } from './stack-config';
 
 export interface BaseInfraStackProps extends StackProps {
   environment: 'prod' | 'dev-test';
@@ -33,27 +33,24 @@ export class BaseInfraStack extends cdk.Stack {
       description: 'TAK Base Layer - VPC, ECS, ECR, KMS, S3, ACM',
     });
 
-    // Create configuration from context
-    const configResult: BaseInfraConfigResult = createStackConfigFromContext(props.environment, props.envConfig);
-
+    // Use environment configuration directly (no complex transformations needed)
+    const { envConfig } = props;
+    
     // Apply tags
     const defaults = this.node.tryGetContext('tak-defaults');
     cdk.Tags.of(this).add('Project', defaults?.project || 'TAK');
-    cdk.Tags.of(this).add('Environment', props.envConfig.stackName);
+    cdk.Tags.of(this).add('Environment', envConfig.stackName);
     cdk.Tags.of(this).add('Component', defaults?.component || 'BaseInfra');
     cdk.Tags.of(this).add('ManagedBy', 'CDK');
 
-    // Extract configuration values
-    const { 
-      stackConfig, 
-      isHighAvailability, 
-      environmentLabel,
-      createNatGateways,
-      enableVpcEndpoints,
-      certificateTransparency 
-    } = configResult;
-    const vpcCidr = stackConfig.overrides?.networking?.vpcCidr ?? props.envConfig.vpcCidr ?? '10.0.0.0/20';
-    const r53ZoneName = stackConfig.r53ZoneName;
+    // Extract configuration values directly from envConfig
+    const vpcCidr = envConfig.vpcCidr ?? '10.0.0.0/20';
+    const r53ZoneName = envConfig.r53ZoneName;
+    const createNatGateways = envConfig.networking.createNatGateways;
+    const enableVpcEndpoints = envConfig.networking.createVpcEndpoints;
+    const certificateTransparency = envConfig.certificate.transparencyLoggingEnabled;
+    const isHighAvailability = props.environment === 'prod';
+    const environmentLabel = props.environment === 'prod' ? 'Prod' : 'Dev-Test';
 
     // Add Environment Type tag
     cdk.Tags.of(this).add('Environment Type', environmentLabel);
