@@ -1,5 +1,5 @@
 {
-  "name": "@TAK-NZ/base-infra",
+  "name": "@tak-nz/base-infra",
   "version": "0.1.0",
   "description": "Base infrastructure for TAK-NZ projects using AWS CDK",
   "bin": {
@@ -10,7 +10,20 @@
     "watch": "tsc -w",
     "test": "unset CDK_DEFAULT_ACCOUNT && unset CDK_DEFAULT_REGION && jest",
     "cdk": "cdk",
-    "clean": "rm -f bin/*.js bin/*.d.ts lib/*.js lib/*.d.ts test/*.js test/*.d.ts; rm -rf cdk.out/*"
+    "clean": "rm -f bin/*.js bin/*.d.ts lib/*.js lib/*.d.ts test/*.js test/*.d.ts; rm -rf cdk.out/*",
+    
+    "dev": "npm run build && npm run test",
+    "test:watch": "unset CDK_DEFAULT_ACCOUNT && unset CDK_DEFAULT_REGION && jest --watch",
+    "test:coverage": "unset CDK_DEFAULT_ACCOUNT && unset CDK_DEFAULT_REGION && jest --coverage",
+    
+    "deploy:dev": "npm run build && cdk deploy --context env=dev-test",
+    "deploy:prod": "npm run build && cdk deploy --context env=prod",
+    "synth:dev": "npm run build && cdk synth --context env=dev-test",
+    "synth:prod": "npm run build && cdk synth --context env=prod",
+    
+    "cdk:diff:dev": "npm run build && cdk diff --context env=dev-test",
+    "cdk:diff:prod": "npm run build && cdk diff --context env=prod",
+    "cdk:bootstrap": "cdk bootstrap"
   },
   "devDependencies": {
     "@aws-cdk/assertions": "^1.203.0",
@@ -23,7 +36,7 @@
     "typescript": "~5.6.3"
   },
   "dependencies": {
-    "aws-cdk-lib": "2.198.0",
+    "aws-cdk-lib": "^2.167.0",
     "constructs": "^10.0.0"
   }
 }

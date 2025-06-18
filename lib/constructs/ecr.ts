@@ -28,11 +28,19 @@ export function createEcrResources(scope: Construct, stackName: string) {
     removalPolicy: cdk.RemovalPolicy.DESTROY,
   });
 
-  // Add a resource policy (repository policy)
+  // Add a resource policy (repository policy) - restricted to account and AWS services
   ecrRepo.addToResourcePolicy(new iam.PolicyStatement({
     effect: iam.Effect.ALLOW,
-    principals: [new iam.AnyPrincipal()],
-    actions: ['ecr:BatchGetImage', 'ecr:GetDownloadUrlForLayer'],
+    principals: [
+      new iam.AccountRootPrincipal(), // Only this AWS account
+      new iam.ServicePrincipal('ecs-tasks.amazonaws.com'), // ECS tasks
+      new iam.ServicePrincipal('lambda.amazonaws.com'), // Lambda functions
+    ],
+    actions: [
+      'ecr:BatchGetImage',
+      'ecr:GetDownloadUrlForLayer',
+      'ecr:BatchCheckLayerAvailability', // Standard ECR pull permission
+    ],
   }));
 
   return { ecrRepo };
