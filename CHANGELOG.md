@@ -10,7 +10,7 @@
 
 ## Version History
 
-### Pending ReleaseAdd commentMore actions
+### Pending Release
 
 ### v1.0.0
 
