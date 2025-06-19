@@ -29,7 +29,6 @@ jobs:
     if: ${{ github.event.pull_request.draft == false }}
     timeout-minutes: 60
     permissions:
-      actions: write
       contents: read
       id-token: write
     steps:
@@ -59,15 +58,3 @@ jobs:
 
       - name: Run tests with coverage report
         run: npm run test:coverage
-        env:
-          CI: true       
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results
-          path: |
-            coverage/
-          retention-days: 30
-          if-no-files-found: warn  # Don't fail if no coverage files exist
