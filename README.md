@@ -13,7 +13,7 @@ It is specifically targeted at the deployment of [TAK.NZ](https://tak.nz) via a 
 > [!CAUTION]
 > **New Deployment Tool**
 > 
-> This is the new [AWS CDK](https://aws.amazon.com/cdk/) version of the Base Infrastructure Layer. It is **not compatible** with the [previous version](../../../tree/legacy) that uses the [OpenAddresses Deploy Tool](https://github.com/openaddresses/deploy).
+> This is the new [AWS CDK](https://aws.amazon.com/cdk/) version of the Base Infrastructure Layer. It is **not compatible** with the [previous version](../../tree/legacy) that uses the [OpenAddresses Deploy Tool](https://github.com/openaddresses/deploy).
 > 
 > **For new deployments:**
 > - Choose either CDK **OR** Deploy Tool for your entire stack - both approaches cannot be mixed
