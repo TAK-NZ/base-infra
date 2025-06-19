@@ -31,6 +31,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      pull-requests: write  # Required for PR comments
     steps:
       - run: echo "🌅 Job triggered by ${{ github.event_name }} event"
       - run: echo "💨 Job running on ${{ runner.os }}"
