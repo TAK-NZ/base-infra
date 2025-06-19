@@ -1,31 +1,73 @@
 name: Test CDK code
+
 # This workflow is triggered on pushes and pull requests to the main branch.
+# It can also be triggered manually.
+# It runs tests on the CDK code to ensure that it is functioning correctly.
+# The workflow will not run for draft pull requests.
 
 on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '.gitignore'
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '.gitignore'
+  workflow_dispatch:
 
 jobs:
-  test:
+  build-test:
     runs-on: ubuntu-latest
+    environment: Test
     if: ${{ github.event.pull_request.draft == false }}
     timeout-minutes: 60
+    permissions:
+      actions: write
+      contents: read
+      id-token: write
     steps:
-      - name: Checkout
+      - run: echo "🌅 Job triggered by ${{ github.event_name }} event"
+      - run: echo "💨 Job running on ${{ runner.os }}"
+      - run: echo "🕊️ Branch is ${{ github.ref }}"
+      - run: echo "👾 Repository is ${{ github.repository }}."
+      
+      - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
 
-      - name: Use Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
             node-version: '22.x'
             registry-url: https://registry.npmjs.org/
+            cache: 'npm'
 
-      - name: Install
-        run: npm install
-  
-      - name: Testing 
-        run: npm test
+      - name: Install CDK package dependencies
+        run: npm ci  # Use npm ci for faster, reliable installs
+
+      - name: TypeScript compilation check
+        run: npx tsc --noEmit --skipLibCheck
+
+      - name: Run tests with coverage report
+        run: npm run test:coverage
+        env:
+          CI: true       
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            coverage/
+          retention-days: 30
+          if-no-files-found: warn  # Don't fail if no coverage files exist

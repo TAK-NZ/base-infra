@@ -12,13 +12,17 @@
   "moduleNameMapper": {
     "^(\\.{1,2}/.*)\\.js$": "$1"
   },
-  "coverageReporters": ["text"],
-  "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "json", "node"],
-  "transformIgnorePatterns": [
-    "node_modules/(?!(aws-cdk-lib)/)"
+  "coverageReporters": [
+    "text",
+    ...(process.env.CI ? ["lcov", "json", "text-summary"] : [])
   ],
+  "coverageDirectory": "coverage",
   "collectCoverageFrom": [
     "lib/**/*.ts",
     "!lib/**/*.d.ts"
+  ],
+  "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "json", "node"],
+  "transformIgnorePatterns": [
+    "node_modules/(?!(aws-cdk-lib)/)"
   ]
 }
