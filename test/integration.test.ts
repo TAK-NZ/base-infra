@@ -21,7 +21,7 @@ describe('Integration Tests', () => {
     const invalidEnvConfig = {
       stackName: 'Test',
       r53ZoneName: '', // Empty zone name should cause validation error
-      networking: { createNatGateways: false, createVpcEndpoints: false },
+      networking: { enableRedundantNatGateways: false, createVpcEndpoints: false },
       certificate: { transparencyLoggingEnabled: false },
       general: { removalPolicy: 'DESTROY', enableDetailedLogging: true, enableContainerInsights: false },
       kms: { enableKeyRotation: false },

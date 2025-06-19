@@ -29,7 +29,7 @@ export function applyContextOverrides(
     ...Object.fromEntries(Object.entries(topLevelOverrides).filter(([_, v]) => v !== undefined)),
     networking: {
       ...baseConfig.networking,
-      createNatGateways: app.node.tryGetContext('createNatGateways') ?? baseConfig.networking.createNatGateways,
+      enableRedundantNatGateways: app.node.tryGetContext('enableRedundantNatGateways') ?? app.node.tryGetContext('createNatGateways') ?? baseConfig.networking.enableRedundantNatGateways,
       createVpcEndpoints: app.node.tryGetContext('createVpcEndpoints') ?? baseConfig.networking.createVpcEndpoints,
     },
     certificate: {

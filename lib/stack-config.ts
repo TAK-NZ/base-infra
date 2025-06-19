@@ -12,7 +12,7 @@ export interface ContextEnvironmentConfig {
   r53ZoneName: string;
   vpcCidr?: string;
   networking: {
-    createNatGateways: boolean;
+    enableRedundantNatGateways: boolean;
     createVpcEndpoints: boolean;
   };
   certificate: {

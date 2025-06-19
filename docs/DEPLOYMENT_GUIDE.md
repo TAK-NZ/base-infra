@@ -48,8 +48,8 @@ npm run deploy:prod -- --context r53ZoneName=enterprise.tak.nz
 # Custom VPC CIDR
 npm run deploy:dev -- --context vpcCidr=10.5.0.0/20
 
-# Disable NAT gateways for cost savings
-npm run deploy:prod -- --context createNatGateways=false
+# Disable redundant NAT gateways for cost savings (use 1 instead of 2)
+npm run deploy:prod -- --context enableRedundantNatGateways=false
 
 # Enable VPC endpoints in development
 npm run deploy:dev -- --context createVpcEndpoints=true
@@ -80,7 +80,7 @@ All settings are stored in [`cdk.json`](../cdk.json) under the `context` section
       "r53ZoneName": "dev.tak.nz",
       "vpcCidr": "10.0.0.0/20",
       "networking": {
-        "createNatGateways": false,
+        "enableRedundantNatGateways": false,
         "createVpcEndpoints": false
       },
       "certificate": {
@@ -112,7 +112,7 @@ npm run deploy:dev -- --context vpcCidr=10.2.0.0/20
 npm run deploy:prod -- --context vpcCidr=10.5.0.0/16
 
 # Networking features
-npm run deploy:dev -- --context createNatGateways=true
+npm run deploy:dev -- --context enableRedundantNatGateways=true
 npm run deploy:prod -- --context createVpcEndpoints=false
 ```
 
@@ -139,7 +139,7 @@ npm run deploy:dev -- --context transparencyLoggingEnabled=false
 | `stackName` | CloudFormation stack name | `Dev` | `Prod` |
 | `r53ZoneName` | Route 53 hosted zone | `dev.tak.nz` | `tak.nz` |
 | `vpcCidr` | VPC CIDR block | `10.0.0.0/20` | `10.0.0.0/20` |
-| `createNatGateways` | Enable NAT gateways | `false` | `true` |
+| `enableRedundantNatGateways` | Enable redundant NAT gateways | `false` (1 gateway) | `true` (2 gateways) |
 | `createVpcEndpoints` | Enable VPC endpoints | `false` | `true` |
 | `transparencyLoggingEnabled` | Certificate transparency | `true` | `true` |
 | `removalPolicy` | Resource cleanup policy | `DESTROY` | `RETAIN` |
@@ -274,7 +274,7 @@ npx cdk destroy --context env=prod --profile your-profile
 - **[Quick Reference](QUICK_REFERENCE.md)** - Fast deployment commands
 npx cdk deploy --context env=dev-test \
   --context r53ZoneName=custom.tak.nz \
-  --context createNatGateways=true \
+  --context enableRedundantNatGateways=true \
   --context vpcCidr=10.2.0.0/20
 ```
 
@@ -305,7 +305,7 @@ npx cdk deploy --context env=prod
 ### **5. Deploy with Custom Settings:**
 ```bash
 npx cdk deploy --context env=prod \
-  --context createNatGateways=false \
+  --context enableRedundantNatGateways=false \
   --context enableContainerInsights=false
 ```
 

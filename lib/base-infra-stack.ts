@@ -37,14 +37,14 @@ export class BaseInfraStack extends cdk.Stack {
     // Extract configuration values directly from envConfig
     const vpcCidr = envConfig.vpcCidr ?? DEFAULT_VPC_CIDR;
     const r53ZoneName = envConfig.r53ZoneName;
-    const createNatGateways = envConfig.networking.createNatGateways;
+    const enableRedundantNatGateways = envConfig.networking.enableRedundantNatGateways;
     const enableVpcEndpoints = envConfig.networking.createVpcEndpoints;
     const certificateTransparency = envConfig.certificate.transparencyLoggingEnabled;
     const isHighAvailability = props.environment === 'prod';
     const environmentLabel = props.environment === 'prod' ? 'Prod' : 'Dev-Test';
 
     // Create AWS resources
-    const { vpc, ipv6CidrBlock, vpcLogicalId } = createVpcL2Resources(this, vpcCidr, createNatGateways);
+    const { vpc, ipv6CidrBlock, vpcLogicalId } = createVpcL2Resources(this, vpcCidr, enableRedundantNatGateways);
     const { ecsCluster } = createEcsResources(this, this.stackName, vpc);
     const { ecrRepo } = createEcrResources(this, this.stackName);
     const { kmsKey, kmsAlias } = createKmsResources(this, this.stackName);

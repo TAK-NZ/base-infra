@@ -41,7 +41,7 @@ export function createTestApp(): cdk.App {
         r53ZoneName: 'dev.tak.nz',
         vpcCidr: '10.0.0.0/20',
         networking: {
-          createNatGateways: false,
+          enableRedundantNatGateways: false,
           createVpcEndpoints: false
         },
         certificate: {
@@ -69,7 +69,7 @@ export function createTestApp(): cdk.App {
         r53ZoneName: 'tak.nz',
         vpcCidr: '10.1.0.0/20',
         networking: {
-          createNatGateways: true,
+          enableRedundantNatGateways: true,
           createVpcEndpoints: true
         },
         certificate: {

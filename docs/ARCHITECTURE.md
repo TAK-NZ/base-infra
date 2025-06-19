@@ -67,7 +67,7 @@ The TAK Base Infrastructure provides foundational AWS resources for containerize
 - **Technology**: AWS NAT Gateway
 - **Purpose**: Outbound internet access for private subnet resources
 - **Configuration**: 
-  - **dev-test**: Single NAT Gateway (cost-optimized)
+  - **dev-test**: Single NAT Gateway in AZ-A (cost-optimized, basic functionality)
   - **prod**: Redundant NAT Gateways in both AZs (high availability)
 - **Scaling**: Environment-based configuration with override capability
 

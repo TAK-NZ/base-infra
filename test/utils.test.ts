@@ -7,7 +7,7 @@ const createTestConfig = (overrides: Partial<ContextEnvironmentConfig> = {}): Co
   stackName: 'Test',
   r53ZoneName: 'test.example.com',
   vpcCidr: '10.0.0.0/16',
-  networking: { createNatGateways: true, createVpcEndpoints: false },
+  networking: { enableRedundantNatGateways: true, createVpcEndpoints: false },
   certificate: { transparencyLoggingEnabled: true },
   general: { 
     removalPolicy: 'DESTROY', 
@@ -61,7 +61,7 @@ describe('Utility Functions', () => {
           tryGetContext: jest.fn((key) => {
             const context: { [key: string]: any } = {
               'vpcCidr': '192.168.0.0/16',
-              'createNatGateways': false,
+              'enableRedundantNatGateways': false,
               'transparencyLoggingEnabled': false
             };
             return context[key];
@@ -73,7 +73,7 @@ describe('Utility Functions', () => {
       const result = applyContextOverrides(mockApp, baseConfig);
 
       expect(result.vpcCidr).toBe('192.168.0.0/16');
-      expect(result.networking.createNatGateways).toBe(false);
+      expect(result.networking.enableRedundantNatGateways).toBe(false);
       expect(result.certificate.transparencyLoggingEnabled).toBe(false);
     });
 

@@ -11,8 +11,8 @@ npm run deploy:dev     # Development environment
 npm run deploy:prod    # Production environment
 
 # Deploy with configuration overrides
-npm run deploy:dev -- --context dev-test.r53ZoneName=custom.tak.nz
-npm run deploy:prod -- --context prod.vpcCidr=10.5.0.0/20
+npm run deploy:dev -- --context r53ZoneName=custom.tak.nz
+npm run deploy:prod -- --context vpcCidr=10.5.0.0/20
 ```
 
 ## Configuration System Architecture
@@ -28,7 +28,7 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
       "r53ZoneName": "dev.tak.nz", 
       "vpcCidr": "10.0.0.0/20",
       "networking": {
-        "createNatGateways": false,
+        "enableRedundantNatGateways": false,
         "createVpcEndpoints": false
       }
     },
@@ -37,7 +37,7 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
       "r53ZoneName": "tak.nz",
       "vpcCidr": "10.1.0.0/20", 
       "networking": {
-        "createNatGateways": true,
+        "enableRedundantNatGateways": true,
         "createVpcEndpoints": true
       }
     }
@@ -62,7 +62,7 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
 | Setting | dev-test | prod | Impact |
 |---------|----------|------|--------|
 | **VPC CIDR** | `10.0.0.0/20` | `10.0.0.0/20` | Same network range |
-| **NAT Gateways** | `false` (cost savings) | `true` (redundancy) | High availability |
+| **NAT Gateways** | `false` (1 gateway, cost-effective) | `true` (2 gateways, redundant) | High availability |
 | **VPC Endpoints** | `false` (cost savings) | `true` (security) | Private AWS access |
 | **Certificate Transparency** | `true` | `true` | Security compliance |
 | **Container Insights** | `false` | `true` | ECS monitoring |
@@ -110,6 +110,8 @@ Use CDK's built-in `--context` flag with **flat parameter names** to override an
 ### **Network Security**
 - **Private Subnets**: All compute resources deployed in private subnets
 - **NAT Gateways**: Controlled internet access from private subnets
+  - **dev-test**: 1 NAT Gateway (cost-effective, single AZ)
+  - **prod**: 2 NAT Gateways (high availability, multi-AZ)
 - **VPC Endpoints**: Private connectivity to AWS services (production)
 - **Security Groups**: Restrictive access controls throughout
 
@@ -128,7 +130,7 @@ Use CDK's built-in `--context` flag with **flat parameter names** to override an
 ## **Cost Optimization**
 
 ### **Development Environment Optimizations**
-- **Single NAT Gateway**: Reduces NAT gateway costs (~$45/month savings)
+- **Single NAT Gateway**: Uses 1 NAT gateway vs 2 in production (~$42/month savings)
 - **No VPC Endpoints**: Eliminates interface endpoint costs (~$22/month savings)
 - **Reduced ECR Retention**: Lower storage costs
 - **Container Insights Disabled**: Reduces CloudWatch costs
@@ -181,9 +183,9 @@ npm run deploy:prod -- --context r53ZoneName=enterprise.example.com
 npm run deploy:dev -- --context vpcCidr=10.5.0.0/20
 npm run deploy:prod -- --context vpcCidr=10.1.0.0/20
 
-# Enable/disable NAT gateways
-npm run deploy:dev -- --context createNatGateways=true
-npm run deploy:prod -- --context createNatGateways=false
+# Enable/disable redundant NAT gateways
+npm run deploy:dev -- --context enableRedundantNatGateways=true
+npm run deploy:prod -- --context enableRedundantNatGateways=false
 
 # Enable/disable VPC endpoints
 npm run deploy:dev -- --context createVpcEndpoints=true
@@ -251,7 +253,7 @@ All AWS resources are automatically tagged with:
 ### **Networking Configuration**
 | Parameter | Description | dev-test | prod |
 |-----------|-------------|----------|------|
-| `networking.createNatGateways` | Enable redundant NAT gateways | `false` | `true` |
+| `networking.enableRedundantNatGateways` | Enable redundant NAT gateways | `false` (1 NAT Gateway) | `true` (2 NAT Gateways) |
 | `networking.createVpcEndpoints` | Enable VPC interface endpoints | `false` | `true` |
 
 ### **Certificate Configuration**
@@ -281,17 +283,17 @@ npx cdk deploy --context env=prod
 ### Advanced Deployments
 ```bash
 # Production with custom domain
-npx cdk deploy --context env=prod --context prod.r53ZoneName=company.com
+npx cdk deploy --context env=prod --context r53ZoneName=company.com
 
 # Development with production-like networking
 npx cdk deploy --context env=dev-test \
-  --context dev-test.networking.createNatGateways=true \
-  --context dev-test.networking.createVpcEndpoints=true
+  --context networking.enableRedundantNatGateways=true \
+  --context networking.createVpcEndpoints=true
 
 # Custom environment for feature testing
 npx cdk deploy --context env=dev-test \
-  --context dev-test.stackName=FeatureX \
-  --context dev-test.r53ZoneName=feature.tak.nz
+  --context stackName=FeatureX \
+  --context r53ZoneName=feature.tak.nz
 ```
 
 ## Required Environment Variables

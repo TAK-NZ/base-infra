@@ -22,7 +22,7 @@
       "r53ZoneName": "dev.tak.nz",
       "vpcCidr": "10.0.0.0/20",
       "networking": {
-        "createNatGateways": false,
+        "enableRedundantNatGateways": false,
         "createVpcEndpoints": false
       },
       "certificate": {
@@ -50,7 +50,7 @@
       "r53ZoneName": "tak.nz",
       "vpcCidr": "10.0.0.0/20",
       "networking": {
-        "createNatGateways": true,
+        "enableRedundantNatGateways": true,
         "createVpcEndpoints": true
       },
       "certificate": {

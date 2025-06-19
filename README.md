@@ -112,8 +112,8 @@ npm run deploy:dev -- --context r53ZoneName=custom.tak.nz
 # Deploy production with different VPC CIDR
 npm run deploy:prod -- --context vpcCidr=10.5.0.0/20
 
-# Disable high availability features for cost savings
-npm run deploy:prod -- --context createNatGateways=false
+# Use single NAT gateway instead of redundant setup for cost savings
+npm run deploy:prod -- --context enableRedundantNatGateways=false
 ```
 
 ## 📚 Documentation

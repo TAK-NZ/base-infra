@@ -16,7 +16,7 @@ describe('ACM Certificate', () => {
           stackName: 'Prod',
           r53ZoneName: 'example.com',
           vpcCidr: "10.1.0.0/20",
-          networking: { createNatGateways: true, createVpcEndpoints: true },
+          networking: { enableRedundantNatGateways: true, createVpcEndpoints: true },
           certificate: { transparencyLoggingEnabled: true },
           general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
           kms: { enableKeyRotation: true },
@@ -62,7 +62,7 @@ describe('ACM Certificate', () => {
         envConfig: {
           stackName: 'Test',
           r53ZoneName: '', // Empty zone name
-          networking: { createNatGateways: true, createVpcEndpoints: true },
+          networking: { enableRedundantNatGateways: true, createVpcEndpoints: true },
           certificate: { transparencyLoggingEnabled: true },
           general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
           kms: { enableKeyRotation: true },
@@ -79,7 +79,7 @@ describe('ACM Certificate', () => {
         envConfig: {
           stackName: 'Test',
           r53ZoneName: '   ', // Whitespace zone name
-          networking: { createNatGateways: true, createVpcEndpoints: true },
+          networking: { enableRedundantNatGateways: true, createVpcEndpoints: true },
           certificate: { transparencyLoggingEnabled: true },
           general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
           kms: { enableKeyRotation: true },
@@ -115,7 +115,7 @@ describe('ACM Certificate', () => {
         envConfig: {
           stackName: 'Test',
           r53ZoneName: undefined as any, // Undefined zone name
-          networking: { createNatGateways: true, createVpcEndpoints: true },
+          networking: { enableRedundantNatGateways: true, createVpcEndpoints: true },
           certificate: { transparencyLoggingEnabled: true },
           general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
           kms: { enableKeyRotation: true },
@@ -138,7 +138,7 @@ describe('ACM Certificate', () => {
           stackName: 'Prod',
           r53ZoneName: 'example.com',
           vpcCidr: "10.1.0.0/20",
-          networking: { createNatGateways: true, createVpcEndpoints: true },
+          networking: { enableRedundantNatGateways: true, createVpcEndpoints: true },
           certificate: { transparencyLoggingEnabled: true },
           general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
           kms: { enableKeyRotation: true },
@@ -176,7 +176,7 @@ describe('ACM Certificate', () => {
           stackName: 'Dev',
           r53ZoneName: 'example.com',
           vpcCidr: "10.0.0.0/20",
-          networking: { createNatGateways: false, createVpcEndpoints: false },
+          networking: { enableRedundantNatGateways: false, createVpcEndpoints: false },
           certificate: { transparencyLoggingEnabled: false },
           general: { removalPolicy: 'DESTROY', enableDetailedLogging: true, enableContainerInsights: false },
           kms: { enableKeyRotation: false },
@@ -219,7 +219,7 @@ describe('ACM Certificate', () => {
       stackName: 'Dev',
       r53ZoneName: 'example.com',
       vpcCidr: "10.0.0.0/20",
-      networking: { createNatGateways: false, createVpcEndpoints: false },
+      networking: { enableRedundantNatGateways: false, createVpcEndpoints: false },
       certificate: { transparencyLoggingEnabled: true }, // Override dev-test default
       general: { removalPolicy: 'DESTROY', enableDetailedLogging: true, enableContainerInsights: false },
       kms: { enableKeyRotation: false },

@@ -15,12 +15,12 @@ export interface VpcResources {
 export function createVpcL2Resources(
   scope: Construct,
   vpcCidr: string = '10.0.0.0/20',
-  createNatGateways: boolean
+  enableRedundantNatGateways: boolean
 ): VpcResources {
   const vpc = new ec2.Vpc(scope, 'Vpc', {
     ipAddresses: ec2.IpAddresses.cidr(vpcCidr),
     maxAzs: 2,
-    natGateways: createNatGateways ? 2 : 0,
+    natGateways: enableRedundantNatGateways ? 2 : 1,
     subnetConfiguration: [
       {
         cidrMask: 24,
