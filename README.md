@@ -1,86 +1,158 @@
-<h1 align=center>TAK VPC</h1>
+# TAK Base Infrastructure
 
-<p align=center>TAK Base Layer (VPC, ECS, ECR, S3, KMS)</p>
+<p align=center>Modern AWS CDK v2 infrastructure for Team Awareness Kit (TAK) deployments
 
-## Background
+## Overview
 
 The [Team Awareness Kit (TAK)](https://tak.gov/solutions/emergency) provides Fire, Emergency Management, and First Responders an operationally agnostic tool for improved situational awareness and a common operational picture. 
-This repo deploys the base infrastructure required to deploy a [TAK server](https://tak.gov/solutions/emergency) along with [Authentik](https://goauthentik.io/) as the authentication layer on AWS.
 
-The following additional layers are required after deploying this `coe-base-<name>` layer:
+This repository deploys the foundational AWS infrastructure required for a complete TAK server deployment, including networking, compute, storage, and security services - all while using [free and open source software](https://en.wikipedia.org/wiki/Free_and_open-source_software).
 
-| Name                  | Notes |
-| --------------------- | ----- |
-| `coe-auth-<name>`     | Authentication layer using Authentik - [repo](https://github.com/TAK-NZ/auth-infra)      |
-| `coe-tak-<name>`      | TAK Server layer - [repo](https://github.com/TAK-NZ/tak-infra)      |
+It is specifically targeted at the deployment of [TAK.NZ](https://tak.nz) via a CI/CD pipeline. Nevertheless others interested in deploying a similar infrastructure can do so by adapting the configuration items.
 
-## Pre-Reqs
+> [!CAUTION]
+> **New Deployment Tool**
+> 
+> This is the new [AWS CDK](https://aws.amazon.com/cdk/) version of the Base Infrastructure Layer. It is **not compatible** with the [previous version](../../../tree/legacy) that uses the [OpenAddresses Deploy Tool](https://github.com/openaddresses/deploy).
+> 
+> **For new deployments:**
+> - Choose either CDK **OR** Deploy Tool for your entire stack - both approaches cannot be mixed
+> - CDK versions are not yet available for all stack layers - verify complete CDK coverage before choosing this approach
+> - Existing Deploy Tool deployments can remain unchanged - no migration required
+> 
+> **When to choose CDK:** All future feature enhancements and updates will only be made to the CDK version. New deployments should use CDK when all required stack layers are available.
 
-The following dependencies must be fulfilled:
-- An [AWS Account](https://signin.aws.amazon.com/signup?request_type=register).
-- A Domain Name under which the TAK server is made available, e.g. `tak.nz` in the example here.
-- An [AWS ACM certificate](https://docs.aws.amazon.com/acm/latest/userguide/gs.html) certificate.
-  - This certificate should cover the main domain - e.g. `tak.nz`, as well as `*.<domain name>` and `*.map.<domain name>`. E.g. `*.tak.nz` and `*.map.tak.nz`.
+### Architecture Layers
 
-## AWS Deployment
+This base infrastructure supports additional application layers:
 
-### 1. Install Tooling Dependencies
+| Layer | Repository | Description |
+|-------|------------|-------------|
+| **Base Infrastructure** | `base-infra` (this repo) | VPC, ECS, ECR, S3, KMS, ACM |
+| **Authentication Layer** | [`auth-infra`](https://github.com/TAK-NZ/auth-infra) | Authentik SSO and LDAP |
+| **TAK Server Layer** | [`tak-infra`](https://github.com/TAK-NZ/tak-infra) | TAK Server deployment |
 
-From the root directory, install the deploy dependencies
+## Quick Start
 
-```sh
+### Prerequisites
+- [AWS Account](https://signin.aws.amazon.com/signup) with configured credentials
+- Public Route 53 hosted zone (e.g., `tak.nz`)
+- [Node.js](https://nodejs.org/) and npm installed
+
+### Installation & Deployment
+
+```bash
+# 1. Install dependencies
 npm install
+
+# 2. Bootstrap CDK (first time only)
+npx cdk bootstrap --profile your-aws-profile
+
+# 3. Deploy development environment
+npm run deploy:dev
+
+# 4. Deploy production environment  
+npm run deploy:prod
 ```
 
-### 2. First use of Amazon Elastic Container Service (ECS)
+## Infrastructure Resources
 
-Amazon Elastic Container Service uses AWS Identity and Access Management (IAM) service-linked roles. This service linked role needs to be created first - either manually or by having ECS create it during the first deployment. If you have never used ECS in this specific AWS account you need to manually create the service-linked role via `aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com`. If you have already used ECS before in this particular AWS account, you can move on to the next step. 
+### Networking
+- **VPC** with IPv4/IPv6 dual-stack support
+- **Subnets** - Public and private across 2 Availability Zones
+- **NAT Gateways** - Environment-specific (1 for dev, 2 for prod)
+- **VPC Endpoints** - S3 Gateway + Interface endpoints (prod only)
 
-### 3. CloudFormation Stack Deployment
-Deployment to AWS is handled via AWS Cloudformation. The template can be found in the `./cloudformation`
-directory. The deployment itself is performed by [Deploy](https://github.com/openaddresses/deploy) which
-was installed in the previous step.
+### Compute & Storage  
+- **ECS Cluster** - Fargate-enabled for containerized applications
+- **ECR Repository** - Container registry with lifecycle policies
+- **S3 Bucket** - Configuration storage with KMS encryption
+- **KMS Key & Alias** - Application-specific encryption
 
-Deployment can then be performed via the `npx deploy create <stack>` command. 
+### Security & DNS
+- **ACM Certificate** - Wildcard SSL covering multiple subdomains:
+  - Main domain (e.g., `tak.nz`)
+  - Wildcard (e.g., `*.tak.nz`) 
+  - Map services (e.g., `*.map.tak.nz`)
+- **Security Groups** - Restrictive access controls
+- **IAM Policies** - Least-privilege access patterns
 
-For example:
+## Available Environments
 
+| Environment | Stack Name | Description | Domain | Monthly Cost* |
+|-------------|------------|-------------|--------|---------------|
+| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized development | `dev.tak.nz` | ~$45 |
+| `prod` | `TAK-Prod-BaseInfra` | High-availability production | `tak.nz` | ~$144 |
+
+*Estimated AWS costs for ap-southeast-2, excluding data processing and storage usage
+
+## Development Workflow
+
+### New NPM Scripts (Enhanced Developer Experience)
+```bash
+# Development and Testing
+npm run dev                    # Build and test
+npm run test:watch            # Run tests in watch mode
+npm run test:coverage         # Generate coverage report
+
+# Environment-Specific Deployment
+npm run deploy:dev            # Deploy to dev-test
+npm run deploy:prod           # Deploy to production
+npm run synth:dev             # Preview dev infrastructure
+npm run synth:prod            # Preview prod infrastructure
+
+# Infrastructure Management
+npm run cdk:diff:dev          # Show what would change in dev
+npm run cdk:diff:prod         # Show what would change in prod
+npm run cdk:bootstrap         # Bootstrap CDK in account
 ```
-npx deploy create staging
+
+### Configuration System
+
+The project uses **AWS CDK context-based configuration** for consistent deployments:
+
+- **All settings** stored in [`cdk.json`](cdk.json) under `context` section
+- **Version controlled** - consistent deployments across team members
+- **Runtime overrides** - use `--context` flag for one-off changes
+- **Environment-specific** - separate configs for dev-test and production
+
+#### Configuration Override Examples
+```bash
+# Override domain name for custom deployment
+npm run deploy:dev -- --context r53ZoneName=custom.tak.nz
+
+# Deploy production with different VPC CIDR
+npm run deploy:prod -- --context vpcCidr=10.5.0.0/20
+
+# Use single NAT gateway instead of redundant setup for cost savings
+npm run deploy:prod -- --context enableRedundantNatGateways=false
 ```
 
-## About the deploy tool
+## 📚 Documentation
 
-The deploy tool can be run via the `npx deploy` command.
+- **[🚀 Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Comprehensive deployment instructions and configuration options
+- **[🏗️ Architecture Guide](docs/ARCHITECTURE.md)** - Technical architecture and design decisions  
+- **[⚡ Quick Reference](docs/QUICK_REFERENCE.md)** - Fast deployment commands and environment comparison
+- **[⚙️ Configuration Guide](docs/PARAMETERS.md)** - Complete configuration management reference
+- **[🧪 Test Organization](test/TEST_ORGANIZATION.md)** - Test structure and coverage information
 
-To install it globally - view the deploy [README](https://github.com/openaddresses/deploy)
+## Security Features
 
-Deploy uses your existing AWS credentials. Ensure that your `~/.aws/credentials` has an entry like:
- 
-```
-[coe]
-aws_access_key_id = <redacted>
-aws_secret_access_key = <redacted>
-```
+### Enterprise-Grade Security
+- **🔐 ECR Repository** - Account-restricted access (no public pull permissions)
+- **🔑 KMS Encryption** - All data encrypted with customer-managed keys
+- **🛡️ Network Security** - Private subnets with controlled internet access
+- **🔒 IAM Policies** - Least-privilege access patterns throughout
+- **📋 VPC Endpoints** - Private connectivity to AWS services (production)
 
-Stacks can be created, deleted, cancelled, etc all via the deploy tool. For further information
-information about `deploy` functionality run the following for help.
- 
-```sh
-npx deploy
-```
- 
-Further help about a specific command can be obtained via something like:
+## Getting Help
 
-```sh
-npx deploy info --help
-```
+### Common Issues
+- **Route53 Hosted Zone** - Ensure your domain's hosted zone exists before deployment
+- **AWS Permissions** - CDK requires broad permissions for CloudFormation operations
+- **First ECS Deployment** - May require service-linked role creation: `aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com`
 
-## Estimated Cost
-
-The estimated AWS cost for this layer of the stack without data transfer or data processing based usage is:
-
-| Environment type      | Estimated monthly cost | Estimated yearly cost |
-| --------------------- | ----- | ----- |
-| Prod                  | 80.00 USD | 960.00 USD |
-| Dev-Test              | 43.50 USD | 522.00 USD |
+### Support Resources
+- **AWS CDK Documentation** - https://docs.aws.amazon.com/cdk/
+- **TAK-NZ Project** - https://github.com/TAK-NZ/
+- **Issue Tracking** - Use GitHub Issues for bug reports and feature requests
