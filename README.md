@@ -107,13 +107,13 @@ The project uses **AWS CDK context-based configuration** for consistent deployme
 #### Configuration Override Examples
 ```bash
 # Override domain name for custom deployment
-npm run deploy:dev -- --context dev-test.r53ZoneName=custom.tak.nz
+npm run deploy:dev -- --context r53ZoneName=custom.tak.nz
 
 # Deploy production with different VPC CIDR
-npm run deploy:prod -- --context prod.vpcCidr=10.5.0.0/20
+npm run deploy:prod -- --context vpcCidr=10.5.0.0/20
 
 # Disable high availability features for cost savings
-npm run deploy:prod -- --context prod.networking.createNatGateways=false
+npm run deploy:prod -- --context createNatGateways=false
 ```
 
 ## 📚 Documentation

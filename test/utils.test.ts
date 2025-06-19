@@ -1,6 +1,5 @@
 import { generateStandardTags } from '../lib/utils/tag-helpers';
 import { applyContextOverrides } from '../lib/utils/context-overrides';
-import { createOutput } from '../lib/utils/output-helpers';
 import { ContextEnvironmentConfig } from '../lib/stack-config';
 
 // Helper function to create a complete test config
@@ -53,22 +52,7 @@ describe('Utility Functions', () => {
     });
   });
 
-  describe('createOutput', () => {
-    it('accepts correct config structure', () => {
-      // This test just verifies the config interface works correctly
-      const config = {
-        id: 'TestOutput',
-        description: 'Test Description',
-        value: 'test-value',
-        exportKey: 'test-key'
-      };
 
-      expect(config.id).toBe('TestOutput');
-      expect(config.description).toBe('Test Description');
-      expect(config.value).toBe('test-value');
-      expect(config.exportKey).toBe('test-key');
-    });
-  });
 
   describe('applyContextOverrides', () => {
     it('applies context overrides correctly', () => {
@@ -77,8 +61,8 @@ describe('Utility Functions', () => {
           tryGetContext: jest.fn((key) => {
             const context: { [key: string]: any } = {
               'vpcCidr': '192.168.0.0/16',
-              'networking.createNatGateways': false,
-              'certificate.transparencyLoggingEnabled': false
+              'createNatGateways': false,
+              'transparencyLoggingEnabled': false
             };
             return context[key];
           })

@@ -6,8 +6,6 @@ import * as kms from 'aws-cdk-lib/aws-kms';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
-import { createOutputs, createConditionalOutputs } from './utils/output-helpers';
-import { getOutputConfigs, getConditionalOutputConfigs } from './utils/constants';
 
 export interface OutputParams {
   stack: cdk.Stack;
@@ -27,16 +25,61 @@ export interface OutputParams {
 
 /**
  * Registers all CloudFormation outputs for the base infrastructure stack
- * Uses helper functions to create outputs with consistent naming and structure
  */
 export function registerOutputs(params: OutputParams): void {
   const { stack, stackName } = params;
   
-  // Create standard outputs
-  const standardOutputs = getOutputConfigs(params);
-  createOutputs(stack, stackName, standardOutputs);
-  
-  // Create conditional outputs (only if resources exist)
-  const conditionalOutputs = getConditionalOutputConfigs(params);
-  createConditionalOutputs(stack, stackName, conditionalOutputs);
+  // Standard outputs
+  const outputs = [
+    { key: 'VpcId', value: params.vpc.vpcId, description: 'VPC ID' },
+    { key: 'VpcCidrIpv4', value: params.vpc.vpcCidrBlock, description: 'VPC IPv4 CIDR Block' },
+    { key: 'SubnetPublicA', value: params.vpc.publicSubnets[0].subnetId, description: 'Subnet Public A' },
+    { key: 'SubnetPublicB', value: params.vpc.publicSubnets[1].subnetId, description: 'Subnet Public B' },
+    { key: 'SubnetPrivateA', value: params.vpc.privateSubnets[0].subnetId, description: 'Subnet Private A' },
+    { key: 'SubnetPrivateB', value: params.vpc.privateSubnets[1].subnetId, description: 'Subnet Private B' },
+    { key: 'EcsClusterArn', value: params.ecsCluster.clusterArn, description: 'ECS Cluster ARN' },
+    { key: 'EcrRepoArn', value: params.ecrRepo.repositoryArn, description: 'ECR Repository ARN' },
+    { key: 'KmsKeyArn', value: params.kmsKey.keyArn, description: 'KMS Key ARN' },
+    { key: 'KmsAlias', value: params.kmsAlias.aliasName, description: 'KMS Key Alias' },
+    { key: 'S3BucketArn', value: params.configBucket.bucketArn, description: 'S3 Configuration Bucket ARN' },
+  ];
+
+  outputs.forEach(({ key, value, description }) => {
+    new cdk.CfnOutput(stack, `${key}Output`, {
+      value,
+      description,
+      exportName: `${stackName}-${key}`,
+    });
+  });
+
+  // Conditional outputs
+  if (params.ipv6CidrBlock && params.vpcLogicalId) {
+    new cdk.CfnOutput(stack, 'VpcCidrIpv6Output', {
+      value: cdk.Fn.select(0, params.vpc.vpcIpv6CidrBlocks),
+      description: 'VPC IPv6 CIDR Block',
+      exportName: `${stackName}-VpcCidrIpv6`,
+    });
+  }
+
+  if (params.certificate) {
+    new cdk.CfnOutput(stack, 'CertificateArnOutput', {
+      value: params.certificate.certificateArn,
+      description: 'ACM Certificate ARN',
+      exportName: `${stackName}-CertificateArn`,
+    });
+  }
+
+  if (params.hostedZone) {
+    new cdk.CfnOutput(stack, 'HostedZoneIdOutput', {
+      value: params.hostedZone.hostedZoneId,
+      description: 'Route53 Hosted Zone ID',
+      exportName: `${stackName}-HostedZoneId`,
+    });
+    
+    new cdk.CfnOutput(stack, 'HostedZoneNameOutput', {
+      value: params.hostedZone.zoneName,
+      description: 'Route53 Hosted Zone Name',
+      exportName: `${stackName}-HostedZoneName`,
+    });
+  }
 }

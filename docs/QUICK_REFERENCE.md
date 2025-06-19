@@ -41,16 +41,16 @@ npx cdk deploy --context env=prod --profile your-aws-profile
 
 ```bash
 # Custom domain deployment
-npm run deploy:dev -- --context dev-test.r53ZoneName=custom.tak.nz
+npm run deploy:dev -- --context r53ZoneName=custom.tak.nz
 
 # Cost-optimized production deployment
-npm run deploy:prod -- --context prod.networking.createNatGateways=false
+npm run deploy:prod -- --context createNatGateways=false
 
 # Custom VPC CIDR
-npm run deploy:dev -- --context dev-test.vpcCidr=10.5.0.0/20
+npm run deploy:dev -- --context vpcCidr=10.5.0.0/20
 
 # Enable features in development
-npm run deploy:dev -- --context dev-test.networking.createVpcEndpoints=true
+npm run deploy:dev -- --context createVpcEndpoints=true
 ```
 
 ## Infrastructure Resources

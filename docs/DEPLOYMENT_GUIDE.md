@@ -39,20 +39,20 @@ npm run deploy:prod
 ### **Custom Domain Deployment**
 ```bash
 # Deploy with custom domain
-npm run deploy:dev -- --context dev-test.r53ZoneName=custom.tak.nz
-npm run deploy:prod -- --context prod.r53ZoneName=enterprise.tak.nz
+npm run deploy:dev -- --context r53ZoneName=custom.tak.nz
+npm run deploy:prod -- --context r53ZoneName=enterprise.tak.nz
 ```
 
 ### **Network Configuration Overrides**
 ```bash
 # Custom VPC CIDR
-npm run deploy:dev -- --context dev-test.vpcCidr=10.5.0.0/20
+npm run deploy:dev -- --context vpcCidr=10.5.0.0/20
 
 # Disable NAT gateways for cost savings
-npm run deploy:prod -- --context prod.networking.createNatGateways=false
+npm run deploy:prod -- --context createNatGateways=false
 
 # Enable VPC endpoints in development
-npm run deploy:dev -- --context dev-test.networking.createVpcEndpoints=true
+npm run deploy:dev -- --context createVpcEndpoints=true
 ```
 
 ### **Infrastructure Preview**
@@ -97,39 +97,39 @@ All settings are stored in [`cdk.json`](../cdk.json) under the `context` section
 ```
 
 ### **Runtime Configuration Overrides**
-Override any configuration value using CDK's built-in `--context` flag with dot notation:
+Override any configuration value using CDK's built-in `--context` flag with flat parameter names:
 
 ### **Configuration Override Examples**
 
 #### **Domain and Networking**
 ```bash
 # Custom domain for any environment
-npm run deploy:dev -- --context dev-test.r53ZoneName=custom.tak.nz
-npm run deploy:prod -- --context prod.r53ZoneName=enterprise.example.com
+npm run deploy:dev -- --context r53ZoneName=custom.tak.nz
+npm run deploy:prod -- --context r53ZoneName=enterprise.example.com
 
 # VPC configuration
-npm run deploy:dev -- --context dev-test.vpcCidr=10.2.0.0/20
-npm run deploy:prod -- --context prod.vpcCidr=10.5.0.0/16
+npm run deploy:dev -- --context vpcCidr=10.2.0.0/20
+npm run deploy:prod -- --context vpcCidr=10.5.0.0/16
 
 # Networking features
-npm run deploy:dev -- --context dev-test.networking.createNatGateways=true
-npm run deploy:prod -- --context prod.networking.createVpcEndpoints=false
+npm run deploy:dev -- --context createNatGateways=true
+npm run deploy:prod -- --context createVpcEndpoints=false
 ```
 
 #### **Resource Configuration**
 ```bash
 # ECR settings
 npm run deploy:dev -- \
-  --context dev-test.ecr.imageRetentionCount=10 \
-  --context dev-test.ecr.scanOnPush=true
+  --context imageRetentionCount=10 \
+  --context scanOnPush=true
 
 # S3 and KMS
 npm run deploy:prod -- \
-  --context prod.s3.enableVersioning=false \
-  --context prod.kms.enableKeyRotation=false
+  --context enableVersioning=false \
+  --context enableKeyRotation=false
 
 # Certificate settings
-npm run deploy:dev -- --context dev-test.certificate.transparencyLoggingEnabled=false
+npm run deploy:dev -- --context transparencyLoggingEnabled=false
 ```
 
 ### **🔧 Available Configuration Parameters**
@@ -139,12 +139,12 @@ npm run deploy:dev -- --context dev-test.certificate.transparencyLoggingEnabled=
 | `stackName` | CloudFormation stack name | `Dev` | `Prod` |
 | `r53ZoneName` | Route 53 hosted zone | `dev.tak.nz` | `tak.nz` |
 | `vpcCidr` | VPC CIDR block | `10.0.0.0/20` | `10.0.0.0/20` |
-| `networking.createNatGateways` | Enable NAT gateways | `false` | `true` |
-| `networking.createVpcEndpoints` | Enable VPC endpoints | `false` | `true` |
-| `certificate.transparencyLoggingEnabled` | Certificate transparency | `true` | `true` |
-| `general.removalPolicy` | Resource cleanup policy | `DESTROY` | `RETAIN` |
-| `ecr.imageRetentionCount` | ECR image retention | `5` | `20` |
-| `ecr.scanOnPush` | ECR vulnerability scanning | `false` | `true` |
+| `createNatGateways` | Enable NAT gateways | `false` | `true` |
+| `createVpcEndpoints` | Enable VPC endpoints | `false` | `true` |
+| `transparencyLoggingEnabled` | Certificate transparency | `true` | `true` |
+| `removalPolicy` | Resource cleanup policy | `DESTROY` | `RETAIN` |
+| `imageRetentionCount` | ECR image retention | `5` | `20` |
+| `scanOnPush` | ECR vulnerability scanning | `false` | `true` |
 - `r53ZoneName` - Route53 hosted zone name
 - `vpcCidr` - VPC IPv4 CIDR block (e.g., `10.0.0.0/20`)
 - `stackName` - Stack name suffix
@@ -274,7 +274,7 @@ npx cdk destroy --context env=prod --profile your-profile
 - **[Quick Reference](QUICK_REFERENCE.md)** - Fast deployment commands
 npx cdk deploy --context env=dev-test \
   --context r53ZoneName=custom.tak.nz \
-  --context networking.createNatGateways=true \
+  --context createNatGateways=true \
   --context vpcCidr=10.2.0.0/20
 ```
 
@@ -305,8 +305,8 @@ npx cdk deploy --context env=prod
 ### **5. Deploy with Custom Settings:**
 ```bash
 npx cdk deploy --context env=prod \
-  --context networking.createNatGateways=false \
-  --context general.enableContainerInsights=false
+  --context createNatGateways=false \
+  --context enableContainerInsights=false
 ```
 
 ### **6. Clean Up:**

@@ -26,7 +26,6 @@
     "cdk:bootstrap": "cdk bootstrap"
   },
   "devDependencies": {
-    "@aws-cdk/assertions": "^1.203.0",
     "@types/jest": "^29.5.14",
     "@types/node": "22.7.9",
     "aws-cdk": "2.1017.1",

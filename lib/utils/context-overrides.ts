@@ -1,42 +1,13 @@
 /**
- * Dynamic context override utilities
- * Handles command-line context overrides without manual property mapping
+ * Simplified context override utilities
+ * Handles command-line context overrides with minimal complexity
  */
 
 import * as cdk from 'aws-cdk-lib';
 import { ContextEnvironmentConfig } from '../stack-config';
 
 /**
- * Configuration mapping for context overrides
- * Defines which properties can be overridden and their types
- */
-export const OVERRIDE_CONFIG = {
-  // Top-level properties
-  'r53ZoneName': { type: 'string' as const, path: ['r53ZoneName'] },
-  'vpcCidr': { type: 'string' as const, path: ['vpcCidr'] },
-  'stackName': { type: 'string' as const, path: ['stackName'] },
-  
-  // Nested properties
-  'networking.createNatGateways': { type: 'boolean' as const, path: ['networking', 'createNatGateways'] },
-  'networking.createVpcEndpoints': { type: 'boolean' as const, path: ['networking', 'createVpcEndpoints'] },
-  
-  'certificate.transparencyLoggingEnabled': { type: 'boolean' as const, path: ['certificate', 'transparencyLoggingEnabled'] },
-  
-  'general.removalPolicy': { type: 'string' as const, path: ['general', 'removalPolicy'] },
-  'general.enableDetailedLogging': { type: 'boolean' as const, path: ['general', 'enableDetailedLogging'] },
-  'general.enableContainerInsights': { type: 'boolean' as const, path: ['general', 'enableContainerInsights'] },
-  
-  'kms.enableKeyRotation': { type: 'boolean' as const, path: ['kms', 'enableKeyRotation'] },
-  
-  's3.enableVersioning': { type: 'boolean' as const, path: ['s3', 'enableVersioning'] },
-  's3.lifecycleRules': { type: 'boolean' as const, path: ['s3', 'lifecycleRules'] },
-  
-  'ecr.imageRetentionCount': { type: 'number' as const, path: ['ecr', 'imageRetentionCount'] },
-  'ecr.scanOnPush': { type: 'boolean' as const, path: ['ecr', 'scanOnPush'] },
-};
-
-/**
- * Applies context overrides to environment configuration dynamically
+ * Applies context overrides to environment configuration
  * 
  * @param app - CDK App instance to read context from
  * @param baseConfig - Base environment configuration from cdk.json
@@ -46,73 +17,44 @@ export function applyContextOverrides(
   app: cdk.App, 
   baseConfig: ContextEnvironmentConfig
 ): ContextEnvironmentConfig {
-  // Deep clone the base configuration to avoid mutations
-  const result = JSON.parse(JSON.stringify(baseConfig)) as ContextEnvironmentConfig;
-  
-  // Apply each possible override
-  for (const [contextKey, config] of Object.entries(OVERRIDE_CONFIG)) {
-    const contextValue = app.node.tryGetContext(contextKey);
-    
-    if (contextValue !== undefined) {
-      // Convert context value to appropriate type
-      const convertedValue = convertContextValue(contextValue, config.type);
-      
-      // Set the value at the specified path
-      setNestedProperty(result, [...config.path], convertedValue);
-    }
-  }
-  
-  return result;
-}
+  // Top-level overrides
+  const topLevelOverrides = {
+    r53ZoneName: app.node.tryGetContext('r53ZoneName'),
+    vpcCidr: app.node.tryGetContext('vpcCidr'),
+    stackName: app.node.tryGetContext('stackName'),
+  };
 
-/**
- * Converts context string values to appropriate types
- */
-function convertContextValue(value: any, type: string): any {
-  if (value === undefined || value === null) {
-    return value;
-  }
-  
-  switch (type) {
-    case 'boolean':
-      if (typeof value === 'boolean') return value;
-      if (typeof value === 'string') {
-        const lower = value.toLowerCase();
-        if (lower === 'true') return true;
-        if (lower === 'false') return false;
-      }
-      return Boolean(value);
-      
-    case 'number':
-      if (typeof value === 'number') return value;
-      if (typeof value === 'string') {
-        const parsed = parseInt(value, 10);
-        if (!isNaN(parsed)) return parsed;
-      }
-      return Number(value);
-      
-    case 'string':
-    default:
-      return String(value);
-  }
-}
-
-/**
- * Sets a nested property value using a path array
- */
-function setNestedProperty(obj: any, path: string[], value: any): void {
-  let current = obj;
-  
-  // Navigate to the parent of the target property
-  for (let i = 0; i < path.length - 1; i++) {
-    const key = path[i];
-    if (!(key in current) || typeof current[key] !== 'object') {
-      current[key] = {};
-    }
-    current = current[key];
-  }
-  
-  // Set the final property
-  const finalKey = path[path.length - 1];
-  current[finalKey] = value;
+  return {
+    ...baseConfig,
+    ...Object.fromEntries(Object.entries(topLevelOverrides).filter(([_, v]) => v !== undefined)),
+    networking: {
+      ...baseConfig.networking,
+      createNatGateways: app.node.tryGetContext('createNatGateways') ?? baseConfig.networking.createNatGateways,
+      createVpcEndpoints: app.node.tryGetContext('createVpcEndpoints') ?? baseConfig.networking.createVpcEndpoints,
+    },
+    certificate: {
+      ...baseConfig.certificate,
+      transparencyLoggingEnabled: app.node.tryGetContext('transparencyLoggingEnabled') ?? baseConfig.certificate.transparencyLoggingEnabled,
+    },
+    general: {
+      ...baseConfig.general,
+      removalPolicy: app.node.tryGetContext('removalPolicy') || baseConfig.general.removalPolicy,
+      enableDetailedLogging: app.node.tryGetContext('enableDetailedLogging') ?? baseConfig.general.enableDetailedLogging,
+      enableContainerInsights: app.node.tryGetContext('enableContainerInsights') ?? baseConfig.general.enableContainerInsights,
+    },
+    kms: {
+      ...baseConfig.kms,
+      enableKeyRotation: app.node.tryGetContext('enableKeyRotation') ?? baseConfig.kms.enableKeyRotation,
+    },
+    s3: {
+      ...baseConfig.s3,
+      enableVersioning: app.node.tryGetContext('enableVersioning') ?? baseConfig.s3.enableVersioning,
+      lifecycleRules: app.node.tryGetContext('lifecycleRules') ?? baseConfig.s3.lifecycleRules,
+    },
+    ecr: {
+      ...baseConfig.ecr,
+      imageRetentionCount: app.node.tryGetContext('imageRetentionCount') ?? baseConfig.ecr.imageRetentionCount,
+      scanOnPush: app.node.tryGetContext('scanOnPush') ?? baseConfig.ecr.scanOnPush,
+    },
+  };
 }

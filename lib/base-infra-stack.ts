@@ -7,10 +7,7 @@ import * as route53 from 'aws-cdk-lib/aws-route53';
 
 // Construct imports
 import { createVpcL2Resources } from './constructs/vpc';
-import { createEcsResources } from './constructs/ecs';
-import { createEcrResources } from './constructs/ecr';
-import { createKmsResources } from './constructs/kms';
-import { createS3Resources } from './constructs/s3';
+import { createEcsResources, createEcrResources, createKmsResources, createS3Resources } from './constructs/services';
 import { createVpcEndpoints } from './constructs/endpoints';
 import { createAcmCertificate } from './constructs/acm';
 

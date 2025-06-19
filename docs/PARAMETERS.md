@@ -76,7 +76,7 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
 
 ## **Runtime Configuration Overrides**
 
-Use CDK's built-in `--context` flag with dot notation to override any configuration value:
+Use CDK's built-in `--context` flag with **flat parameter names** to override any configuration value:
 
 ### **Network Configuration**
 ### **General Configuration**
@@ -174,40 +174,40 @@ npm run synth:dev -- --context dev-test.vpcCidr=10.5.0.0/20
 ```
 ```bash
 # Custom domain
-npm run deploy:dev -- --context dev-test.r53ZoneName=custom.tak.nz
-npm run deploy:prod -- --context prod.r53ZoneName=enterprise.example.com
+npm run deploy:dev -- --context r53ZoneName=custom.tak.nz
+npm run deploy:prod -- --context r53ZoneName=enterprise.example.com
 
 # Custom VPC CIDR  
-npm run deploy:dev -- --context dev-test.vpcCidr=10.5.0.0/20
-npm run deploy:prod -- --context prod.vpcCidr=10.1.0.0/20
+npm run deploy:dev -- --context vpcCidr=10.5.0.0/20
+npm run deploy:prod -- --context vpcCidr=10.1.0.0/20
 
 # Enable/disable NAT gateways
-npm run deploy:dev -- --context dev-test.networking.createNatGateways=true
-npm run deploy:prod -- --context prod.networking.createNatGateways=false
+npm run deploy:dev -- --context createNatGateways=true
+npm run deploy:prod -- --context createNatGateways=false
 
 # Enable/disable VPC endpoints
-npm run deploy:dev -- --context dev-test.networking.createVpcEndpoints=true
-npm run deploy:prod -- --context prod.networking.createVpcEndpoints=false
+npm run deploy:dev -- --context createVpcEndpoints=true
+npm run deploy:prod -- --context createVpcEndpoints=false
 ```
 
 ### **Resource Configuration**
 ```bash
 # ECR settings
 npm run deploy:dev -- \
-  --context dev-test.ecr.imageRetentionCount=10 \
-  --context dev-test.ecr.scanOnPush=true
+  --context imageRetentionCount=10 \
+  --context scanOnPush=true
 
 # S3 and KMS settings
 npm run deploy:prod -- \
-  --context prod.s3.enableVersioning=false \
-  --context prod.kms.enableKeyRotation=false
+  --context enableVersioning=false \
+  --context enableKeyRotation=false
 
 # Certificate settings
-npm run deploy:dev -- --context dev-test.certificate.transparencyLoggingEnabled=false
+npm run deploy:dev -- --context transparencyLoggingEnabled=false
 ```
 
 ### **Override Syntax Rules**
-- Use **dot notation** for nested properties: `environment.section.property=value`
+- Use **flat parameter names** (no dot notation): `parameter=value`
 - **Command-line context always takes precedence** over `cdk.json` values
 - Can override **any configuration property** defined in the environment config
 - Boolean values: `true`/`false` (not `True`/`False`)
@@ -224,10 +224,10 @@ npm run deploy:dev -- --context dev-test.certificate.transparencyLoggingEnabled=
 ### **Custom Stack Names**
 ```bash
 # Results in "TAK-Staging-BaseInfra"
-npm run deploy:prod -- --context prod.stackName=Staging
+npm run deploy:prod -- --context stackName=Staging
 
 # Results in "TAK-FeatureBranch-BaseInfra"  
-npm run deploy:dev -- --context dev-test.stackName=FeatureBranch
+npm run deploy:dev -- --context stackName=FeatureBranch
 ```
 
 ### **Resource Tagging**
