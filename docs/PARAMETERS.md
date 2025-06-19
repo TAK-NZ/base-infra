@@ -79,28 +79,46 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
 Use CDK's built-in `--context` flag with **flat parameter names** to override any configuration value:
 
 ### **Network Configuration**
+| Parameter | Description | dev-test | prod |
+|-----------|-------------|----------|------|
+| `enableRedundantNatGateways` | Enable redundant NAT gateways | `false` (1 gateway) | `true` (2 gateways) |
+| `createVpcEndpoints` | Enable VPC interface endpoints | `false` | `true` |
+| `vpcCidr` | VPC CIDR block | `10.0.0.0/20` | `10.0.0.0/20` |
+
+### **Core Configuration**
+| Parameter | Description | dev-test | prod |
+|-----------|-------------|----------|------|
+| `stackName` | CloudFormation stack name | `Dev` | `Prod` |
+| `r53ZoneName` | Route 53 hosted zone | `dev.tak.nz` | `tak.nz` |
+
+### **Certificate Configuration**
+| Parameter | Description | dev-test | prod |
+|-----------|-------------|----------|------|
+| `transparencyLoggingEnabled` | Certificate transparency logging | `true` | `true` |
+
 ### **General Configuration**
 | Parameter | Description | dev-test | prod |
 |-----------|-------------|----------|------|
-| `general.removalPolicy` | Resource cleanup policy | `DESTROY` | `RETAIN` |
-| `general.enableDetailedLogging` | CloudWatch detailed logging | `true` | `true` |
-| `general.enableContainerInsights` | ECS container insights | `false` | `true` |
+| `removalPolicy` | Resource cleanup policy | `DESTROY` | `RETAIN` |
+| `enableDetailedLogging` | CloudWatch detailed logging | `true` | `true` |
+| `enableContainerInsights` | ECS container insights | `false` | `true` |
 
 ### **KMS Configuration**
 | Parameter | Description | dev-test | prod |
 |-----------|-------------|----------|------|
-| `kms.enableKeyRotation` | Automatic key rotation | `false` | `true` |
+| `enableKeyRotation` | Automatic key rotation | `false` | `true` |
 
 ### **S3 Configuration**
 | Parameter | Description | dev-test | prod |
 |-----------|-------------|----------|------|
-| `s3.enableVersioning` | S3 bucket versioning | `false` | `true` |
-| `s3.lifecycleRules` | S3 lifecycle management | `true` | `true` |
+| `enableVersioning` | S3 bucket versioning | `false` | `true` |
+| `lifecycleRules` | S3 lifecycle management | `true` | `true` |
 
 ### **ECR Configuration**
 | Parameter | Description | dev-test | prod |
 |-----------|-------------|----------|------|
-| `ecr.imageRetentionCount` | Number of images to retain | `5` | `20` |
+| `imageRetentionCount` | Number of images to retain | `5` | `20` |
+| `scanOnPush` | Vulnerability scanning on push | `false` | `true` |
 | `ecr.scanOnPush` | Vulnerability scanning on push | `false` | `true` |
 
 ---

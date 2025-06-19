@@ -10,6 +10,18 @@ This repository deploys the foundational AWS infrastructure required for a compl
 
 It is specifically targeted at the deployment of [TAK.NZ](https://tak.nz) via a CI/CD pipeline. Nevertheless others interested in deploying a similar infrastructure can do so by adapting the configuration items.
 
+> [!CAUTION]
+> **New Deployment Tool**
+> 
+> This is the new [AWS CDK](https://aws.amazon.com/cdk/) version of the Base Infrastructure Layer. It is **not compatible** with the [previous version](https://github.com/TAK-NZ/base-infra/tree/legacy) that uses the [OpenAddresses Deploy Tool](https://github.com/openaddresses/deploy).
+> 
+> **For new deployments:**
+> - Choose either CDK **OR** Deploy Tool for your entire stack - both approaches cannot be mixed
+> - CDK versions are not yet available for all stack layers - verify complete CDK coverage before choosing this approach
+> - Existing Deploy Tool deployments can remain unchanged - no migration required
+> 
+> **When to choose CDK:** All future feature enhancements and updates will only be made to the CDK version. New deployments should use CDK when all required stack layers are available.
+
 ### Architecture Layers
 
 This base infrastructure supports additional application layers:

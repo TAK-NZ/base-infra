@@ -143,11 +143,13 @@ npm run deploy:dev -- --context transparencyLoggingEnabled=false
 | `createVpcEndpoints` | Enable VPC endpoints | `false` | `true` |
 | `transparencyLoggingEnabled` | Certificate transparency | `true` | `true` |
 | `removalPolicy` | Resource cleanup policy | `DESTROY` | `RETAIN` |
+| `enableDetailedLogging` | CloudWatch detailed logging | `true` | `true` |
+| `enableContainerInsights` | ECS container insights | `false` | `true` |
+| `enableKeyRotation` | Automatic key rotation | `false` | `true` |
+| `enableVersioning` | S3 bucket versioning | `false` | `true` |
+| `lifecycleRules` | S3 lifecycle management | `true` | `true` |
 | `imageRetentionCount` | ECR image retention | `5` | `20` |
 | `scanOnPush` | ECR vulnerability scanning | `false` | `true` |
-- `r53ZoneName` - Route53 hosted zone name
-- `vpcCidr` - VPC IPv4 CIDR block (e.g., `10.0.0.0/20`)
-- `stackName` - Stack name suffix
 
 ---
 
@@ -187,6 +189,77 @@ npm run deploy:prod   # Production environment
 npx cdk deploy --context env=dev-test --profile your-profile
 npx cdk deploy --context env=prod --profile your-profile
 ```
+
+---
+
+## **🔄 Environment Transformation**
+
+### **Switching Between Environment Types**
+
+One of the powerful features of this CDK stack is the ability to transform deployed environments between different configuration profiles (dev-test ↔ prod) without recreating resources from scratch.
+
+### **Initial Deployment with Custom Configuration**
+You can deploy a stack with custom naming and domain configuration that doesn't follow the standard dev-test or prod patterns:
+
+```bash
+# Deploy a demo environment with dev-test configuration
+npx cdk deploy \
+  --context env=dev-test \
+  --context stackName=Demo \
+  --context r53ZoneName=demo.tak.nz \
+  --profile your-profile
+```
+
+This creates a stack named `TAK-Demo-BaseInfra` with:
+- **1 NAT Gateway** (cost-optimized)
+- **No VPC endpoints** (basic networking)
+- **Development-grade settings** for ECR, S3, logging, etc.
+
+### **Environment Upgrade (dev-test → prod)**
+Later, you can upgrade the same stack to production-grade configuration:
+
+```bash
+# Transform to production configuration
+npx cdk deploy \
+  --context env=prod \
+  --context stackName=Demo \
+  --context r53ZoneName=demo.tak.nz \
+  --profile your-profile
+```
+
+This **upgrades the existing** `TAK-Demo-BaseInfra` stack to:
+- **2 NAT Gateways** (high availability)
+- **VPC endpoints enabled** (enhanced security)
+- **Production-grade settings** for all services
+- **Resource retention policies** (data protection)
+
+### **Environment Downgrade (prod → dev-test)**
+You can also downgrade for cost optimization during development phases:
+
+```bash
+# Scale back to development configuration
+npx cdk deploy \
+  --context env=dev-test \
+  --context stackName=Demo \
+  --context r53ZoneName=demo.tak.nz \
+  --profile your-profile
+```
+
+### **⚠️ Important Considerations**
+
+1. **NAT Gateway Changes**: When switching from 2 NAT Gateways to 1, or vice versa, there may be brief network interruptions as the VPC subnets are reconfigured.
+
+2. **Removal Policies**: When downgrading from prod to dev-test, resources with `RETAIN` policies will switch to `DESTROY` policies, but existing resources retain their original policy until replaced.
+
+3. **Cost Impact**: Upgrading to prod configuration will increase costs due to additional NAT Gateways, VPC endpoints, and enhanced logging.
+
+4. **Incremental Updates**: CDK intelligently updates only the resources that need to change, minimizing disruption to running applications.
+
+### **Best Practices**
+- **Test transformations** in a non-critical environment first
+- **Plan for brief downtime** during NAT Gateway reconfigurations
+- **Monitor costs** when upgrading to production configurations
+- **Use consistent domain names** across transformations to avoid certificate recreation
 
 ---
 
