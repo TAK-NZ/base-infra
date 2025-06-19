@@ -23,6 +23,35 @@ describe('Stack Outputs', () => {
       expect(outputs[name]).toBeDefined();
     });
   });
-});
 
-// Remove or update tests that depend on parameterization/config logic. Use direct values or context for output tests.
+  it('creates outputs without IPv6 when not enabled', () => {
+    const app = createTestApp();
+    const envConfig = app.node.tryGetContext('dev-test');
+    
+    const stack = new BaseInfraStack(app, 'TestStack', { 
+      environment: 'dev-test',
+      envConfig: envConfig,
+      env: { account: '123456789012', region: 'us-east-1' }
+    });
+    const template = Template.fromStack(stack);
+    const outputs = template.toJSON().Outputs;
+    
+    expect(outputs['VpcCidrIpv6Output']).toBeUndefined();
+  });
+
+  it('creates IPv6 output when IPv6 is enabled', () => {
+    const app = createTestApp();
+    app.node.setContext('enableIpv6', true);
+    const envConfig = app.node.tryGetContext('prod');
+    
+    const stack = new BaseInfraStack(app, 'TestStack', { 
+      environment: 'prod',
+      envConfig: envConfig,
+      env: { account: '123456789012', region: 'us-east-1' }
+    });
+    const template = Template.fromStack(stack);
+    const outputs = template.toJSON().Outputs;
+    
+    expect(outputs['VpcCidrIpv6Output']).toBeDefined();
+  });
+});

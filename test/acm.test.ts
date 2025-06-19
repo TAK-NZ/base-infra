@@ -239,4 +239,30 @@ describe('ACM Certificate', () => {
       CertificateTransparencyLoggingPreference: 'ENABLED'
     });
   });
+
+  it('uses default transparency logging when not specified', () => {
+    const { createAcmCertificate } = require('../lib/constructs/acm');
+    const app = new cdk.App({
+      context: {
+        'hosted-zone:account=123456789012:domainName=example.com:region=us-east-1:privateZone=false': {
+          Id: '/hostedzone/Z1PA6795UKMFR9',
+          Name: 'example.com.'
+        }
+      }
+    });
+    const testStack = new cdk.Stack(app, 'TestStack', {
+      env: { account: '123456789012', region: 'us-east-1' }
+    });
+    
+    // Test with undefined certificateTransparency
+    createAcmCertificate(testStack, { 
+      zoneName: 'example.com',
+      certificateTransparency: undefined 
+    });
+    
+    const template = Template.fromStack(testStack);
+    template.hasResourceProperties('AWS::CertificateManager::Certificate', {
+      CertificateTransparencyLoggingPreference: 'ENABLED'
+    });
+  });
 });
