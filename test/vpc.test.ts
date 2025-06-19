@@ -21,7 +21,7 @@ describe('VPC and Networking', () => {
     });
   });
 
-  it('does not create IPv6 CIDR when context not enabled', () => {
+  it('creates IPv6 CIDR block (always enabled)', () => {
     const app = createTestApp();
     const envConfig = app.node.tryGetContext('dev-test');
     
@@ -31,12 +31,11 @@ describe('VPC and Networking', () => {
       env: { account: '123456789012', region: 'us-east-1' }
     });
     const template = Template.fromStack(stack);
-    template.resourceCountIs('AWS::EC2::VPCCidrBlock', 0);
+    template.resourceCountIs('AWS::EC2::VPCCidrBlock', 1);
   });
 
-  it('creates IPv6 CIDR when enableIpv6 context is true', () => {
+  it('creates IPv6 CIDR with proper configuration', () => {
     const app = createTestApp();
-    app.node.setContext('enableIpv6', true);
     const envConfig = app.node.tryGetContext('prod');
     
     const stack = new BaseInfraStack(app, 'TestStack', { 
