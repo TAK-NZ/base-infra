@@ -10,3 +10,8 @@
 
 ## Version History
 
+### Pending ReleaseAdd commentMore actions
+
+### v1.0.0
+
+- :rocket: Initial Release using AWS CDK
