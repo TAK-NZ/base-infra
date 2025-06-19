@@ -14,7 +14,7 @@ The following additional layers are required after deploying this `coe-base-<nam
 | `coe-auth-<name>`     | Authentication layer using Authentik - [repo](https://github.com/TAK-NZ/auth-infra)      |
 | `coe-tak-<name>`      | TAK Server layer - [repo](https://github.com/TAK-NZ/tak-infra)      |
 
-> [!WARNING]
+> [!CAUTION]
 > **Legacy Branch - Deploy Tool Version**
 > 
 > This branch contains the OpenAddresses Deploy Tool version of the base infrastructure.
