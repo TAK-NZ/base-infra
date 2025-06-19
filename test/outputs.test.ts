@@ -24,7 +24,7 @@ describe('Stack Outputs', () => {
     });
   });
 
-  it('creates outputs without IPv6 when not enabled', () => {
+  it('creates IPv6 outputs (always enabled)', () => {
     const app = createTestApp();
     const envConfig = app.node.tryGetContext('dev-test');
     
@@ -36,12 +36,11 @@ describe('Stack Outputs', () => {
     const template = Template.fromStack(stack);
     const outputs = template.toJSON().Outputs;
     
-    expect(outputs['VpcCidrIpv6Output']).toBeUndefined();
+    expect(outputs['VpcCidrIpv6Output']).toBeDefined();
   });
 
-  it('creates IPv6 output when IPv6 is enabled', () => {
+  it('creates IPv6 output with proper structure', () => {
     const app = createTestApp();
-    app.node.setContext('enableIpv6', true);
     const envConfig = app.node.tryGetContext('prod');
     
     const stack = new BaseInfraStack(app, 'TestStack', { 
@@ -53,5 +52,6 @@ describe('Stack Outputs', () => {
     const outputs = template.toJSON().Outputs;
     
     expect(outputs['VpcCidrIpv6Output']).toBeDefined();
+    expect(outputs['VpcCidrIpv6Output'].Description).toBe('VPC IPv6 CIDR Block');
   });
 });
