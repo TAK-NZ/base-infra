@@ -187,6 +187,9 @@ const standardTags = {
 - **Master Dashboard**: $3.00
 - **Layer Dashboard**: $0 (disabled)
 - **Cost Tracking**: $0 (disabled)
+- **CloudWatch Alarms**: $0 (disabled)
+- **AWS Budgets**: $0 (first 2 budgets free)
+- **SNS Notifications**: $0 (disabled)
 - **Log Insights**: ~$0.005
 - **Total**: ~$3.01/month
 
@@ -194,8 +197,11 @@ const standardTags = {
 - **Master Dashboard**: $3.00
 - **Layer Dashboard**: $3.00
 - **Cost Tracking Lambda**: ~$90.00 (if enabled)
+- **CloudWatch Alarms**: $0.60 (4 alarms)
+- **AWS Budgets**: $1.20 (2 additional budgets)
+- **SNS Notifications**: $0.00 (first 1,000 emails free)
 - **Log Insights**: ~$0.005
-- **Total**: ~$96.01/month
+- **Total**: ~$97.81/month
 
 ### Configuration Options
 
@@ -449,9 +455,166 @@ aws ce get-cost-and-usage --time-period Start=2024-01-01,End=2024-01-02 --granul
 - **Time range**: Last 24 hours (adjustable)
 - **Real-time**: Near real-time for most metrics (1-5 minute delay)
 
+## Alerting & Notifications
+
+### CloudWatch Alarms
+
+**Automatically Created Alarms (when `enableAlerting: true`):**
+- **ECS CPU Utilization** > threshold (default: 80%)
+- **ECS Memory Utilization** > threshold (default: 80%)
+- **KMS Request Failures** > 0 (immediate alert)
+- **S3 Bucket Errors** > 5 (within 5 minutes)
+
+**Alarm Configuration:**
+- **Evaluation Period**: 2 periods of 5 minutes
+- **Comparison**: Greater than threshold
+- **Missing Data**: Not breaching (for KMS/S3)
+
+**Environment Defaults:**
+```json
+// Dev: Higher thresholds, alerting disabled
+"alerting": {
+  "ecsThresholds": {
+    "cpuUtilization": 85,
+    "memoryUtilization": 85
+  }
+}
+
+// Prod: Lower thresholds, alerting enabled
+"alerting": {
+  "ecsThresholds": {
+    "cpuUtilization": 80,
+    "memoryUtilization": 80
+  }
+}
+```
+
+### SNS Notifications
+
+**Email Alerts:**
+- Sent to configured `notificationEmail`
+- Triggered by any alarm state change (OK → ALARM → OK)
+- First 1,000 emails per month are FREE
+- Additional emails: $2.00 per 100,000
+
+**SMS Alerts (Optional):**
+- Enable via `enableSmsAlerts: true`
+- Cost: $0.75 per 100 SMS messages
+- Recommended for critical production alerts only
+
+**SNS Topic Export:**
+- Topic ARN exported as `{StackName}-AlertsTopicArn`
+- Can be imported by other stacks for additional subscriptions
+
+## AWS Budgets
+
+### Budget Types
+
+**Environment Budget:**
+- **Purpose**: Track total environment spending
+- **Filter**: Environment tag (Dev/Prod)
+- **Alerts**: 80% actual, 100% forecasted
+- **Scope**: All AWS services in the environment
+
+**Component Budget:**
+- **Purpose**: Track BaseInfra component spending
+- **Filter**: Component tag (BaseInfra)
+- **Alerts**: 90% actual spending
+- **Scope**: Resources tagged with Component=BaseInfra
+
+**Budget Defaults:**
+```json
+// Dev: Lower limits for cost control
+"budgets": {
+  "environmentBudget": 100,    // $100/month
+  "componentBudget": 50        // $50/month
+}
+
+// Prod: Higher limits for production workloads
+"budgets": {
+  "environmentBudget": 500,    // $500/month
+  "componentBudget": 150       // $150/month
+}
+```
+
+### Budget Notifications
+
+**Email Alerts:**
+- Sent to same email as CloudWatch alarms
+- **Environment Budget**: 80% actual + 100% forecasted
+- **Component Budget**: 90% actual only
+- Notifications are FREE
+
+**Budget Export:**
+- Environment budget name exported as `{StackName}-EnvironmentBudgetName`
+- Can be referenced by other stacks
+
+### Cost Breakdown
+- **First 2 budgets**: FREE (AWS free tier)
+- **Additional budgets**: $0.02 per budget per day ($0.60/month)
+- **Notifications**: FREE (email only)
+- **Total cost**: $1.20/month for prod (2 additional budgets)
+
+## Configuration Examples
+
+### Enable All Monitoring Features
+```json
+// cdk.json - production configuration
+"monitoring": {
+  "enableCostTracking": true,
+  "enableLayerDashboards": true,
+  "enableAlerting": true,
+  "enableBudgets": true
+},
+"alerting": {
+  "notificationEmail": "alerts@tak.nz",
+  "enableSmsAlerts": false,
+  "ecsThresholds": {
+    "cpuUtilization": 80,
+    "memoryUtilization": 80
+  }
+},
+"budgets": {
+  "environmentBudget": 500,
+  "componentBudget": 150
+}
+```
+
+### Cost-Optimized Development
+```json
+// cdk.json - development configuration
+"monitoring": {
+  "enableCostTracking": false,     // Saves $90/month
+  "enableLayerDashboards": false,  // Saves $3/month
+  "enableAlerting": false,         // Saves $0.60/month
+  "enableBudgets": true            // Keep for cost control
+},
+"budgets": {
+  "environmentBudget": 100,
+  "componentBudget": 50
+}
+```
+
+### CLI Overrides
+```bash
+# Enable alerting in dev for testing
+cdk deploy --context enableAlerting=true
+
+# Override alert thresholds
+cdk deploy --context "ecsThresholds.cpuUtilization=90"
+
+# Override budget limits
+cdk deploy --context environmentBudget=1000 --context componentBudget=200
+
+# Disable cost tracking to save money
+cdk deploy --context enableCostTracking=false
+```
+
 ## Support
 
 For issues:
 1. **Automated components**: Check CloudFormation stack events and Lambda logs
 2. **Manual setup**: AWS Billing Console documentation
 3. **Cost allocation tags**: Contact AWS Support (24-48 hour activation delay is normal)
+4. **Alerting issues**: Check SNS topic subscriptions and email delivery
+5. **Budget alerts**: Verify budget configuration and notification settings

@@ -24,6 +24,8 @@ export interface OutputParams {
   hostedZone?: route53.IHostedZone;
   masterDashboard?: cloudwatch.Dashboard;
   baseInfraDashboard?: cloudwatch.Dashboard;
+  alerting?: any;
+  budgetsResources?: any;
 }
 
 /**
@@ -99,6 +101,22 @@ export function registerOutputs(params: OutputParams): void {
       value: params.baseInfraDashboard.dashboardName,
       description: 'BaseInfra Dashboard Name',
       exportName: `${stackName}-BaseInfraDashboardName`,
+    });
+  }
+
+  if (params.alerting?.criticalAlertsTopic) {
+    new cdk.CfnOutput(stack, 'AlertsTopicArnOutput', {
+      value: params.alerting.criticalAlertsTopic.topicArn,
+      description: 'SNS Topic ARN for Critical Alerts',
+      exportName: `${stackName}-AlertsTopicArn`,
+    });
+  }
+
+  if (params.budgetsResources?.environmentBudget) {
+    new cdk.CfnOutput(stack, 'EnvironmentBudgetNameOutput', {
+      value: params.budgetsResources.environmentBudget.ref,
+      description: 'Environment Budget Name',
+      exportName: `${stackName}-EnvironmentBudgetName`,
     });
   }
 }

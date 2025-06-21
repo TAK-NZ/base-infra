@@ -10,6 +10,8 @@ import { createVpcL2Resources } from './constructs/vpc';
 import { createEcsResources, createKmsResources, createS3Resources } from './constructs/services';
 import { createCloudWatchDashboards } from './constructs/monitoring';
 import { createCostTrackingLambda } from './constructs/cost-tracking';
+import { createAlerting } from './constructs/alerting';
+import { createBudgets } from './constructs/budgets';
 import { createVpcEndpoints } from './constructs/endpoints';
 import { createAcmCertificate } from './constructs/acm';
 
@@ -56,6 +58,8 @@ export class BaseInfraStack extends cdk.Stack {
     const enableVersioning = envConfig.s3.enableVersioning;
     const enableCostTracking = envConfig.monitoring?.enableCostTracking ?? false;
     const enableLayerDashboards = envConfig.monitoring?.enableLayerDashboards ?? false;
+    const enableAlerting = envConfig.monitoring?.enableAlerting ?? false;
+    const enableBudgets = envConfig.monitoring?.enableBudgets ?? false;
 
     // Create AWS resources
     const { vpc, ipv6CidrBlock, vpcLogicalId } = createVpcL2Resources(this, vpcCidr, enableRedundantNatGateways);
@@ -112,6 +116,33 @@ export class BaseInfraStack extends cdk.Stack {
       costTrackingFunction = costTracking.costTrackingFunction;
     }
 
+    // Alerting (optional)
+    let alerting;
+    if (enableAlerting && envConfig.alerting?.notificationEmail) {
+      alerting = createAlerting(this, this.stackName, {
+        notificationEmail: envConfig.alerting.notificationEmail,
+        enableSmsAlerts: envConfig.alerting.enableSmsAlerts ?? false,
+        ecsThresholds: {
+          cpuUtilization: envConfig.alerting.ecsThresholds?.cpuUtilization ?? 80,
+          memoryUtilization: envConfig.alerting.ecsThresholds?.memoryUtilization ?? 80,
+        },
+      }, {
+        ecsCluster,
+        kmsKey,
+        configBucket,
+      });
+    }
+
+    // Budgets (optional)
+    let budgetsResources;
+    if (enableBudgets && envConfig.budgets && envConfig.alerting?.notificationEmail) {
+      budgetsResources = createBudgets(this, this.stackName, props.environment, {
+        environmentBudget: envConfig.budgets.environmentBudget ?? 100,
+        componentBudget: envConfig.budgets.componentBudget ?? 50,
+        notificationEmail: envConfig.alerting.notificationEmail,
+      }, alerting?.criticalAlertsTopic);
+    }
+
     // Outputs
     registerOutputs({
       stack: this,
@@ -128,6 +159,8 @@ export class BaseInfraStack extends cdk.Stack {
       hostedZone,
       masterDashboard,
       baseInfraDashboard,
+      alerting,
+      budgetsResources,
     });
   }
 }

@@ -39,7 +39,21 @@
       },
       "monitoring": {
         "enableCostTracking": false,
-        "enableLayerDashboards": false
+        "enableLayerDashboards": false,
+        "enableAlerting": false,
+        "enableBudgets": true
+      },
+      "alerting": {
+        "notificationEmail": "alerts@tak.nz",
+        "enableSmsAlerts": false,
+        "ecsThresholds": {
+          "cpuUtilization": 85,
+          "memoryUtilization": 85
+        }
+      },
+      "budgets": {
+        "environmentBudget": 100,
+        "componentBudget": 50
       }
     },
     "prod": {
@@ -64,7 +78,21 @@
       },
       "monitoring": {
         "enableCostTracking": true,
-        "enableLayerDashboards": true
+        "enableLayerDashboards": true,
+        "enableAlerting": true,
+        "enableBudgets": true
+      },
+      "alerting": {
+        "notificationEmail": "alerts@tak.nz",
+        "enableSmsAlerts": false,
+        "ecsThresholds": {
+          "cpuUtilization": 80,
+          "memoryUtilization": 80
+        }
+      },
+      "budgets": {
+        "environmentBudget": 500,
+        "componentBudget": 150
       }
     },
     "tak-defaults": {

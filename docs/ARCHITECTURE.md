@@ -58,16 +58,24 @@ The TAK Base Infrastructure provides foundational AWS resources for containerize
         ┌─────────────────────────────────────────────────────────────────┐
         │                      Core Services                              │
         │                                                                 │
-        │                 ┌─────────────┐  ┌─────────────┐                │
-        │                 │     KMS     │  │     S3      │                │
-        │                 │Customer Key │  │Config Bucket│                │
-        │                 │             │  │             │                │
-        │                 │dev: no rot  │  │dev: no ver  │                │
-        │                 │prod: rotate │  │prod: version│                │
-        │                 │             │  │             │                │
-        │                 │             │  │             │                │
-        │                 │             │  │             │                │
-        │                 └─────────────┘  └─────────────┘                │
+        │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
+        │  │     KMS     │  │     S3      │  │      CloudWatch         │  │
+        │  │Customer Key │  │Config Bucket│  │     Monitoring          │  │
+        │  │             │  │             │  │                         │  │
+        │  │dev: no rot  │  │dev: no ver  │  │ ┌─ Master Dashboard ──┐ │  │
+        │  │prod: rotate │  │prod: version│  │ │ (Always Deployed)   │ │  │
+        │  │             │  │             │  │ └─────────────────────┘ │  │
+        │  │             │  │             │  │ ┌─ Layer Dashboard ───┐ │  │
+        │  │             │  │             │  │ │ (prod only)         │ │  │
+        │  └─────────────┘  └─────────────┘  │ └─────────────────────┘ │  │
+        │                                    │ ┌─ Cost Tracking ─────┐ │  │
+        │  ┌─────────────┐  ┌─────────────┐  │ │ Lambda (prod only)  │ │  │
+        │  │     SNS     │  │   Budgets   │  │ └─────────────────────┘ │  │
+        │  │ Alerting    │  │Cost Control │  │ ┌─ CloudWatch Alarms ─┐ │  │
+        │  │             │  │             │  │ │ ECS/KMS/S3 (prod)   │ │  │
+        │  │dev: disabled│  │dev: $100    │  │ └─────────────────────┘ │  │
+        │  │prod: enabled│  │prod: $500   │  └─────────────────────────┘  │
+        │  └─────────────┘  └─────────────┘                               │
         └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -140,6 +148,36 @@ The TAK Base Infrastructure provides foundational AWS resources for containerize
 - **Lifecycle**: Environment-dependent intelligent tiering and cleanup rules
 - **Security**: Block public access, enforce HTTPS, bucket owner enforced
 
+### Monitoring & Alerting
+
+#### 1. CloudWatch Dashboards
+- **Technology**: AWS CloudWatch custom dashboards
+- **Master Dashboard**: Always deployed, aggregated metrics across all layers
+- **Layer Dashboards**: Environment-dependent detailed monitoring (prod only)
+- **Widgets**: ECS metrics, VPC flow logs, S3/KMS usage, cost tracking
+- **Cost**: $3/month per dashboard
+
+#### 2. CloudWatch Alarms & SNS
+- **Technology**: AWS CloudWatch Alarms with SNS notifications
+- **Alarms**: ECS CPU/Memory thresholds, KMS failures, S3 errors
+- **Notifications**: Email alerts to configured address
+- **Configuration**: Environment-dependent thresholds (dev: 85%, prod: 80%)
+- **Cost**: $0.60/month (4 alarms), email notifications free
+
+#### 3. AWS Budgets
+- **Technology**: AWS Budgets for cost control
+- **Environment Budget**: Total spending per environment (dev: $100, prod: $500)
+- **Component Budget**: BaseInfra-specific limits (dev: $50, prod: $150)
+- **Alerts**: 80% actual, 100% forecasted spending notifications
+- **Cost**: First 2 budgets free, additional $1.20/month
+
+#### 4. Cost Tracking Lambda
+- **Technology**: AWS Lambda with Cost Explorer API
+- **Purpose**: Component-level cost visibility via custom metrics
+- **Execution**: Daily at 6 AM UTC via EventBridge
+- **Metrics**: Published to TAK/Cost namespace for dashboard consumption
+- **Configuration**: Production only (saves $90/month in dev)
+
 ### Network Architecture
 
 #### 1. Subnet Design
@@ -156,4 +194,24 @@ The TAK Base Infrastructure provides foundational AWS resources for containerize
 - **Default Security Group**: Automatically restricted (no ingress/egress rules)
 - **VPC Endpoint Security**: Controlled access to AWS service endpoints
 - **Principle of Least Privilege**: Minimal required access between components
+
+### Monitoring Architecture
+
+#### 1. Multi-Layer Dashboard Strategy
+- **Master Dashboard**: Cross-layer visibility for executive overview
+- **Layer Dashboards**: Detailed operational metrics per infrastructure layer
+- **Scalable Design**: Each layer adds one row to master dashboard
+- **Cost Optimization**: Layer dashboards disabled in dev environment
+
+#### 2. Alerting Strategy
+- **Proactive Monitoring**: Threshold-based alerts for critical metrics
+- **Escalation Path**: Email notifications with optional SMS
+- **Environment Tuning**: Higher thresholds in dev, lower in prod
+- **Integration Ready**: SNS topic exported for cross-stack subscriptions
+
+#### 3. Cost Management
+- **Real-time Visibility**: Component and environment-level cost tracking
+- **Budget Controls**: Automated alerts before overspending
+- **Tag-based Allocation**: Granular cost attribution via resource tagging
+- **Optimization Insights**: Historical trends for capacity planning
 

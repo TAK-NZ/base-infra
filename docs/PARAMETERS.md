@@ -52,8 +52,8 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
 
 | Environment | Stack Name | Description | Monthly Cost* |
 |-------------|------------|-------------|---------------|
-| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized development | ~$44 |
-| `prod` | `TAK-Prod-BaseInfra` | High-availability production | ~$236 |
+| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized development | ~$45 |
+| `prod` | `TAK-Prod-BaseInfra` | High-availability production | ~$238 |
 
 *Estimated AWS costs for ap-southeast-2, excluding data processing and storage usage
 
@@ -70,6 +70,8 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
 | **S3 Versioning** | `false` | `true` | Data protection |
 | **Cost Tracking** | `false` | `true` | Component cost visibility |
 | **Layer Dashboards** | `false` | `true` | Detailed monitoring |
+| **Alerting** | `false` | `true` | CloudWatch alarms + SNS |
+| **Budgets** | `true` | `true` | Cost control alerts |
 | **Removal Policy** | `DESTROY` | `RETAIN` | Resource cleanup |
 
 ---
@@ -118,6 +120,22 @@ Use CDK's built-in `--context` flag with **flat parameter names** to override an
 |-----------|-------------|----------|------|
 | `enableCostTracking` | Deploy cost tracking Lambda | `false` | `true` |
 | `enableLayerDashboards` | Deploy layer-specific dashboards | `false` | `true` |
+| `enableAlerting` | Deploy CloudWatch alarms and SNS notifications | `false` | `true` |
+| `enableBudgets` | Deploy AWS Budgets for cost control | `true` | `true` |
+
+### **Alerting Configuration**
+| Parameter | Description | dev-test | prod |
+|-----------|-------------|----------|------|
+| `notificationEmail` | Email address for alerts and budget notifications | `alerts@tak.nz` | `alerts@tak.nz` |
+| `enableSmsAlerts` | Enable SMS notifications (additional cost) | `false` | `false` |
+| `ecsThresholds.cpuUtilization` | ECS CPU alarm threshold (%) | `85` | `80` |
+| `ecsThresholds.memoryUtilization` | ECS Memory alarm threshold (%) | `85` | `80` |
+
+### **Budgets Configuration**
+| Parameter | Description | dev-test | prod |
+|-----------|-------------|----------|------|
+| `environmentBudget` | Monthly environment spending limit (USD) | `100` | `500` |
+| `componentBudget` | Monthly BaseInfra component limit (USD) | `50` | `150` |
 | `lifecycleRules` | S3 lifecycle management | `true` | `true` |
 
 ---
@@ -216,6 +234,20 @@ npm run deploy:prod -- --context enableCostTracking=false
 # Enable/disable layer dashboards
 npm run deploy:dev -- --context enableLayerDashboards=true
 npm run deploy:prod -- --context enableLayerDashboards=false
+
+# Enable/disable alerting
+npm run deploy:dev -- --context enableAlerting=true
+npm run deploy:prod -- --context enableAlerting=false
+
+# Enable/disable budgets
+npm run deploy:dev -- --context enableBudgets=false
+npm run deploy:prod -- --context enableBudgets=true
+
+# Override alerting thresholds
+npm run deploy:prod -- --context "ecsThresholds.cpuUtilization=90"
+
+# Override budget limits
+npm run deploy:prod -- --context environmentBudget=1000 --context componentBudget=200
 ```
 
 ### **Resource Configuration**
