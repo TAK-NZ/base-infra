@@ -27,4 +27,8 @@ export interface ContextEnvironmentConfig {
   s3: {
     enableVersioning: boolean;
   };
+  monitoring?: {
+    enableCostTracking?: boolean;
+    enableLayerDashboards?: boolean;
+  };
 }

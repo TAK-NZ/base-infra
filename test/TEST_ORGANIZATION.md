@@ -69,6 +69,32 @@
   - Full stack construction validation
   - Environment-specific deployments
 
+### 📁 **test/monitoring.test.ts** - CloudWatch Monitoring
+- **Purpose**: Tests CloudWatch dashboard creation and configuration
+- **Coverage**:
+  - Master dashboard always created
+  - Layer dashboard conditional creation
+  - Dashboard widget content and metrics
+  - Cost tracking widget configuration
+  - Environment-specific dashboard naming
+
+### 📁 **test/cost-tracking.test.ts** - Cost Tracking Lambda
+- **Purpose**: Tests automated cost collection Lambda function
+- **Coverage**:
+  - Lambda function configuration (Node.js 18.x, 5min timeout)
+  - EventBridge daily scheduling (6 AM UTC)
+  - IAM permissions for Cost Explorer and CloudWatch
+  - Lambda code includes SDK imports and error handling
+  - Cost grouping by Environment and Component tags
+
+### 📁 **test/monitoring-integration.test.ts** - Monitoring Integration
+- **Purpose**: Tests monitoring features within full stack context
+- **Coverage**:
+  - Configuration-based deployment scenarios
+  - Dashboard output exports
+  - Resource tagging for cost allocation
+  - Environment-specific monitoring behavior
+
 ## Running Tests
 
 ```bash
@@ -91,6 +117,9 @@ npm test -- naming.test.ts
 npm test -- parameters.test.ts
 npm test -- utils.test.ts
 npm test -- integration.test.ts
+npm test -- monitoring.test.ts
+npm test -- cost-tracking.test.ts
+npm test -- monitoring-integration.test.ts
 
 # Run tests with specific pattern
 npm test -- --testPathPattern="vpc|resources|acm"
@@ -98,7 +127,7 @@ npm test -- --testPathPattern="vpc|resources|acm"
 
 ## Test Coverage Summary
 
-- **Total Test Suites**: 9
+- **Total Test Suites**: 13
 - **All Constructs Covered**: ✅ Yes
 - **Integration Tests**: ✅ Yes  
 - **Utility Functions**: ✅ Yes
@@ -111,4 +140,7 @@ npm test -- --testPathPattern="vpc|resources|acm"
 - ✅ **Enhanced** utility function test coverage
 - ✅ **Updated** export naming system tests
 - ✅ **Added** context override system testing
+- ✅ **Added** CloudWatch monitoring and cost tracking test suites (3 new test files)
+- ✅ **Enhanced** integration testing for monitoring configuration scenarios
+- ✅ **Added** Lambda function testing for automated cost collection
 

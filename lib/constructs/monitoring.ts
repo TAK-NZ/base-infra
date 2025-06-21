@@ -4,12 +4,13 @@ import * as kms from 'aws-cdk-lib/aws-kms';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
+import { Duration } from 'aws-cdk-lib';
 
 export function createCloudWatchDashboards(scope: Construct, stackName: string, environment: string, enableLayerDashboards: boolean, vpc: ec2.IVpc, ecsCluster: ecs.Cluster, kmsKey: kms.Key, configBucket: s3.Bucket) {
   // Master dashboard that other stacks will add to
   const masterDashboard = new cloudwatch.Dashboard(scope, 'MasterDashboard', {
     dashboardName: `${stackName}-Master-Overview`,
-    defaultInterval: cloudwatch.Duration.hours(1),
+    defaultInterval: Duration.hours(1),
   });
 
   // BaseInfra specific dashboard (conditional)
@@ -17,7 +18,7 @@ export function createCloudWatchDashboards(scope: Construct, stackName: string, 
   if (enableLayerDashboards) {
     baseInfraDashboard = new cloudwatch.Dashboard(scope, 'BaseInfraDashboard', {
       dashboardName: `${stackName}-BaseInfra`,
-      defaultInterval: cloudwatch.Duration.hours(1),
+      defaultInterval: Duration.hours(1),
     });
   }
 
@@ -175,13 +176,13 @@ function createBaseInfraWidgets(vpc: ec2.IVpc, ecsCluster: ecs.Cluster, kmsKey: 
     // Row 4: Cost & Operational Metrics
     new cloudwatch.LogQueryWidget({
       title: 'Recent CloudTrail Events',
-      logGroups: ['/aws/cloudtrail/management-events'],
-      queryLines: [
+      logGroupNames: ['/aws/cloudtrail/management-events'],
+      queryString: [
         'fields @timestamp, eventName, sourceIPAddress, userIdentity.type',
         'filter eventName like /Create|Delete|Update/',
         'sort @timestamp desc',
         'limit 10'
-      ],
+      ].join('\n'),
       width: 24,
       height: 6,
     }),
