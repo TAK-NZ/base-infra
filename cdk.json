@@ -40,10 +40,7 @@
         "enableVersioning": false,
         "lifecycleRules": true
       },
-      "ecr": {
-        "imageRetentionCount": 5,
-        "scanOnPush": false
-      }
+
     },
     "prod": {
       "stackName": "Prod",
@@ -68,10 +65,7 @@
         "enableVersioning": true,
         "lifecycleRules": true
       },
-      "ecr": {
-        "imageRetentionCount": 20,
-        "scanOnPush": true
-      }
+
     },
     "tak-defaults": {
       "project": "TAK.NZ",

@@ -24,13 +24,52 @@ It is specifically targeted at the deployment of [TAK.NZ](https://tak.nz) via a 
 
 ### Architecture Layers
 
-This base infrastructure supports additional application layers:
+This base infrastructure is the foundation of additional higher level layers. Layers can be deployed in multiple independent environments. As an example:
+
+```
+        PRODUCTION ENVIRONMENT                DEVELOPMENT ENVIRONMENT
+        Domain: tak.nz                        Domain: dev.tak.nz
+
+┌─────────────────────────────────┐    ┌─────────────────────────────────┐
+│         CloudTAK                │    │         CloudTAK                │
+│    CloudFormation Stack         │    │    CloudFormation Stack         │
+└─────────────────────────────────┘    └─────────────────────────────────┘
+                │                                        │
+                ▼                                        ▼
+┌─────────────────────────────────┐    ┌─────────────────────────────────┐
+│        VideoInfra               │    │        VideoInfra               │
+│    CloudFormation Stack         │    │    CloudFormation Stack         │
+└─────────────────────────────────┘    └─────────────────────────────────┘
+                │                                        │
+                ▼                                        ▼
+┌─────────────────────────────────┐    ┌─────────────────────────────────┐
+│         TakInfra                │    │         TakInfra                │
+│    CloudFormation Stack         │    │    CloudFormation Stack         │
+└─────────────────────────────────┘    └─────────────────────────────────┘
+                │                                        │
+                ▼                                        ▼
+┌─────────────────────────────────┐    ┌─────────────────────────────────┐
+│        AuthInfra                │    │        AuthInfra                │
+│    CloudFormation Stack         │    │    CloudFormation Stack         │
+└─────────────────────────────────┘    └─────────────────────────────────┘
+                │                                        │
+                ▼                                        ▼
+┌─────────────────────────────────┐    ┌─────────────────────────────────┐
+│        BaseInfra                │    │        BaseInfra                │
+│    CloudFormation Stack         │    │    CloudFormation Stack         │
+│      (This Repository)          │    │      (This Repository)          │
+└─────────────────────────────────┘    └─────────────────────────────────┘
+```
 
 | Layer | Repository | Description |
 |-------|------------|-------------|
-| **Base Infrastructure** | `base-infra` (this repo) | VPC, ECS, ECR, S3, KMS, ACM |
-| **Authentication Layer** | [`auth-infra`](https://github.com/TAK-NZ/auth-infra) | Authentik SSO and LDAP |
-| **TAK Server Layer** | [`tak-infra`](https://github.com/TAK-NZ/tak-infra) | TAK Server deployment |
+| **BaseInfra** | `base-infra` (this repo) | Foundation: VPC, ECS, S3, KMS, ACM |
+| **AuthInfra** | [`auth-infra`](https://github.com/TAK-NZ/auth-infra) | SSO via Authentik, LDAP |
+| **TAKInfra** | [`tak-infra`](https://github.com/TAK-NZ/tak-infra) | TAK Server |
+| **VideoInfra** | [`video-infra`](https://github.com/TAK-NZ/video-infra) | Video Server based on Mediamtx |
+| **CloudTAK** | [`CloudTAK`](https://github.com/TAK-NZ/CloudTAK) | CloudTAK web interface and ETL |
+
+**Deployment Order**: BaseInfra must be deployed first, followed by AuthInfra, TakInfra, VideoInfra, and finally CloudTAK. Each layer imports outputs from the layer below via CloudFormation exports.
 
 ## Quick Start
 
@@ -65,7 +104,6 @@ npm run deploy:prod
 
 ### Compute & Storage  
 - **ECS Cluster** - Fargate-enabled for containerized applications
-- **ECR Repository** - Container registry with lifecycle policies
 - **S3 Bucket** - Configuration storage with KMS encryption
 - **KMS Key & Alias** - Application-specific encryption
 
@@ -139,7 +177,6 @@ npm run deploy:prod -- --context enableRedundantNatGateways=false
 ## Security Features
 
 ### Enterprise-Grade Security
-- **🔐 ECR Repository** - Account-restricted access (no public pull permissions)
 - **🔑 KMS Encryption** - All data encrypted with customer-managed keys
 - **🛡️ Network Security** - Private subnets with controlled internet access
 - **🔒 IAM Policies** - Least-privilege access patterns throughout

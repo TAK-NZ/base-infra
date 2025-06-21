@@ -58,16 +58,16 @@ The TAK Base Infrastructure provides foundational AWS resources for containerize
         ┌─────────────────────────────────────────────────────────────────┐
         │                      Core Services                              │
         │                                                                 │
-        │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
-        │  │     ECR     │  │     KMS     │  │     S3      │              │
-        │  │ Repository  │  │Customer Key │  │Config Bucket│              │
-        │  │             │  │             │  │             │              │
-        │  │dev: 5 imgs  │  │dev: no rot  │  │dev: no ver  │              │
-        │  │prod:20 imgs │  │prod: rotate │  │prod: version│              │
-        │  │             │  │             │  │             │              │
-        │  │dev: no scan │  │             │  │             │              │
-        │  │prod: scan   │  │             │  │             │              │
-        │  └─────────────┘  └─────────────┘  └─────────────┘              │
+        │                 ┌─────────────┐  ┌─────────────┐                │
+        │                 │     KMS     │  │     S3      │                │
+        │                 │Customer Key │  │Config Bucket│                │
+        │                 │             │  │             │                │
+        │                 │dev: no rot  │  │dev: no ver  │                │
+        │                 │prod: rotate │  │prod: version│                │
+        │                 │             │  │             │                │
+        │                 │             │  │             │                │
+        │                 │             │  │             │                │
+        │                 └─────────────┘  └─────────────┘                │
         └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -107,13 +107,6 @@ The TAK Base Infrastructure provides foundational AWS resources for containerize
 - **Capacity Providers**: FARGATE and FARGATE_SPOT for cost optimization
 - **Scaling**: Auto-scaling groups with CPU and memory-based policies
 - **Container Insights**: Environment-dependent monitoring enablement
-
-#### 2. Amazon ECR Repository
-- **Technology**: AWS Elastic Container Registry
-- **Purpose**: Private Docker container image storage
-- **Lifecycle Policy**: Automated cleanup of untagged images (8-day retention)
-- **Permissions**: Cross-account pull permissions for deployment flexibility
-- **Scanning**: Environment-dependent vulnerability scanning
 
 ### Security Layer
 

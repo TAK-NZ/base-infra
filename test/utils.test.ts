@@ -16,7 +16,7 @@ const createTestConfig = (overrides: Partial<ContextEnvironmentConfig> = {}): Co
   },
   kms: { enableKeyRotation: true },
   s3: { enableVersioning: true, lifecycleRules: false },
-  ecr: { imageRetentionCount: 5, scanOnPush: true },
+
   ...overrides
 });
 
