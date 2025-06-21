@@ -19,6 +19,9 @@ describe('AWS Resources', () => {
     template.resourceCountIs('AWS::KMS::Alias', 1);
     template.resourceCountIs('AWS::S3::Bucket', 1);
     template.resourceCountIs('AWS::CertificateManager::Certificate', 1);
+    template.resourceCountIs('AWS::CloudWatch::Dashboard', 1); // Master only
+    template.resourceCountIs('AWS::Lambda::Function', 0); // Cost tracking disabled in test context
+    template.resourceCountIs('AWS::Events::Rule', 0); // EventBridge disabled in test context
     template.hasResourceProperties('AWS::S3::Bucket', {
       OwnershipControls: {
         Rules: [{ ObjectOwnership: 'BucketOwnerEnforced' }]

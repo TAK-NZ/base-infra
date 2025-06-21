@@ -6,6 +6,7 @@ import * as kms from 'aws-cdk-lib/aws-kms';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 
 export interface OutputParams {
   stack: cdk.Stack;
@@ -21,6 +22,10 @@ export interface OutputParams {
   vpcEndpoints?: Record<string, ec2.GatewayVpcEndpoint | ec2.InterfaceVpcEndpoint>;
   certificate?: acm.Certificate;
   hostedZone?: route53.IHostedZone;
+  masterDashboard?: cloudwatch.Dashboard;
+  baseInfraDashboard?: cloudwatch.Dashboard;
+  alerting?: any;
+  budgetsResources?: any;
 }
 
 /**
@@ -42,6 +47,15 @@ export function registerOutputs(params: OutputParams): void {
     { key: 'KmsAlias', value: params.kmsAlias.aliasName, description: 'KMS Key Alias' },
     { key: 'S3BucketArn', value: params.configBucket.bucketArn, description: 'S3 Configuration Bucket ARN' },
   ];
+
+  // Dashboard outputs for cross-stack sharing
+  if (params.masterDashboard) {
+    outputs.push({
+      key: 'MasterDashboardName',
+      value: params.masterDashboard.dashboardName,
+      description: 'Master Dashboard Name for cross-stack widget additions'
+    });
+  }
 
   outputs.forEach(({ key, value, description }) => {
     new cdk.CfnOutput(stack, `${key}Output`, {
@@ -79,6 +93,30 @@ export function registerOutputs(params: OutputParams): void {
       value: params.hostedZone.zoneName,
       description: 'Route53 Hosted Zone Name',
       exportName: `${stackName}-HostedZoneName`,
+    });
+  }
+
+  if (params.baseInfraDashboard) {
+    new cdk.CfnOutput(stack, 'BaseInfraDashboardNameOutput', {
+      value: params.baseInfraDashboard.dashboardName,
+      description: 'BaseInfra Dashboard Name',
+      exportName: `${stackName}-BaseInfraDashboardName`,
+    });
+  }
+
+  if (params.alerting?.criticalAlertsTopic) {
+    new cdk.CfnOutput(stack, 'AlertsTopicArnOutput', {
+      value: params.alerting.criticalAlertsTopic.topicArn,
+      description: 'SNS Topic ARN for Critical Alerts',
+      exportName: `${stackName}-AlertsTopicArn`,
+    });
+  }
+
+  if (params.budgetsResources?.environmentBudget) {
+    new cdk.CfnOutput(stack, 'EnvironmentBudgetNameOutput', {
+      value: params.budgetsResources.environmentBudget.ref,
+      description: 'Environment Budget Name',
+      exportName: `${stackName}-EnvironmentBudgetName`,
     });
   }
 }

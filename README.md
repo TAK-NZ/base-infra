@@ -172,6 +172,7 @@ npm run deploy:prod -- --context enableRedundantNatGateways=false
 - **[🏗️ Architecture Guide](docs/ARCHITECTURE.md)** - Technical architecture and design decisions  
 - **[⚡ Quick Reference](docs/QUICK_REFERENCE.md)** - Fast deployment commands and environment comparison
 - **[⚙️ Configuration Guide](docs/PARAMETERS.md)** - Complete configuration management reference
+- **[📈 CloudWatch Monitoring](docs/CLOUDWATCH_MONITORING.md)** - Dashboard setup, cost tracking, and monitoring guide
 - **[🧪 Test Organization](test/TEST_ORGANIZATION.md)** - Test structure and coverage information
 
 ## Security Features

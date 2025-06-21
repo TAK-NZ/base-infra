@@ -52,8 +52,8 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
 
 | Environment | Stack Name | Description | Monthly Cost* |
 |-------------|------------|-------------|---------------|
-| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized development | ~$44 |
-| `prod` | `TAK-Prod-BaseInfra` | High-availability production | ~$143 |
+| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized development | ~$45 |
+| `prod` | `TAK-Prod-BaseInfra` | High-availability production | ~$238 |
 
 *Estimated AWS costs for ap-southeast-2, excluding data processing and storage usage
 
@@ -68,6 +68,10 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
 | **Container Insights** | `false` | `true` | ECS monitoring |
 | **KMS Key Rotation** | `false` | `true` | Enhanced security |
 | **S3 Versioning** | `false` | `true` | Data protection |
+| **Cost Tracking** | `false` | `true` | Component cost visibility |
+| **Layer Dashboards** | `false` | `true` | Detailed monitoring |
+| **Alerting** | `false` | `true` | CloudWatch alarms + SNS |
+| **Budgets** | `true` | `true` | Cost control alerts |
 | **Removal Policy** | `DESTROY` | `RETAIN` | Resource cleanup |
 
 ---
@@ -98,8 +102,7 @@ Use CDK's built-in `--context` flag with **flat parameter names** to override an
 | Parameter | Description | dev-test | prod |
 |-----------|-------------|----------|------|
 | `removalPolicy` | Resource cleanup policy | `DESTROY` | `RETAIN` |
-| `enableDetailedLogging` | CloudWatch detailed logging | `true` | `true` |
-| `enableContainerInsights` | ECS container insights | `false` | `true` |
+
 
 ### **KMS Configuration**
 | Parameter | Description | dev-test | prod |
@@ -110,7 +113,28 @@ Use CDK's built-in `--context` flag with **flat parameter names** to override an
 | Parameter | Description | dev-test | prod |
 |-----------|-------------|----------|------|
 | `enableVersioning` | S3 bucket versioning | `false` | `true` |
-| `lifecycleRules` | S3 lifecycle management | `true` | `true` |
+
+### **Monitoring Configuration**
+| Parameter | Description | dev-test | prod |
+|-----------|-------------|----------|------|
+| `enableCostTracking` | Deploy cost tracking Lambda | `false` | `true` |
+| `enableLayerDashboards` | Deploy layer-specific dashboards | `false` | `true` |
+| `enableAlerting` | Deploy CloudWatch alarms and SNS notifications | `false` | `true` |
+| `enableBudgets` | Deploy AWS Budgets for cost control | `true` | `true` |
+
+### **Alerting Configuration**
+| Parameter | Description | dev-test | prod |
+|-----------|-------------|----------|------|
+| `notificationEmail` | Email address for alerts and budget notifications | `alerts@tak.nz` | `alerts@tak.nz` |
+| `enableSmsAlerts` | Enable SMS notifications (additional cost) | `false` | `false` |
+| `cpuUtilization` | ECS CPU alarm threshold (%) | `85` | `80` |
+| `memoryUtilization` | ECS Memory alarm threshold (%) | `85` | `80` |
+
+### **Budgets Configuration**
+| Parameter | Description | dev-test | prod |
+|-----------|-------------|----------|------|
+| `environmentBudget` | Monthly environment spending limit (USD) | `100` | `500` |
+| `componentBudget` | Monthly BaseInfra component limit (USD) | `50` | `150` |
 
 ---
 
@@ -140,13 +164,16 @@ Use CDK's built-in `--context` flag with **flat parameter names** to override an
 ### **Development Environment Optimizations**
 - **Single NAT Gateway**: Uses 1 NAT gateway vs 2 in production (~$42/month savings)
 - **No VPC Endpoints**: Eliminates interface endpoint costs (~$22/month savings)
+- **No Cost Tracking**: Disables Lambda and custom metrics (~$90/month savings)
+- **No Layer Dashboards**: Only master dashboard deployed (~$3/month savings)
 - **Container Insights Disabled**: Reduces CloudWatch costs
 
 ### **Production Environment Features**
 - **High Availability**: Dual NAT gateways across AZs
 - **Private AWS Access**: VPC endpoints for S3, ECR, KMS, Secrets Manager, CloudWatch
 - **Enhanced Security**: Key rotation, vulnerability scanning, versioning
-- **Monitoring**: Container insights and detailed logging
+- **Full Monitoring**: Container insights, cost tracking, layer dashboards
+- **Cost Visibility**: Component-level cost breakdown and tracking
 
 ---
 
@@ -179,7 +206,7 @@ npm run synth:dev
 npm run synth:prod
 
 # Validate specific overrides
-npm run synth:dev -- --context dev-test.vpcCidr=10.5.0.0/20
+npm run synth:dev -- --context vpcCidr=10.5.0.0/20
 ```
 ```bash
 # Custom domain
@@ -197,6 +224,28 @@ npm run deploy:prod -- --context enableRedundantNatGateways=false
 # Enable/disable VPC endpoints
 npm run deploy:dev -- --context createVpcEndpoints=true
 npm run deploy:prod -- --context createVpcEndpoints=false
+
+# Enable/disable cost tracking
+npm run deploy:dev -- --context enableCostTracking=true
+npm run deploy:prod -- --context enableCostTracking=false
+
+# Enable/disable layer dashboards
+npm run deploy:dev -- --context enableLayerDashboards=true
+npm run deploy:prod -- --context enableLayerDashboards=false
+
+# Enable/disable alerting
+npm run deploy:dev -- --context enableAlerting=true
+npm run deploy:prod -- --context enableAlerting=false
+
+# Enable/disable budgets
+npm run deploy:dev -- --context enableBudgets=false
+npm run deploy:prod -- --context enableBudgets=true
+
+# Override alerting thresholds
+npm run deploy:prod -- --context cpuUtilization=90 --context memoryUtilization=85
+
+# Override budget limits
+npm run deploy:prod -- --context environmentBudget=1000 --context componentBudget=200
 ```
 
 ### **Resource Configuration**
@@ -255,16 +304,14 @@ All AWS resources are automatically tagged with:
 ### **Networking Configuration**
 | Parameter | Description | dev-test | prod |
 |-----------|-------------|----------|------|
-| `networking.enableRedundantNatGateways` | Enable redundant NAT gateways | `false` (1 NAT Gateway) | `true` (2 NAT Gateways) |
-| `networking.createVpcEndpoints` | Enable VPC interface endpoints | `false` | `true` |
+| `enableRedundantNatGateways` | Enable redundant NAT gateways | `false` (1 NAT Gateway) | `true` (2 NAT Gateways) |
+| `createVpcEndpoints` | Enable VPC interface endpoints | `false` | `true` |
 
 ### **Certificate Configuration**
 | Parameter | Description | dev-test | prod |
 |-----------|-------------|----------|------|
-| `certificate.transparencyLoggingEnabled` | Certificate transparency logging | `true` | `true` |
+| `transparencyLoggingEnabled` | Certificate transparency logging | `true` | `true` |
 - `general.removalPolicy`: CloudFormation removal policy (DESTROY/RETAIN)
-- `general.enableContainerInsights`: ECS Container Insights
-- `general.enableDetailedLogging`: Detailed CloudWatch logging
 
 ### Security Configuration
 - `kms.enableKeyRotation`: Automatic KMS key rotation
@@ -288,8 +335,8 @@ npx cdk deploy --context env=prod --context r53ZoneName=company.com
 
 # Development with production-like networking
 npx cdk deploy --context env=dev-test \
-  --context networking.enableRedundantNatGateways=true \
-  --context networking.createVpcEndpoints=true
+  --context enableRedundantNatGateways=true \
+  --context createVpcEndpoints=true
 
 # Custom environment for feature testing
 npx cdk deploy --context env=dev-test \

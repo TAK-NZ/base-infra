@@ -85,7 +85,28 @@ describe('Utility Functions', () => {
       const baseConfig = createTestConfig();
       const result = applyContextOverrides(mockApp, baseConfig);
 
-      expect(result).toEqual(baseConfig);
+      // Should preserve original config but add new sections
+      expect(result).toEqual({
+        ...baseConfig,
+        monitoring: {
+          enableCostTracking: undefined,
+          enableLayerDashboards: undefined,
+          enableAlerting: undefined,
+          enableBudgets: undefined,
+        },
+        alerting: {
+          notificationEmail: undefined,
+          enableSmsAlerts: undefined,
+          ecsThresholds: {
+            cpuUtilization: undefined,
+            memoryUtilization: undefined,
+          },
+        },
+        budgets: {
+          environmentBudget: undefined,
+          componentBudget: undefined,
+        },
+      });
     });
   });
 });

@@ -27,4 +27,22 @@ export interface ContextEnvironmentConfig {
   s3: {
     enableVersioning: boolean;
   };
+  monitoring?: {
+    enableCostTracking?: boolean;
+    enableLayerDashboards?: boolean;
+    enableAlerting?: boolean;
+    enableBudgets?: boolean;
+  };
+  alerting?: {
+    notificationEmail?: string;
+    enableSmsAlerts?: boolean;
+    ecsThresholds?: {
+      cpuUtilization?: number;
+      memoryUtilization?: number;
+    };
+  };
+  budgets?: {
+    environmentBudget?: number;
+    componentBudget?: number;
+  };
 }

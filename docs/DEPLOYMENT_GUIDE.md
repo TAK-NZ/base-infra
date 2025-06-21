@@ -87,9 +87,7 @@ All settings are stored in [`cdk.json`](../cdk.json) under the `context` section
         "transparencyLoggingEnabled": true  
       },
       "general": {
-        "removalPolicy": "DESTROY",
-        "enableDetailedLogging": true,
-        "enableContainerInsights": false
+        "removalPolicy": "DESTROY"
       }
     }
   }
@@ -138,11 +136,8 @@ npm run deploy:dev -- --context transparencyLoggingEnabled=false
 | `createVpcEndpoints` | Enable VPC endpoints | `false` | `true` |
 | `transparencyLoggingEnabled` | Certificate transparency | `true` | `true` |
 | `removalPolicy` | Resource cleanup policy | `DESTROY` | `RETAIN` |
-| `enableDetailedLogging` | CloudWatch detailed logging | `true` | `true` |
-| `enableContainerInsights` | ECS container insights | `false` | `true` |
 | `enableKeyRotation` | Automatic key rotation | `false` | `true` |
 | `enableVersioning` | S3 bucket versioning | `false` | `true` |
-| `lifecycleRules` | S3 lifecycle management | `true` | `true` |
 
 ---
 
@@ -372,7 +367,7 @@ npx cdk deploy --context env=prod
 ```bash
 npx cdk deploy --context env=prod \
   --context enableRedundantNatGateways=false \
-  --context enableContainerInsights=false
+  --context enableVersioning=false
 ```
 
 ### **6. Clean Up:**
