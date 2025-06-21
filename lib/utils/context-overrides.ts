@@ -39,8 +39,6 @@ export function applyContextOverrides(
     general: {
       ...baseConfig.general,
       removalPolicy: app.node.tryGetContext('removalPolicy') || baseConfig.general.removalPolicy,
-      enableDetailedLogging: app.node.tryGetContext('enableDetailedLogging') ?? baseConfig.general.enableDetailedLogging,
-      enableContainerInsights: app.node.tryGetContext('enableContainerInsights') ?? baseConfig.general.enableContainerInsights,
     },
     kms: {
       ...baseConfig.kms,
@@ -49,8 +47,6 @@ export function applyContextOverrides(
     s3: {
       ...baseConfig.s3,
       enableVersioning: app.node.tryGetContext('enableVersioning') ?? baseConfig.s3.enableVersioning,
-      lifecycleRules: app.node.tryGetContext('lifecycleRules') ?? baseConfig.s3.lifecycleRules,
     },
-
   };
 }

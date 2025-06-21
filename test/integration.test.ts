@@ -23,10 +23,9 @@ describe('Integration Tests', () => {
       r53ZoneName: '', // Empty zone name should cause validation error
       networking: { enableRedundantNatGateways: false, createVpcEndpoints: false },
       certificate: { transparencyLoggingEnabled: false },
-      general: { removalPolicy: 'DESTROY', enableDetailedLogging: true, enableContainerInsights: false },
+      general: { removalPolicy: 'DESTROY' },
       kms: { enableKeyRotation: false },
-      s3: { enableVersioning: false, lifecycleRules: true },
-      ecr: { imageRetentionCount: 5, scanOnPush: false }
+      s3: { enableVersioning: false }
     };
     
     expect(() => {

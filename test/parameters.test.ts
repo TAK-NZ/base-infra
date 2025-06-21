@@ -8,9 +8,9 @@ describe('Stack Configuration', () => {
       vpcCidr: '10.1.0.0/20',
       networking: { enableRedundantNatGateways: true, createVpcEndpoints: true },
       certificate: { transparencyLoggingEnabled: true },
-      general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
+      general: { removalPolicy: 'RETAIN' },
       kms: { enableKeyRotation: true },
-      s3: { enableVersioning: true, lifecycleRules: true }
+      s3: { enableVersioning: true }
     };
 
     const devTestContextConfig: ContextEnvironmentConfig = {
@@ -19,9 +19,9 @@ describe('Stack Configuration', () => {
       vpcCidr: '10.0.0.0/20',
       networking: { enableRedundantNatGateways: false, createVpcEndpoints: false },
       certificate: { transparencyLoggingEnabled: false },
-      general: { removalPolicy: 'DESTROY', enableDetailedLogging: true, enableContainerInsights: false },
+      general: { removalPolicy: 'DESTROY' },
       kms: { enableKeyRotation: false },
-      s3: { enableVersioning: false, lifecycleRules: true }
+      s3: { enableVersioning: false }
     };
 
     it('validates prod environment configuration structure', () => {
@@ -32,11 +32,8 @@ describe('Stack Configuration', () => {
       expect(prodContextConfig.networking.createVpcEndpoints).toBe(true);
       expect(prodContextConfig.certificate.transparencyLoggingEnabled).toBe(true);
       expect(prodContextConfig.general.removalPolicy).toBe('RETAIN');
-      expect(prodContextConfig.general.enableDetailedLogging).toBe(true);
-      expect(prodContextConfig.general.enableContainerInsights).toBe(true);
       expect(prodContextConfig.kms.enableKeyRotation).toBe(true);
       expect(prodContextConfig.s3.enableVersioning).toBe(true);
-      expect(prodContextConfig.s3.lifecycleRules).toBe(true);
     });
 
     it('validates dev-test environment configuration structure', () => {
@@ -47,11 +44,8 @@ describe('Stack Configuration', () => {
       expect(devTestContextConfig.networking.createVpcEndpoints).toBe(false);
       expect(devTestContextConfig.certificate.transparencyLoggingEnabled).toBe(false);
       expect(devTestContextConfig.general.removalPolicy).toBe('DESTROY');
-      expect(devTestContextConfig.general.enableDetailedLogging).toBe(true);
-      expect(devTestContextConfig.general.enableContainerInsights).toBe(false);
       expect(devTestContextConfig.kms.enableKeyRotation).toBe(false);
       expect(devTestContextConfig.s3.enableVersioning).toBe(false);
-      expect(devTestContextConfig.s3.lifecycleRules).toBe(true);
     });
 
     it('validates optional vpcCidr property', () => {
