@@ -28,8 +28,7 @@ export function createBudgets(
       timeUnit: 'MONTHLY',
       budgetType: 'COST',
       costFilters: {
-        TagKey: ['Environment'],
-        TagValue: [environmentName],
+        TagKeyValue: [`Environment$${environmentName}`],
       },
     },
     notificationsWithSubscribers: [
@@ -75,8 +74,7 @@ export function createBudgets(
       timeUnit: 'MONTHLY',
       budgetType: 'COST',
       costFilters: {
-        TagKey: ['Component'],
-        TagValue: ['BaseInfra'],
+        TagKeyValue: ['Component$BaseInfra'],
       },
     },
     notificationsWithSubscribers: [

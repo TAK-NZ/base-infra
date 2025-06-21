@@ -601,7 +601,7 @@ aws ce get-cost-and-usage --time-period Start=2024-01-01,End=2024-01-02 --granul
 cdk deploy --context enableAlerting=true
 
 # Override alert thresholds
-cdk deploy --context "ecsThresholds.cpuUtilization=90"
+cdk deploy --context cpuUtilization=90 --context memoryUtilization=85
 
 # Override budget limits
 cdk deploy --context environmentBudget=1000 --context componentBudget=200

@@ -102,8 +102,7 @@ Use CDK's built-in `--context` flag with **flat parameter names** to override an
 | Parameter | Description | dev-test | prod |
 |-----------|-------------|----------|------|
 | `removalPolicy` | Resource cleanup policy | `DESTROY` | `RETAIN` |
-| `enableDetailedLogging` | CloudWatch detailed logging | `true` | `true` |
-| `enableContainerInsights` | ECS container insights | `false` | `true` |
+
 
 ### **KMS Configuration**
 | Parameter | Description | dev-test | prod |
@@ -128,15 +127,14 @@ Use CDK's built-in `--context` flag with **flat parameter names** to override an
 |-----------|-------------|----------|------|
 | `notificationEmail` | Email address for alerts and budget notifications | `alerts@tak.nz` | `alerts@tak.nz` |
 | `enableSmsAlerts` | Enable SMS notifications (additional cost) | `false` | `false` |
-| `ecsThresholds.cpuUtilization` | ECS CPU alarm threshold (%) | `85` | `80` |
-| `ecsThresholds.memoryUtilization` | ECS Memory alarm threshold (%) | `85` | `80` |
+| `cpuUtilization` | ECS CPU alarm threshold (%) | `85` | `80` |
+| `memoryUtilization` | ECS Memory alarm threshold (%) | `85` | `80` |
 
 ### **Budgets Configuration**
 | Parameter | Description | dev-test | prod |
 |-----------|-------------|----------|------|
 | `environmentBudget` | Monthly environment spending limit (USD) | `100` | `500` |
 | `componentBudget` | Monthly BaseInfra component limit (USD) | `50` | `150` |
-| `lifecycleRules` | S3 lifecycle management | `true` | `true` |
 
 ---
 
@@ -208,7 +206,7 @@ npm run synth:dev
 npm run synth:prod
 
 # Validate specific overrides
-npm run synth:dev -- --context dev-test.vpcCidr=10.5.0.0/20
+npm run synth:dev -- --context vpcCidr=10.5.0.0/20
 ```
 ```bash
 # Custom domain
@@ -244,7 +242,7 @@ npm run deploy:dev -- --context enableBudgets=false
 npm run deploy:prod -- --context enableBudgets=true
 
 # Override alerting thresholds
-npm run deploy:prod -- --context "ecsThresholds.cpuUtilization=90"
+npm run deploy:prod -- --context cpuUtilization=90 --context memoryUtilization=85
 
 # Override budget limits
 npm run deploy:prod -- --context environmentBudget=1000 --context componentBudget=200
@@ -306,16 +304,14 @@ All AWS resources are automatically tagged with:
 ### **Networking Configuration**
 | Parameter | Description | dev-test | prod |
 |-----------|-------------|----------|------|
-| `networking.enableRedundantNatGateways` | Enable redundant NAT gateways | `false` (1 NAT Gateway) | `true` (2 NAT Gateways) |
-| `networking.createVpcEndpoints` | Enable VPC interface endpoints | `false` | `true` |
+| `enableRedundantNatGateways` | Enable redundant NAT gateways | `false` (1 NAT Gateway) | `true` (2 NAT Gateways) |
+| `createVpcEndpoints` | Enable VPC interface endpoints | `false` | `true` |
 
 ### **Certificate Configuration**
 | Parameter | Description | dev-test | prod |
 |-----------|-------------|----------|------|
-| `certificate.transparencyLoggingEnabled` | Certificate transparency logging | `true` | `true` |
+| `transparencyLoggingEnabled` | Certificate transparency logging | `true` | `true` |
 - `general.removalPolicy`: CloudFormation removal policy (DESTROY/RETAIN)
-- `general.enableContainerInsights`: ECS Container Insights
-- `general.enableDetailedLogging`: Detailed CloudWatch logging
 
 ### Security Configuration
 - `kms.enableKeyRotation`: Automatic KMS key rotation
@@ -339,8 +335,8 @@ npx cdk deploy --context env=prod --context r53ZoneName=company.com
 
 # Development with production-like networking
 npx cdk deploy --context env=dev-test \
-  --context networking.enableRedundantNatGateways=true \
-  --context networking.createVpcEndpoints=true
+  --context enableRedundantNatGateways=true \
+  --context createVpcEndpoints=true
 
 # Custom environment for feature testing
 npx cdk deploy --context env=dev-test \

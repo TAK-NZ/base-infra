@@ -173,19 +173,7 @@ function createBaseInfraWidgets(vpc: ec2.IVpc, ecsCluster: ecs.Cluster, kmsKey: 
       width: 12,
     }),
 
-    // Row 4: Cost & Operational Metrics
-    new cloudwatch.LogQueryWidget({
-      title: 'Recent CloudTrail Events',
-      logGroupNames: ['/aws/cloudtrail/management-events'],
-      queryString: [
-        'fields @timestamp, eventName, sourceIPAddress, userIdentity.type',
-        'filter eventName like /Create|Delete|Update/',
-        'sort @timestamp desc',
-        'limit 10'
-      ].join('\n'),
-      width: 24,
-      height: 6,
-    }),
+
   ];
 }
 

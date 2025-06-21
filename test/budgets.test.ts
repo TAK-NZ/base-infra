@@ -30,8 +30,7 @@ describe('Budgets', () => {
           TimeUnit: 'MONTHLY',
           BudgetType: 'COST',
           CostFilters: {
-            TagKey: ['Environment'],
-            TagValue: ['Prod']
+            TagKeyValue: ['Environment$Prod']
           }
         }
       });
@@ -53,8 +52,7 @@ describe('Budgets', () => {
             Unit: 'USD'
           },
           CostFilters: {
-            TagKey: ['Component'],
-            TagValue: ['BaseInfra']
+            TagKeyValue: ['Component$BaseInfra']
           }
         }
       });
