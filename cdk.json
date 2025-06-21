@@ -39,8 +39,7 @@
       "s3": {
         "enableVersioning": false,
         "lifecycleRules": true
-      },
-
+      }
     },
     "prod": {
       "stackName": "Prod",
@@ -64,8 +63,7 @@
       "s3": {
         "enableVersioning": true,
         "lifecycleRules": true
-      },
-
+      }
     },
     "tak-defaults": {
       "project": "TAK.NZ",

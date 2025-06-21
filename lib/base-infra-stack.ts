@@ -28,7 +28,7 @@ export class BaseInfraStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BaseInfraStackProps) {
     super(scope, id, {
       ...props,
-      description: 'TAK Base Layer - VPC, ECS, ECR, KMS, S3, ACM',
+      description: 'TAK Base Layer - VPC, ECS, KMS, S3, ACM',
     });
 
     // Use environment configuration directly (no complex transformations needed)
