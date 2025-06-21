@@ -17,11 +17,11 @@ export function createEcsResources(scope: Construct, stackName: string, vpc: ec2
 
 
 
-export function createKmsResources(scope: Construct, stackName: string) {
+export function createKmsResources(scope: Construct, stackName: string, enableKeyRotation: boolean, removalPolicy: string) {
   const kmsKey = new kms.Key(scope, 'KMS', {
     description: stackName,
-    enableKeyRotation: false,
-    removalPolicy: RemovalPolicy.DESTROY,
+    enableKeyRotation,
+    removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
   });
 
   kmsKey.addToResourcePolicy(new PolicyStatement({
@@ -39,7 +39,7 @@ export function createKmsResources(scope: Construct, stackName: string) {
   return { kmsKey, kmsAlias };
 }
 
-export function createS3Resources(scope: Construct, stackName: string, region: string, kmsKey: kms.Key) {
+export function createS3Resources(scope: Construct, stackName: string, region: string, kmsKey: kms.Key, enableVersioning: boolean, removalPolicy: string) {
   const configBucket = new s3.Bucket(scope, 'ConfigBucket', {
     bucketName: `${stackName.toLowerCase()}-${region}-env-config`,
     encryption: s3.BucketEncryption.KMS,
@@ -47,7 +47,8 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
     bucketKeyEnabled: true,
     enforceSSL: true,
     blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-    removalPolicy: RemovalPolicy.DESTROY,
+    versioned: enableVersioning,
+    removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
     objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
   });
   return { configBucket };

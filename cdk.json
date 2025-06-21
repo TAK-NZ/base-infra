@@ -29,16 +29,13 @@
         "transparencyLoggingEnabled": true
       },
       "general": {
-        "removalPolicy": "DESTROY",
-        "enableDetailedLogging": true,
-        "enableContainerInsights": false
+        "removalPolicy": "DESTROY"
       },
       "kms": {
         "enableKeyRotation": false
       },
       "s3": {
-        "enableVersioning": false,
-        "lifecycleRules": true
+        "enableVersioning": false
       }
     },
     "prod": {
@@ -53,16 +50,13 @@
         "transparencyLoggingEnabled": true
       },
       "general": {
-        "removalPolicy": "RETAIN",
-        "enableDetailedLogging": true,
-        "enableContainerInsights": true
+        "removalPolicy": "RETAIN"
       },
       "kms": {
         "enableKeyRotation": true
       },
       "s3": {
-        "enableVersioning": true,
-        "lifecycleRules": true
+        "enableVersioning": true
       }
     },
     "tak-defaults": {

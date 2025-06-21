@@ -10,12 +10,10 @@ const createTestConfig = (overrides: Partial<ContextEnvironmentConfig> = {}): Co
   networking: { enableRedundantNatGateways: true, createVpcEndpoints: false },
   certificate: { transparencyLoggingEnabled: true },
   general: { 
-    removalPolicy: 'DESTROY', 
-    enableDetailedLogging: false, 
-    enableContainerInsights: false 
+    removalPolicy: 'DESTROY'
   },
   kms: { enableKeyRotation: true },
-  s3: { enableVersioning: true, lifecycleRules: false },
+  s3: { enableVersioning: true },
 
   ...overrides
 });

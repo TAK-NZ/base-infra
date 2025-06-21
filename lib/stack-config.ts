@@ -20,15 +20,11 @@ export interface ContextEnvironmentConfig {
   };
   general: {
     removalPolicy: string;
-    enableDetailedLogging: boolean;
-    enableContainerInsights: boolean;
   };
   kms: {
     enableKeyRotation: boolean;
   };
   s3: {
     enableVersioning: boolean;
-    lifecycleRules: boolean;
   };
-
 }

@@ -1,4 +1,0 @@
-
-> @TAK-NZ/base-infra@0.1.0 cdk
-> cdk synth --context env=dev-test --quiet
-

@@ -18,9 +18,9 @@ describe('ACM Certificate', () => {
           vpcCidr: "10.1.0.0/20",
           networking: { enableRedundantNatGateways: true, createVpcEndpoints: true },
           certificate: { transparencyLoggingEnabled: true },
-          general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
+          general: { removalPolicy: 'RETAIN' },
           kms: { enableKeyRotation: true },
-          s3: { enableVersioning: true, lifecycleRules: true }
+          s3: { enableVersioning: true }
         },
         'tak-defaults': { project: 'TAK', component: 'BaseInfra', region: 'ap-southeast-2' }
       }
@@ -63,9 +63,9 @@ describe('ACM Certificate', () => {
           r53ZoneName: '', // Empty zone name
           networking: { enableRedundantNatGateways: true, createVpcEndpoints: true },
           certificate: { transparencyLoggingEnabled: true },
-          general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
+          general: { removalPolicy: 'RETAIN' },
           kms: { enableKeyRotation: true },
-          s3: { enableVersioning: true, lifecycleRules: true }
+          s3: { enableVersioning: true }
         }
       });
     }).toThrow('R53 zone name is required for ACM certificate creation');
@@ -79,9 +79,9 @@ describe('ACM Certificate', () => {
           r53ZoneName: '   ', // Whitespace zone name
           networking: { enableRedundantNatGateways: true, createVpcEndpoints: true },
           certificate: { transparencyLoggingEnabled: true },
-          general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
+          general: { removalPolicy: 'RETAIN' },
           kms: { enableKeyRotation: true },
-          s3: { enableVersioning: true, lifecycleRules: true }
+          s3: { enableVersioning: true }
         }
       });
     }).toThrow('R53 zone name is required for ACM certificate creation');
@@ -114,9 +114,9 @@ describe('ACM Certificate', () => {
           r53ZoneName: undefined as any, // Undefined zone name
           networking: { enableRedundantNatGateways: true, createVpcEndpoints: true },
           certificate: { transparencyLoggingEnabled: true },
-          general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
+          general: { removalPolicy: 'RETAIN' },
           kms: { enableKeyRotation: true },
-          s3: { enableVersioning: true, lifecycleRules: true }
+          s3: { enableVersioning: true }
         }
       });
     }).toThrow('R53 zone name is required for ACM certificate creation');
@@ -136,9 +136,9 @@ describe('ACM Certificate', () => {
           vpcCidr: "10.1.0.0/20",
           networking: { enableRedundantNatGateways: true, createVpcEndpoints: true },
           certificate: { transparencyLoggingEnabled: true },
-          general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
+          general: { removalPolicy: 'RETAIN' },
           kms: { enableKeyRotation: true },
-          s3: { enableVersioning: true, lifecycleRules: true }
+          s3: { enableVersioning: true }
         },
         'tak-defaults': { project: 'TAK', component: 'BaseInfra', region: 'ap-southeast-2' }
       }
@@ -173,9 +173,9 @@ describe('ACM Certificate', () => {
           vpcCidr: "10.0.0.0/20",
           networking: { enableRedundantNatGateways: false, createVpcEndpoints: false },
           certificate: { transparencyLoggingEnabled: false },
-          general: { removalPolicy: 'DESTROY', enableDetailedLogging: true, enableContainerInsights: false },
+          general: { removalPolicy: 'DESTROY' },
           kms: { enableKeyRotation: false },
-          s3: { enableVersioning: false, lifecycleRules: true }
+          s3: { enableVersioning: false }
         },
         'tak-defaults': { project: 'TAK', component: 'BaseInfra', region: 'ap-southeast-2' }
       }
@@ -215,9 +215,9 @@ describe('ACM Certificate', () => {
       vpcCidr: "10.0.0.0/20",
       networking: { enableRedundantNatGateways: false, createVpcEndpoints: false },
       certificate: { transparencyLoggingEnabled: true }, // Override dev-test default
-      general: { removalPolicy: 'DESTROY', enableDetailedLogging: true, enableContainerInsights: false },
+      general: { removalPolicy: 'DESTROY' },
       kms: { enableKeyRotation: false },
-      s3: { enableVersioning: false, lifecycleRules: true }
+      s3: { enableVersioning: false }
     };
     
     const stack = new BaseInfraStack(app5, 'TestStack', { 

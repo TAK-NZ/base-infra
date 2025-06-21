@@ -48,16 +48,13 @@ export function createTestApp(): cdk.App {
           transparencyLoggingEnabled: false
         },
         general: {
-          removalPolicy: 'DESTROY',
-          enableDetailedLogging: true,
-          enableContainerInsights: false
+          removalPolicy: 'DESTROY'
         },
         kms: {
           enableKeyRotation: false
         },
         s3: {
-          enableVersioning: false,
-          lifecycleRules: true
+          enableVersioning: false
         }
       },
       'prod': {
@@ -72,16 +69,13 @@ export function createTestApp(): cdk.App {
           transparencyLoggingEnabled: true
         },
         general: {
-          removalPolicy: 'RETAIN',
-          enableDetailedLogging: true,
-          enableContainerInsights: true
+          removalPolicy: 'RETAIN'
         },
         kms: {
           enableKeyRotation: true
         },
         s3: {
-          enableVersioning: true,
-          lifecycleRules: true
+          enableVersioning: true
         }
       },
       'tak-defaults': {
