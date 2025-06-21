@@ -8,6 +8,8 @@ import * as route53 from 'aws-cdk-lib/aws-route53';
 // Construct imports
 import { createVpcL2Resources } from './constructs/vpc';
 import { createEcsResources, createKmsResources, createS3Resources } from './constructs/services';
+import { createCloudWatchDashboards } from './constructs/monitoring';
+import { createCostTrackingLambda } from './constructs/cost-tracking';
 import { createVpcEndpoints } from './constructs/endpoints';
 import { createAcmCertificate } from './constructs/acm';
 
@@ -15,6 +17,7 @@ import { createAcmCertificate } from './constructs/acm';
 import { registerOutputs } from './outputs';
 import { ContextEnvironmentConfig } from './stack-config';
 import { DEFAULT_VPC_CIDR } from './utils/constants';
+import { generateStandardTags, TagDefaults } from './utils/tag-helpers';
 
 export interface BaseInfraStackProps extends StackProps {
   environment: 'prod' | 'dev-test';
@@ -34,6 +37,14 @@ export class BaseInfraStack extends cdk.Stack {
     // Use environment configuration directly (no complex transformations needed)
     const { envConfig } = props;
     
+    // Apply standard tags to the entire stack
+    const tagDefaults: TagDefaults = this.node.tryGetContext('tak-defaults');
+    const standardTags = generateStandardTags(envConfig, props.environment, tagDefaults);
+    
+    Object.entries(standardTags).forEach(([key, value]) => {
+      cdk.Tags.of(this).add(key, value);
+    });
+    
     // Extract configuration values directly from envConfig
     const vpcCidr = envConfig.vpcCidr ?? DEFAULT_VPC_CIDR;
     const r53ZoneName = envConfig.r53ZoneName;
@@ -43,6 +54,8 @@ export class BaseInfraStack extends cdk.Stack {
     const removalPolicy = envConfig.general.removalPolicy;
     const enableKeyRotation = envConfig.kms.enableKeyRotation;
     const enableVersioning = envConfig.s3.enableVersioning;
+    const enableCostTracking = envConfig.monitoring?.enableCostTracking ?? false;
+    const enableLayerDashboards = envConfig.monitoring?.enableLayerDashboards ?? false;
 
     // Create AWS resources
     const { vpc, ipv6CidrBlock, vpcLogicalId } = createVpcL2Resources(this, vpcCidr, enableRedundantNatGateways);
@@ -80,6 +93,25 @@ export class BaseInfraStack extends cdk.Stack {
     certificate = acmResources.certificate;
     hostedZone = acmResources.hostedZone;
 
+    // CloudWatch Dashboards
+    const { masterDashboard, baseInfraDashboard } = createCloudWatchDashboards(
+      this, 
+      this.stackName,
+      props.environment,
+      enableLayerDashboards,
+      vpc, 
+      ecsCluster, 
+      kmsKey, 
+      configBucket
+    );
+
+    // Cost Tracking Lambda (optional)
+    let costTrackingFunction;
+    if (enableCostTracking) {
+      const costTracking = createCostTrackingLambda(this, this.stackName);
+      costTrackingFunction = costTracking.costTrackingFunction;
+    }
+
     // Outputs
     registerOutputs({
       stack: this,
@@ -94,6 +126,8 @@ export class BaseInfraStack extends cdk.Stack {
       vpcEndpoints,
       certificate,
       hostedZone,
+      masterDashboard,
+      baseInfraDashboard,
     });
   }
 }

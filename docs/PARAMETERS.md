@@ -53,7 +53,7 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
 | Environment | Stack Name | Description | Monthly Cost* |
 |-------------|------------|-------------|---------------|
 | `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized development | ~$44 |
-| `prod` | `TAK-Prod-BaseInfra` | High-availability production | ~$143 |
+| `prod` | `TAK-Prod-BaseInfra` | High-availability production | ~$236 |
 
 *Estimated AWS costs for ap-southeast-2, excluding data processing and storage usage
 
@@ -68,6 +68,8 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
 | **Container Insights** | `false` | `true` | ECS monitoring |
 | **KMS Key Rotation** | `false` | `true` | Enhanced security |
 | **S3 Versioning** | `false` | `true` | Data protection |
+| **Cost Tracking** | `false` | `true` | Component cost visibility |
+| **Layer Dashboards** | `false` | `true` | Detailed monitoring |
 | **Removal Policy** | `DESTROY` | `RETAIN` | Resource cleanup |
 
 ---
@@ -110,6 +112,12 @@ Use CDK's built-in `--context` flag with **flat parameter names** to override an
 | Parameter | Description | dev-test | prod |
 |-----------|-------------|----------|------|
 | `enableVersioning` | S3 bucket versioning | `false` | `true` |
+
+### **Monitoring Configuration**
+| Parameter | Description | dev-test | prod |
+|-----------|-------------|----------|------|
+| `enableCostTracking` | Deploy cost tracking Lambda | `false` | `true` |
+| `enableLayerDashboards` | Deploy layer-specific dashboards | `false` | `true` |
 | `lifecycleRules` | S3 lifecycle management | `true` | `true` |
 
 ---
@@ -140,13 +148,16 @@ Use CDK's built-in `--context` flag with **flat parameter names** to override an
 ### **Development Environment Optimizations**
 - **Single NAT Gateway**: Uses 1 NAT gateway vs 2 in production (~$42/month savings)
 - **No VPC Endpoints**: Eliminates interface endpoint costs (~$22/month savings)
+- **No Cost Tracking**: Disables Lambda and custom metrics (~$90/month savings)
+- **No Layer Dashboards**: Only master dashboard deployed (~$3/month savings)
 - **Container Insights Disabled**: Reduces CloudWatch costs
 
 ### **Production Environment Features**
 - **High Availability**: Dual NAT gateways across AZs
 - **Private AWS Access**: VPC endpoints for S3, ECR, KMS, Secrets Manager, CloudWatch
 - **Enhanced Security**: Key rotation, vulnerability scanning, versioning
-- **Monitoring**: Container insights and detailed logging
+- **Full Monitoring**: Container insights, cost tracking, layer dashboards
+- **Cost Visibility**: Component-level cost breakdown and tracking
 
 ---
 
@@ -197,6 +208,14 @@ npm run deploy:prod -- --context enableRedundantNatGateways=false
 # Enable/disable VPC endpoints
 npm run deploy:dev -- --context createVpcEndpoints=true
 npm run deploy:prod -- --context createVpcEndpoints=false
+
+# Enable/disable cost tracking
+npm run deploy:dev -- --context enableCostTracking=true
+npm run deploy:prod -- --context enableCostTracking=false
+
+# Enable/disable layer dashboards
+npm run deploy:dev -- --context enableLayerDashboards=true
+npm run deploy:prod -- --context enableLayerDashboards=false
 ```
 
 ### **Resource Configuration**
