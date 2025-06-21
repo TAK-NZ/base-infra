@@ -30,8 +30,5 @@ export interface ContextEnvironmentConfig {
     enableVersioning: boolean;
     lifecycleRules: boolean;
   };
-  ecr: {
-    imageRetentionCount: number;
-    scanOnPush: boolean;
-  };
+
 }

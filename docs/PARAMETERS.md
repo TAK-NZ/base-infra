@@ -52,8 +52,8 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
 
 | Environment | Stack Name | Description | Monthly Cost* |
 |-------------|------------|-------------|---------------|
-| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized development | ~$45 |
-| `prod` | `TAK-Prod-BaseInfra` | High-availability production | ~$144 |
+| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized development | ~$44 |
+| `prod` | `TAK-Prod-BaseInfra` | High-availability production | ~$143 |
 
 *Estimated AWS costs for ap-southeast-2, excluding data processing and storage usage
 
@@ -68,8 +68,6 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
 | **Container Insights** | `false` | `true` | ECS monitoring |
 | **KMS Key Rotation** | `false` | `true` | Enhanced security |
 | **S3 Versioning** | `false` | `true` | Data protection |
-| **ECR Image Retention** | `5 images` | `20 images` | Storage management |
-| **ECR Vulnerability Scanning** | `false` | `true` | Security scanning |
 | **Removal Policy** | `DESTROY` | `RETAIN` | Resource cleanup |
 
 ---
@@ -114,13 +112,6 @@ Use CDK's built-in `--context` flag with **flat parameter names** to override an
 | `enableVersioning` | S3 bucket versioning | `false` | `true` |
 | `lifecycleRules` | S3 lifecycle management | `true` | `true` |
 
-### **ECR Configuration**
-| Parameter | Description | dev-test | prod |
-|-----------|-------------|----------|------|
-| `imageRetentionCount` | Number of images to retain | `5` | `20` |
-| `scanOnPush` | Vulnerability scanning on push | `false` | `true` |
-| `ecr.scanOnPush` | Vulnerability scanning on push | `false` | `true` |
-
 ---
 
 ## **Security Considerations**
@@ -136,7 +127,6 @@ Use CDK's built-in `--context` flag with **flat parameter names** to override an
 ### **Data Security**
 - **KMS Encryption**: All data encrypted with customer-managed keys
 - **S3 Bucket Security**: Block all public access, enforce SSL
-- **ECR Repository**: Account-restricted access (no public pull permissions)
 
 ### **Access Control**
 - **IAM Policies**: Least-privilege access patterns
@@ -150,7 +140,6 @@ Use CDK's built-in `--context` flag with **flat parameter names** to override an
 ### **Development Environment Optimizations**
 - **Single NAT Gateway**: Uses 1 NAT gateway vs 2 in production (~$42/month savings)
 - **No VPC Endpoints**: Eliminates interface endpoint costs (~$22/month savings)
-- **Reduced ECR Retention**: Lower storage costs
 - **Container Insights Disabled**: Reduces CloudWatch costs
 
 ### **Production Environment Features**
@@ -212,11 +201,6 @@ npm run deploy:prod -- --context createVpcEndpoints=false
 
 ### **Resource Configuration**
 ```bash
-# ECR settings
-npm run deploy:dev -- \
-  --context imageRetentionCount=10 \
-  --context scanOnPush=true
-
 # S3 and KMS settings
 npm run deploy:prod -- \
   --context enableVersioning=false \
@@ -285,7 +269,6 @@ All AWS resources are automatically tagged with:
 ### Security Configuration
 - `kms.enableKeyRotation`: Automatic KMS key rotation
 - `s3.enableVersioning`: S3 bucket versioning
-- `ecr.scanOnPush`: ECR vulnerability scanning
 
 ## Deployment Examples
 

@@ -29,7 +29,7 @@ export function applyContextOverrides(
     ...Object.fromEntries(Object.entries(topLevelOverrides).filter(([_, v]) => v !== undefined)),
     networking: {
       ...baseConfig.networking,
-      enableRedundantNatGateways: app.node.tryGetContext('enableRedundantNatGateways') ?? app.node.tryGetContext('createNatGateways') ?? baseConfig.networking.enableRedundantNatGateways,
+      enableRedundantNatGateways: app.node.tryGetContext('enableRedundantNatGateways') ?? baseConfig.networking.enableRedundantNatGateways,
       createVpcEndpoints: app.node.tryGetContext('createVpcEndpoints') ?? baseConfig.networking.createVpcEndpoints,
     },
     certificate: {
@@ -51,10 +51,6 @@ export function applyContextOverrides(
       enableVersioning: app.node.tryGetContext('enableVersioning') ?? baseConfig.s3.enableVersioning,
       lifecycleRules: app.node.tryGetContext('lifecycleRules') ?? baseConfig.s3.lifecycleRules,
     },
-    ecr: {
-      ...baseConfig.ecr,
-      imageRetentionCount: app.node.tryGetContext('imageRetentionCount') ?? baseConfig.ecr.imageRetentionCount,
-      scanOnPush: app.node.tryGetContext('scanOnPush') ?? baseConfig.ecr.scanOnPush,
-    },
+
   };
 }

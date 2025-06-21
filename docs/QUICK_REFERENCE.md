@@ -44,7 +44,7 @@ npx cdk deploy --context env=prod --profile your-aws-profile
 npm run deploy:dev -- --context r53ZoneName=custom.tak.nz
 
 # Cost-optimized production deployment
-npm run deploy:prod -- --context createNatGateways=false
+npm run deploy:prod -- --context enableRedundantNatGateways=false
 
 # Custom VPC CIDR
 npm run deploy:dev -- --context vpcCidr=10.5.0.0/20
@@ -62,7 +62,6 @@ npm run deploy:dev -- --context createVpcEndpoints=true
 | **NAT Gateways** | **1** | **2** | Major cost difference |
 | **VPC Endpoints** | **1** | **6** | S3 Gateway vs full interface suite |
 | **ECS Cluster** | 1 | 1 | Fargate-enabled |
-| **ECR Repository** | 1 | 1 | Lifecycle policies configured |
 | **S3 Bucket** | 1 | 1 | KMS encrypted, config storage |
 | **KMS Key + Alias** | 1 | 1 | Customer-managed encryption |
 | **ACM Certificate** | 1 | 1 | Wildcard + SAN domains |
@@ -75,7 +74,6 @@ npm run deploy:dev -- --context createVpcEndpoints=true
 - **NAT Gateway**: $42.48/month (1 gateway × $0.059/hour)
 - **VPC Endpoints**: $0 (S3 Gateway is free)
 - **ECS**: $0 (Fargate pay-per-use)
-- **ECR**: ~$1/month (minimal images)
 - **S3**: ~$1/month (config storage)
 - **KMS**: $1/month (customer-managed key)
 - **ACM**: Free
@@ -84,7 +82,7 @@ npm run deploy:dev -- --context createVpcEndpoints=true
 ### Production Environment (~$144/month)
 - **NAT Gateways**: $84.96/month (2 × $42.48)
 - **VPC Endpoints**: $50.40/month (5 × $10.08)
-- **Storage**: ~$2/month (ECR + S3)
+- **Storage**: ~$1/month (S3)
 - **KMS**: $1/month
 - **Data Processing**: Variable (reduced via endpoints)
 

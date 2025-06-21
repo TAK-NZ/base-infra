@@ -20,8 +20,7 @@ describe('ACM Certificate', () => {
           certificate: { transparencyLoggingEnabled: true },
           general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
           kms: { enableKeyRotation: true },
-          s3: { enableVersioning: true, lifecycleRules: true },
-          ecr: { imageRetentionCount: 20, scanOnPush: true }
+          s3: { enableVersioning: true, lifecycleRules: true }
         },
         'tak-defaults': { project: 'TAK', component: 'BaseInfra', region: 'ap-southeast-2' }
       }
@@ -66,8 +65,7 @@ describe('ACM Certificate', () => {
           certificate: { transparencyLoggingEnabled: true },
           general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
           kms: { enableKeyRotation: true },
-          s3: { enableVersioning: true, lifecycleRules: true },
-          ecr: { imageRetentionCount: 20, scanOnPush: true }
+          s3: { enableVersioning: true, lifecycleRules: true }
         }
       });
     }).toThrow('R53 zone name is required for ACM certificate creation');
@@ -83,8 +81,7 @@ describe('ACM Certificate', () => {
           certificate: { transparencyLoggingEnabled: true },
           general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
           kms: { enableKeyRotation: true },
-          s3: { enableVersioning: true, lifecycleRules: true },
-          ecr: { imageRetentionCount: 20, scanOnPush: true }
+          s3: { enableVersioning: true, lifecycleRules: true }
         }
       });
     }).toThrow('R53 zone name is required for ACM certificate creation');
@@ -119,8 +116,7 @@ describe('ACM Certificate', () => {
           certificate: { transparencyLoggingEnabled: true },
           general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
           kms: { enableKeyRotation: true },
-          s3: { enableVersioning: true, lifecycleRules: true },
-          ecr: { imageRetentionCount: 20, scanOnPush: true }
+          s3: { enableVersioning: true, lifecycleRules: true }
         }
       });
     }).toThrow('R53 zone name is required for ACM certificate creation');
@@ -142,8 +138,7 @@ describe('ACM Certificate', () => {
           certificate: { transparencyLoggingEnabled: true },
           general: { removalPolicy: 'RETAIN', enableDetailedLogging: true, enableContainerInsights: true },
           kms: { enableKeyRotation: true },
-          s3: { enableVersioning: true, lifecycleRules: true },
-          ecr: { imageRetentionCount: 20, scanOnPush: true }
+          s3: { enableVersioning: true, lifecycleRules: true }
         },
         'tak-defaults': { project: 'TAK', component: 'BaseInfra', region: 'ap-southeast-2' }
       }
@@ -180,8 +175,7 @@ describe('ACM Certificate', () => {
           certificate: { transparencyLoggingEnabled: false },
           general: { removalPolicy: 'DESTROY', enableDetailedLogging: true, enableContainerInsights: false },
           kms: { enableKeyRotation: false },
-          s3: { enableVersioning: false, lifecycleRules: true },
-          ecr: { imageRetentionCount: 5, scanOnPush: false }
+          s3: { enableVersioning: false, lifecycleRules: true }
         },
         'tak-defaults': { project: 'TAK', component: 'BaseInfra', region: 'ap-southeast-2' }
       }
@@ -223,8 +217,7 @@ describe('ACM Certificate', () => {
       certificate: { transparencyLoggingEnabled: true }, // Override dev-test default
       general: { removalPolicy: 'DESTROY', enableDetailedLogging: true, enableContainerInsights: false },
       kms: { enableKeyRotation: false },
-      s3: { enableVersioning: false, lifecycleRules: true },
-      ecr: { imageRetentionCount: 5, scanOnPush: false }
+      s3: { enableVersioning: false, lifecycleRules: true }
     };
     
     const stack = new BaseInfraStack(app5, 'TestStack', { 

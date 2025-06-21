@@ -58,10 +58,6 @@ export function createTestApp(): cdk.App {
         s3: {
           enableVersioning: false,
           lifecycleRules: true
-        },
-        ecr: {
-          imageRetentionCount: 5,
-          scanOnPush: false
         }
       },
       'prod': {
@@ -86,10 +82,6 @@ export function createTestApp(): cdk.App {
         s3: {
           enableVersioning: true,
           lifecycleRules: true
-        },
-        ecr: {
-          imageRetentionCount: 20,
-          scanOnPush: true
         }
       },
       'tak-defaults': {

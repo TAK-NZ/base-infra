@@ -7,7 +7,7 @@ import * as route53 from 'aws-cdk-lib/aws-route53';
 
 // Construct imports
 import { createVpcL2Resources } from './constructs/vpc';
-import { createEcsResources, createEcrResources, createKmsResources, createS3Resources } from './constructs/services';
+import { createEcsResources, createKmsResources, createS3Resources } from './constructs/services';
 import { createVpcEndpoints } from './constructs/endpoints';
 import { createAcmCertificate } from './constructs/acm';
 
@@ -28,7 +28,7 @@ export class BaseInfraStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BaseInfraStackProps) {
     super(scope, id, {
       ...props,
-      description: 'TAK Base Layer - VPC, ECS, ECR, KMS, S3, ACM',
+      description: 'TAK Base Layer - VPC, ECS, KMS, S3, ACM',
     });
 
     // Use environment configuration directly (no complex transformations needed)
@@ -46,7 +46,6 @@ export class BaseInfraStack extends cdk.Stack {
     // Create AWS resources
     const { vpc, ipv6CidrBlock, vpcLogicalId } = createVpcL2Resources(this, vpcCidr, enableRedundantNatGateways);
     const { ecsCluster } = createEcsResources(this, this.stackName, vpc);
-    const { ecrRepo } = createEcrResources(this, this.stackName);
     const { kmsKey, kmsAlias } = createKmsResources(this, this.stackName);
     const { configBucket } = createS3Resources(this, this.stackName, cdk.Stack.of(this).region, kmsKey);
 
@@ -88,7 +87,6 @@ export class BaseInfraStack extends cdk.Stack {
       ipv6CidrBlock,
       vpcLogicalId,
       ecsCluster,
-      ecrRepo,
       kmsKey,
       kmsAlias,
       configBucket,

@@ -27,8 +27,8 @@ npm run deploy:prod
 
 | Environment | Stack Name | Domain | Cost/Month* | Features |
 |-------------|------------|--------|-------------|----------|
-| **dev-test** | `TAK-Dev-BaseInfra` | `dev.tak.nz` | ~$35 | Cost-optimized, single NAT gateway |
-| **prod** | `TAK-Prod-BaseInfra` | `tak.nz` | ~$91 | High availability, dual NAT gateways, VPC endpoints |
+| **dev-test** | `TAK-Dev-BaseInfra` | `dev.tak.nz` | ~$44 | Cost-optimized, single NAT gateway |
+| **prod** | `TAK-Prod-BaseInfra` | `tak.nz` | ~$143 | High availability, dual NAT gateways, VPC endpoints |
 
 *Estimated AWS costs excluding data transfer and usage
 
@@ -118,11 +118,6 @@ npm run deploy:prod -- --context createVpcEndpoints=false
 
 #### **Resource Configuration**
 ```bash
-# ECR settings
-npm run deploy:dev -- \
-  --context imageRetentionCount=10 \
-  --context scanOnPush=true
-
 # S3 and KMS
 npm run deploy:prod -- \
   --context enableVersioning=false \
@@ -148,8 +143,6 @@ npm run deploy:dev -- --context transparencyLoggingEnabled=false
 | `enableKeyRotation` | Automatic key rotation | `false` | `true` |
 | `enableVersioning` | S3 bucket versioning | `false` | `true` |
 | `lifecycleRules` | S3 lifecycle management | `true` | `true` |
-| `imageRetentionCount` | ECR image retention | `5` | `20` |
-| `scanOnPush` | ECR vulnerability scanning | `false` | `true` |
 
 ---
 
@@ -213,7 +206,7 @@ npx cdk deploy \
 This creates a stack named `TAK-Demo-BaseInfra` with:
 - **1 NAT Gateway** (cost-optimized)
 - **No VPC endpoints** (basic networking)
-- **Development-grade settings** for ECR, S3, logging, etc.
+- **Development-grade settings** for S3, logging, etc.
 
 ### **Environment Upgrade (dev-test → prod)**
 Later, you can upgrade the same stack to production-grade configuration:
