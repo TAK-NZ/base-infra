@@ -52,8 +52,8 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
 
 | Environment | Stack Name | Description | Monthly Cost* |
 |-------------|------------|-------------|---------------|
-| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized development | ~$45 |
-| `prod` | `TAK-Prod-BaseInfra` | High-availability production | ~$144 |
+| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized development | ~$44 |
+| `prod` | `TAK-Prod-BaseInfra` | High-availability production | ~$143 |
 
 *Estimated AWS costs for ap-southeast-2, excluding data processing and storage usage
 

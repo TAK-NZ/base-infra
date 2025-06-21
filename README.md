@@ -119,8 +119,8 @@ npm run deploy:prod
 
 | Environment | Stack Name | Description | Domain | Monthly Cost* |
 |-------------|------------|-------------|--------|---------------|
-| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized development | `dev.tak.nz` | ~$45 |
-| `prod` | `TAK-Prod-BaseInfra` | High-availability production | `tak.nz` | ~$144 |
+| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized development | `dev.tak.nz` | ~$44 |
+| `prod` | `TAK-Prod-BaseInfra` | High-availability production | `tak.nz` | ~$143 |
 
 *Estimated AWS costs for ap-southeast-2, excluding data processing and storage usage
 
