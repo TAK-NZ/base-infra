@@ -270,7 +270,7 @@ All AWS resources are automatically tagged with:
 - `kms.enableKeyRotation`: Automatic KMS key rotation
 - `s3.enableVersioning`: S3 bucket versioning
 
-## Deployment Examples
+## 📋 Deployment Examples
 
 ### Basic Deployments
 ```bash
