@@ -298,7 +298,7 @@ aws cloudformation describe-stack-events --stack-name TAK-Dev-BaseInfra --profil
 
 ---
 
-## **� Post-Deployment**
+## **📊 Post-Deployment**
 
 ### **Verify Deployment**
 ```bash
@@ -333,56 +333,5 @@ npx cdk destroy --context env=prod --profile your-profile
 - **[Architecture Guide](ARCHITECTURE.md)** - Technical architecture details
 - **[Configuration Guide](PARAMETERS.md)** - Complete configuration reference
 - **[Quick Reference](QUICK_REFERENCE.md)** - Fast deployment commands
-npx cdk deploy --context env=dev-test \
-  --context r53ZoneName=custom.tak.nz \
-  --context enableRedundantNatGateways=true \
-  --context vpcCidr=10.2.0.0/20
-```
 
----
 
-## **🛠️ Development Workflow**
-
-### **1. Validate Configuration:**
-```bash
-npx cdk synth --context env=dev-test
-```
-
-### **2. Test with Overrides:**
-```bash
-npx cdk synth --context env=dev-test --context vpcCidr=10.99.0.0/16
-```
-
-### **3. View Deployment Plan:**
-```bash
-npx cdk diff --context env=prod
-```
-
-### **4. Deploy:**
-```bash
-npx cdk deploy --context env=prod
-```
-
-### **5. Deploy with Custom Settings:**
-```bash
-npx cdk deploy --context env=prod \
-  --context enableRedundantNatGateways=false \
-  --context enableVersioning=false
-```
-
-### **6. Clean Up:**
-```bash
-npx cdk destroy --context env=dev-test
-```
-
----
-
-## **🔐 Environment Variables**
-
-For AWS credentials and region:
-
-```bash
-export CDK_DEFAULT_ACCOUNT=123456789012
-export CDK_DEFAULT_REGION=ap-southeast-2
-npx cdk deploy --context env=prod
-```
