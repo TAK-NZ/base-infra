@@ -164,6 +164,10 @@ npm run deploy:prod -- --context vpcCidr=10.5.0.0/20
 
 # Use single NAT gateway instead of redundant setup for cost savings
 npm run deploy:prod -- --context enableRedundantNatGateways=false
+
+# Deploy with explicit environment type
+npx cdk deploy --context envType=dev-test
+npx cdk deploy --context envType=prod
 ```
 
 ## 📚 Documentation
