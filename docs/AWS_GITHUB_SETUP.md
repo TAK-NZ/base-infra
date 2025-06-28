@@ -220,7 +220,8 @@ cat > tak-github-actions-policy.json << 'EOF'
         "ssm:DeleteParameter",
         "ssm:AddTagsToResource",
         "ssm:RemoveTagsFromResource",
-        "sts:GetCallerIdentity"
+        "sts:GetCallerIdentity",
+        "sts:AssumeRole"
       ],
       "Resource": "*"
     }
@@ -438,7 +439,8 @@ Instead of `PowerUserAccess`, create a comprehensive policy for all TAK infrastr
         "ssm:DeleteParameter",
         "ssm:AddTagsToResource",
         "ssm:RemoveTagsFromResource",
-        "sts:GetCallerIdentity"
+        "sts:GetCallerIdentity",
+        "sts:AssumeRole"
       ],
       "Resource": "*"
     }
@@ -508,6 +510,7 @@ Monitor deployments in:
 - **DNS Propagation:** Allow 24-48 hours for full DNS propagation
 - **CDK Bootstrap:** Each account needs CDK bootstrap before first deployment
 - **ECS Service-Linked Role:** First ECS deployment requires: `aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com`
+- **CDK Role Assumption Warnings:** Messages like "current credentials could not be used to assume 'arn:aws:iam::***:role/cdk-hnb659fds-*-role-***'" are normal. CDK tries to assume specialized roles but falls back to your main role permissions. The `sts:AssumeRole` permission in the policy eliminates these warnings.
 
 **Useful Commands:**
 
