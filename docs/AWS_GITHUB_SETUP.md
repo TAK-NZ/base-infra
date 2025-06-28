@@ -242,7 +242,6 @@ cat > tak-github-actions-policy.json << 'EOF'
       "Action": [
         "cloudformation:*",
         "s3:*",
-        "iam:*",
         "ec2:*",
         "ecs:*",
         "ecr:*",
@@ -251,7 +250,7 @@ cat > tak-github-actions-policy.json << 'EOF'
         "kms:*",
         "rds:*",
         "elasticache:*",
-        "efs:*",
+        "elasticfilesystem:*",
         "elasticloadbalancing:*",
         "secretsmanager:*",
         "lambda:*",
@@ -266,10 +265,63 @@ cat > tak-github-actions-policy.json << 'EOF'
         "ssm:DeleteParameter",
         "ssm:AddTagsToResource",
         "ssm:RemoveTagsFromResource",
+        "ssmmessages:CreateControlChannel",
+        "ssmmessages:CreateDataChannel",
+        "ssmmessages:OpenControlChannel",
+        "ssmmessages:OpenDataChannel",
         "sts:GetCallerIdentity",
         "sts:AssumeRole"
       ],
       "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:GetRole",
+        "iam:UpdateRole",
+        "iam:TagRole",
+        "iam:UntagRole",
+        "iam:CreatePolicy",
+        "iam:DeletePolicy",
+        "iam:GetPolicy",
+        "iam:GetPolicyVersion",
+        "iam:ListPolicyVersions",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:ListAttachedRolePolicies",
+        "iam:CreateInstanceProfile",
+        "iam:DeleteInstanceProfile",
+        "iam:GetInstanceProfile",
+        "iam:AddRoleToInstanceProfile",
+        "iam:RemoveRoleFromInstanceProfile",
+        "iam:CreateServiceLinkedRole",
+        "iam:DeleteServiceLinkedRole"
+      ],
+      "Resource": [
+        "arn:aws:iam::*:role/aws-service-role/ecs.amazonaws.com/AWSServiceRoleForECS",
+        "arn:aws:iam::*:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS",
+        "arn:aws:iam::*:role/aws-service-role/elasticloadbalancing.amazonaws.com/AWSServiceRoleForElasticLoadBalancing",
+        "arn:aws:iam::*:role/aws-service-role/application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": [
+            "ecs-tasks.amazonaws.com",
+            "rds.amazonaws.com",
+            "lambda.amazonaws.com",
+            "monitoring.rds.amazonaws.com",
+            "elasticloadbalancing.amazonaws.com",
+            "application-autoscaling.amazonaws.com"
+          ]
+        }
+      }
     }
   ]
 }
