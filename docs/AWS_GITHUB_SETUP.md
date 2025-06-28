@@ -5,30 +5,42 @@ This guide covers setting up a secure multi-account AWS deployment pipeline usin
 ## Architecture Overview
 
 ```
-┌─────────────────┐    ┌─────────────────┐
-│   Prod Account  │    │ DevTest Account │
-│   111111111111  │    │   222222222222  │
-│                 │    │                 │
-│ tak.nz (R53)    │    │ dev.tak.nz (R53)│
-│ Production IAM  │    │ DevTest IAM     │
-└─────────────────┘    └─────────────────┘
-         │                       │
-         └───────────┬───────────┘
-                     │
-         ┌─────────────────────┐
-         │   GitHub Actions    │
-         │   OIDC Provider     │
-         │                     │
-         │ Environment: prod   │
-         │ Environment: devtest│
-         └─────────────────────┘
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│   Prod Account  │  │   Demo Account  │  │   Dev Account   │
+│   111111111111  │  │   222222222222  │  │   333333333333  │
+│                 │  │                 │  │                 │
+│ tak.nz (R53)    │  │demo.tak.nz (R53)│  │dev.tak.nz (R53) │
+│ [CI/CD]         │  │ [CI/CD]         │  │ [Manual only]   │
+│ Production IAM  │  │ Demo IAM        │  │ Dev IAM         │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+         │                     │                     │
+         └─────────┬───────────┘                     │
+                   │                                 │
+         ┌─────────────────────┐                     │
+         │   GitHub Actions    │                     │
+         │   OIDC Provider     │                     │
+         │                     │                     │
+         │ Environment: prod   │                     │
+         │ Environment: demo   │                     │
+         └─────────────────────┘                     │
+                                                     │
+                               Manual deployment ────┘
 ```
 
 ## 1. Route 53 DNS Setup
 
-### 1.1 Primary Domain in Production Account
+### 1.1 Environment Overview
 
-In your **Production AWS Account**, create the main hosted zone:
+Three environments are configured with DNS:
+- **`tak.nz`** - Production environment (CI/CD enabled)
+- **`demo.tak.nz`** - Demo environment (CI/CD enabled) 
+- **`dev.tak.nz`** - Development environment (manual deployment only)
+
+> **Note:** Only production and demo environments are configured for GitHub Actions CI/CD. The dev environment is used for manual development work.
+
+### 1.2 Primary Domain in Production Account
+
+In your **Production AWS Account (111111111111)**, create the main hosted zone:
 
 ```bash
 # Create hosted zone for tak.nz
@@ -45,28 +57,41 @@ aws route53 create-hosted-zone \
 - Configure DNSSEC signing for your hosted zone to prevent DNS spoofing attacks
 - See [AWS Documentation: Configuring DNSSEC signing](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-configuring-dnssec.html)
 
-### 1.2 Subdomain Delegation to DevTest Account
+### 1.3 Demo Environment in Demo Account
 
-In your **DevTest AWS Account**, create the development hosted zone:
+In your **Demo AWS Account (222222222222)**, create the demo hosted zone:
 
 ```bash
-# Create hosted zone for dev.tak.nz
+# Create hosted zone for demo.tak.nz (CI/CD enabled)
+aws route53 create-hosted-zone \
+    --name demo.tak.nz \
+    --caller-reference "demo-tak-nz-$(date +%s)"
+```
+
+### 1.4 Dev Environment in Dev Account
+
+In your **Dev AWS Account (333333333333)**, create the dev hosted zone:
+
+```bash
+# Create hosted zone for dev.tak.nz (manual deployment)
 aws route53 create-hosted-zone \
     --name dev.tak.nz \
     --caller-reference "dev-tak-nz-$(date +%s)"
 ```
 
-**In Production Account**, delegate the subdomain:
+### 1.5 Subdomain Delegation from Production
+
+**In Production Account**, delegate both subdomains:
 
 ```bash
-# Add NS record in Production account pointing to DevTest nameservers
+# Add NS record for demo.tak.nz (pointing to Demo account)
 aws route53 change-resource-record-sets \
     --hosted-zone-id Z1D633PJN98FT9 \
     --change-batch '{
         "Changes": [{
             "Action": "CREATE",
             "ResourceRecordSet": {
-                "Name": "dev.tak.nz",
+                "Name": "demo.tak.nz",
                 "Type": "NS",
                 "TTL": 300,
                 "ResourceRecords": [
@@ -78,12 +103,33 @@ aws route53 change-resource-record-sets \
             }
         }]
     }'
+
+# Add NS record for dev.tak.nz (pointing to Dev account)
+aws route53 change-resource-record-sets \
+    --hosted-zone-id Z1D633PJN98FT9 \
+    --change-batch '{
+        "Changes": [{
+            "Action": "CREATE",
+            "ResourceRecordSet": {
+                "Name": "dev.tak.nz",
+                "Type": "NS",
+                "TTL": 300,
+                "ResourceRecords": [
+                    {"Value": "ns-789.awsdns-78.com"},
+                    {"Value": "ns-012.awsdns-90.net"},
+                    {"Value": "ns-345.awsdns-12.org"},
+                    {"Value": "ns-678.awsdns-34.co.uk"}
+                ]
+            }
+        }]
+    }'
 ```
 
-> **Note:** Replace the NS values with actual nameservers from your DevTest hosted zone.
+> **Note:** Replace the NS values with actual nameservers from your respective Demo and Dev account hosted zones.
 
-**Enable DNSSEC for the subdomain:**
-- Configure DNSSEC signing for the `dev.tak.nz` hosted zone in the DevTest account
+**Enable DNSSEC for the subdomains:**
+- Configure DNSSEC signing for `demo.tak.nz` hosted zone in the Demo account
+- Configure DNSSEC signing for `dev.tak.nz` hosted zone in the Dev account
 - See [AWS Documentation: Configuring DNSSEC signing](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-configuring-dnssec.html)
 
 **Reference:** [AWS Documentation: Routing traffic for subdomains](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-routing-traffic-for-subdomains.html)
@@ -92,7 +138,7 @@ aws route53 change-resource-record-sets \
 
 ### 2.1 Create OIDC Identity Provider (Both Accounts)
 
-Run in **both Production and DevTest accounts**:
+Run in **Production and Demo accounts** (not needed for Dev account since it's manual only):
 
 ```bash
 aws iam create-open-id-connect-provider \
@@ -143,11 +189,11 @@ aws iam create-role \
     --description "GitHub Actions role for TAK infrastructure deployment"
 ```
 
-**DevTest Account - Create trust policy file and role:**
+**Demo Account - Create trust policy file and role:**
 
 ```bash
-# Create devtest-github-trust-policy.json
-cat > devtest-github-trust-policy.json << 'EOF'
+# Create demo-github-trust-policy.json
+cat > demo-github-trust-policy.json << 'EOF'
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -163,9 +209,9 @@ cat > devtest-github-trust-policy.json << 'EOF'
         },
         "StringLike": {
           "token.actions.githubusercontent.com:sub": [
-            "repo:TAK-NZ/base-infra:environment:devtest",
-            "repo:TAK-NZ/auth-infra:environment:devtest",
-            "repo:TAK-NZ/tak-infra:environment:devtest"
+            "repo:TAK-NZ/base-infra:environment:demo",
+            "repo:TAK-NZ/auth-infra:environment:demo",
+            "repo:TAK-NZ/tak-infra:environment:demo"
           ]
         }
       }
@@ -177,7 +223,7 @@ EOF
 # Create the role
 aws iam create-role \
     --role-name GitHubActions-TAK-Role \
-    --assume-role-policy-document file://devtest-github-trust-policy.json \
+    --assume-role-policy-document file://demo-github-trust-policy.json \
     --description "GitHub Actions role for TAK infrastructure deployment"
 ```
 
@@ -241,7 +287,7 @@ aws iam attach-role-policy \
     --policy-arn arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):policy/TAK-GitHub-Actions-Policy
 ```
 
-> **Note:** Run these commands in both Production and DevTest accounts. The policy provides least-privilege access for all TAK infrastructure components.
+> **Note:** Run these commands in both Production and Demo accounts. The policy provides least-privilege access for all TAK infrastructure components.
 
 ## 3. GitHub Environment Setup
 
@@ -256,10 +302,14 @@ In your GitHub repository, go to **Settings → Environments** and create:
      - Deployment branches and tags: Select "Selected branches and tags"
        - Add rule: "v*" (for version tags like v1.0.0)
 
-2. **`devtest`** environment
+2. **`demo`** environment
    - **Protection rules:**
      - Deployment branches and tags: Select "Selected branches and tags"
        - Add rule: "main"
+   - **Environment variables:**
+     - `DEMO_TEST_DURATION`: `300` (wait time in seconds, default 5 minutes)
+     - `STACK_NAME`: `Demo`
+     - `R53_ZONE_NAME`: `demo.tak.nz`
 
 ### 3.2 Configure Environment Secrets
 
@@ -268,7 +318,7 @@ In your GitHub repository, go to **Settings → Environments** and create:
 - `AWS_ROLE_ARN`: `arn:aws:iam::111111111111:role/GitHubActions-TAK-Role`
 - `AWS_REGION`: `ap-southeast-6`
 
-**For `devtest` environment:**
+**For `demo` environment:**
 - `AWS_ACCOUNT_ID`: `222222222222`
 - `AWS_ROLE_ARN`: `arn:aws:iam::222222222222:role/GitHubActions-TAK-Role`
 - `AWS_REGION`: `ap-southeast-2`
@@ -277,6 +327,18 @@ In your GitHub repository, go to **Settings → Environments** and create:
 1. Go to repository **Settings → Environments**
 2. Click on environment name
 3. Add environment secrets under **Environment secrets**
+
+### 3.3 Configure Environment Variables
+
+**For `demo` environment:**
+1. Go to repository **Settings → Environments**
+2. Click on **demo** environment
+3. Add environment variables under **Environment variables**:
+   - `DEMO_TEST_DURATION`: `300`
+   - `STACK_NAME`: `Demo`
+   - `R53_ZONE_NAME`: `demo.tak.nz`
+
+> **Note:** Use variables (not secrets) for non-sensitive configuration like stack names and public domain names. Variables are visible in workflow logs, making debugging easier.
 
 ## 4. Branch Protection Setup
 
@@ -292,35 +354,228 @@ In your GitHub repository, go to **Settings → Environments** and create:
 
 > **Note:** Status checks only appear in the "Add checks" list after they've run at least once. After your first PR or push triggers the "Test CDK code" workflow, you can return to branch protection settings and select it as a required status check.
 
-This ensures all code is reviewed and tested before reaching `main`, preventing untested commits from deploying to DevTest.
+This ensures all code is reviewed and tested before reaching `main`, preventing untested commits from deploying to Demo.
 
-## 5. GitHub Actions Workflow
+## 5. Breaking Change Detection
 
-Create `.github/workflows/deploy.yml`:
+### 5.1 Overview
 
-> **Note:** This workflow depends on the existing `cdk-test.yml` workflow. It runs tests first, then only deploys if tests pass, ensuring no broken code is deployed.
+To prevent catastrophic failures when deploying infrastructure changes, a two-stage breaking change detection system is implemented:
+
+1. **Stage 1 (PR Level)**: CDK diff analysis during pull requests - fast feedback
+2. **Stage 2 (Deploy Level)**: CloudFormation change set validation before demo deployment - comprehensive validation
+
+### 5.2 Stack-Specific Breaking Changes
+
+**BaseInfra (Critical - Affects All Stacks):**
+- VPC CIDR block modifications
+- Subnet CIDR changes or deletions
+- KMS key replacements
+- Route53 hosted zone changes
+- ECS cluster name changes
+- S3 bucket replacements
+
+**AuthInfra (Affects TakInfra):**
+- PostgreSQL database cluster replacements
+- Redis cluster replacements
+- EFS file system replacements
+- Application Load Balancer replacements
+- Secrets Manager secret deletions
+
+**TakInfra (Leaf Stack):**
+- PostgreSQL database cluster replacements
+- EFS file system replacements
+- Network Load Balancer replacements
+- Secrets Manager secret deletions
+
+### 5.3 Implementation Requirements
+
+**For Each Repository (base-infra, auth-infra, tak-infra):**
+
+1. **Create breaking change detection script** `scripts/github/check-breaking-changes.sh`:
+
+```bash
+#!/bin/bash
+# Breaking change detection for infrastructure deployments
+
+STACK_TYPE=${1:-"base"}
+CONTEXT_ENV=${2:-"prod"}
+OVERRIDE_CHECK=${3:-"false"}
+
+# Stack-specific breaking change patterns
+case $STACK_TYPE in
+  "base")
+    PATTERNS=(
+      "VPC.*will be destroyed"
+      "Subnet.*will be destroyed"
+      "KMSKey.*will be destroyed"
+      "HostedZone.*will be destroyed"
+      "ECSCluster.*will be destroyed"
+      "S3.*Bucket.*will be destroyed"
+    )
+    ;;
+  "auth")
+    PATTERNS=(
+      "DatabaseCluster.*will be destroyed"
+      "ReplicationGroup.*will be destroyed"
+      "FileSystem.*will be destroyed"
+      "ApplicationLoadBalancer.*will be destroyed"
+      "Secret.*will be destroyed"
+    )
+    ;;
+  "tak")
+    PATTERNS=(
+      "DatabaseCluster.*will be destroyed"
+      "FileSystem.*will be destroyed"
+      "NetworkLoadBalancer.*will be destroyed"
+      "Secret.*will be destroyed"
+    )
+    ;;
+esac
+
+echo "🔍 Checking for breaking changes in $STACK_TYPE stack..."
+
+# Generate CDK diff
+npm run cdk diff --context envType=$CONTEXT_ENV > stack-diff.txt 2>&1
+
+# Check for breaking patterns
+BREAKING_FOUND=false
+for pattern in "${PATTERNS[@]}"; do
+  if grep -q "$pattern" stack-diff.txt; then
+    echo "❌ Breaking change detected: $pattern"
+    BREAKING_FOUND=true
+  fi
+done
+
+if [ "$BREAKING_FOUND" = true ]; then
+  if [ "$OVERRIDE_CHECK" = "true" ]; then
+    echo "🚨 Breaking changes detected but override enabled - proceeding"
+    exit 0
+  else
+    echo ""
+    echo "💡 To override this check, use commit message containing '[force-deploy]'"
+    echo "📋 Review the full diff above to understand the impact"
+    exit 1
+  fi
+else
+  echo "✅ No breaking changes detected"
+fi
+```
+
+2. **Create change set validation script** `scripts/github/validate-changeset.sh`:
+
+```bash
+#!/bin/bash
+# CloudFormation change set validation
+
+STACK_NAME=${1}
+CHANGE_SET_NAME="breaking-change-check-$(date +%s)"
+
+echo "🔍 Creating CloudFormation change set for $STACK_NAME..."
+
+# Generate CDK template
+npm run cdk synth --context envType=prod > template.json
+
+# Create change set
+aws cloudformation create-change-set \
+  --stack-name "$STACK_NAME" \
+  --change-set-name "$CHANGE_SET_NAME" \
+  --template-body file://template.json \
+  --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+
+# Wait for change set creation
+aws cloudformation wait change-set-create-complete \
+  --stack-name "$STACK_NAME" \
+  --change-set-name "$CHANGE_SET_NAME"
+
+# Analyze change set for resource replacements
+REPLACEMENTS=$(aws cloudformation describe-change-set \
+  --stack-name "$STACK_NAME" \
+  --change-set-name "$CHANGE_SET_NAME" \
+  --query 'Changes[?ResourceChange.Replacement==`True`].ResourceChange.LogicalResourceId' \
+  --output text)
+
+# Clean up change set
+aws cloudformation delete-change-set \
+  --stack-name "$STACK_NAME" \
+  --change-set-name "$CHANGE_SET_NAME"
+
+if [ -n "$REPLACEMENTS" ]; then
+  echo "❌ Resource replacements detected:"
+  echo "$REPLACEMENTS"
+  echo "💡 Use '[force-deploy]' in commit message to override"
+  exit 1
+else
+  echo "✅ No resource replacements detected"
+fi
+```
+
+3. **Create scripts directory structure**:
+```bash
+mkdir -p scripts/github
+chmod +x scripts/github/check-breaking-changes.sh
+chmod +x scripts/github/validate-changeset.sh
+```
+
+### 5.4 Cross-Stack Dependencies
+
+**BaseInfra repositories require additional validation** since changes affect dependent stacks:
+
+```bash
+# In base-infra repository only
+- name: Check Cross-Stack Impact
+  run: |
+    echo "🔍 Checking impact on dependent stacks..."
+    
+    # Check AuthInfra compatibility (if repository exists)
+    if [ -d "../auth-infra" ]; then
+      cd ../auth-infra
+      npm ci
+      npm run cdk diff --context envType=prod || echo "⚠️ AuthInfra may be affected"
+      cd ../base-infra
+    fi
+    
+    # Check TakInfra compatibility (if repository exists)
+    if [ -d "../tak-infra" ]; then
+      cd ../tak-infra
+      npm ci  
+      npm run cdk diff --context envType=prod || echo "⚠️ TakInfra may be affected"
+      cd ../base-infra
+    fi
+```
+
+### 5.5 Override Mechanism
+
+To deploy breaking changes intentionally:
+
+1. **Include `[force-deploy]` in commit message**:
+```bash
+git commit -m "feat: update VPC CIDR for network expansion [force-deploy]"
+```
+
+2. **The workflows will detect the override and proceed with deployment**
+
+3. **Use with caution** - ensure dependent stacks are updated accordingly
+
+## 6. GitHub Actions Workflows
+
+### 6.1 Demo Testing Workflow
+
+Create `.github/workflows/demo-deploy.yml`:
+
+> **Note:** This workflow tests both prod and dev-test profiles in demo before production deployment. It runs on every push to main.
 
 ```yaml
-name: Deploy TAK Infrastructure
+name: Demo Testing Pipeline
 
 on:
   push:
     branches: [main]
-    tags: ['v*']
     paths-ignore:
       - 'docs/**'
       - '*.md'
       - '.gitignore'
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to deploy to'
-        required: true
-        default: 'devtest'
-        type: choice
-        options:
-          - devtest
-          - production
 
 permissions:
   id-token: write
@@ -329,12 +584,10 @@ permissions:
 jobs:
   test:
     uses: ./.github/workflows/cdk-test.yml
-    if: github.ref == 'refs/heads/main'
 
-  deploy-devtest:
-    if: (github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'devtest')
+  demo-prod-test:
     runs-on: ubuntu-latest
-    environment: devtest
+    environment: demo
     needs: test
     steps:
       - name: Checkout
@@ -343,7 +596,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
           cache: 'npm'
 
       - name: Configure AWS credentials
@@ -351,22 +604,64 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
-          role-session-name: GitHubActions-DevTest
+          role-session-name: GitHubActions-Demo
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Bootstrap CDK (if needed)
-        run: |
-          if ! aws cloudformation describe-stacks --stack-name CDKToolkit 2>/dev/null; then
-            npx cdk bootstrap aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ secrets.AWS_REGION }} --context envType=dev-test
-          fi
+      - name: Validate CDK Synthesis (Prod Profile)
+        run: npm run cdk synth -- --context envType=prod --context stackName=${{ vars.STACK_NAME }} --context r53ZoneName=${{ vars.R53_ZONE_NAME }}
 
-      - name: Deploy DevTest
-        run: npm run deploy:dev -- --require-approval never
+      - name: Deploy Demo with Prod Profile
+        run: npm run cdk deploy -- --context envType=prod --context stackName=${{ vars.STACK_NAME }} --context r53ZoneName=${{ vars.R53_ZONE_NAME }} --require-approval never
+
+      - name: Wait for Testing Period
+        run: sleep ${{ vars.DEMO_TEST_DURATION || '300' }}
+
+      - name: Run Automated Tests
+        run: |
+          echo "Placeholder for automated tests"
+          # TODO: Add health checks and integration tests
+          # curl -f https://${{ vars.R53_ZONE_NAME }}/health || exit 1
+
+      - name: Validate CDK Synthesis (Dev-Test Profile)
+        run: npm run cdk synth -- --context envType=dev-test --context stackName=${{ vars.STACK_NAME }} --context r53ZoneName=${{ vars.R53_ZONE_NAME }}
+        if: always()
+
+      - name: Revert Demo to Dev-Test Profile
+        run: npm run cdk deploy -- --context envType=dev-test --context stackName=${{ vars.STACK_NAME }} --context r53ZoneName=${{ vars.R53_ZONE_NAME }} --require-approval never
+        if: always()
+```
+
+### 6.2 Production Deployment Workflow
+
+Create `.github/workflows/production-deploy.yml`:
+
+> **Note:** This workflow deploys to production only on version tags. It runs independently of the demo testing workflow.
+
+```yaml
+name: Production Deployment
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment without tag'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test:
+    uses: ./.github/workflows/cdk-test.yml
 
   deploy-production:
-    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
     runs-on: ubuntu-latest
     environment: production
     needs: test
@@ -377,7 +672,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
           cache: 'npm'
 
       - name: Configure AWS credentials
@@ -400,9 +695,9 @@ jobs:
         run: npm run deploy:prod -- --require-approval never
 ```
 
-## 6. Security Best Practices
+## 7. Security Best Practices
 
-### 6.1 Least Privilege IAM Policies
+### 7.1 Least Privilege IAM Policies
 
 Instead of `PowerUserAccess`, create a comprehensive policy for all TAK infrastructure layers:
 
@@ -439,6 +734,10 @@ Instead of `PowerUserAccess`, create a comprehensive policy for all TAK infrastr
         "ssm:DeleteParameter",
         "ssm:AddTagsToResource",
         "ssm:RemoveTagsFromResource",
+        "ssmmessages:CreateControlChannel",
+        "ssmmessages:CreateDataChannel",
+        "ssmmessages:OpenControlChannel",
+        "ssmmessages:OpenDataChannel",
         "sts:GetCallerIdentity",
         "sts:AssumeRole"
       ],
@@ -466,15 +765,15 @@ Instead of `PowerUserAccess`, create a comprehensive policy for all TAK infrastr
 - `application-autoscaling:*` - ECS service scaling
 - `servicediscovery:*` - Service mesh capabilities
 
-### 6.2 Environment Protection
+### 7.2 Environment Protection
 
 - **Production:** Requires manual approval + 5-minute wait + version tags only
-- **DevTest:** Automatic deployment from `main` branch after tests pass
+- **Demo:** Automatic deployment from `main` branch after tests pass, exercises both prod and dev-test profiles
 - **Branch protection:** Requires PR reviews and passing tests before merge to `main`
 
-### 6.3 Monitoring
+### 7.3 Monitoring
 
-Enable CloudTrail in both accounts to monitor GitHub Actions activity:
+Enable CloudTrail in Production and Demo accounts to monitor GitHub Actions activity:
 
 ```bash
 aws cloudtrail create-trail \
@@ -482,12 +781,29 @@ aws cloudtrail create-trail \
     --s3-bucket-name your-cloudtrail-bucket
 ```
 
-## 7. Verification
+## 8. Verification
 
 Test the setup:
 
-1. **DevTest:** Push to `main` branch → Should deploy automatically after tests pass
+1. **Demo Testing:** Push to `main` branch → Should deploy demo with prod profile → Wait → Run tests → Revert to dev-test profile
 2. **Production:** Create and push version tag (e.g., `git tag v2025.1 && git push origin v2025.1`) → Should require approval → Deploy after approval
+
+### 8.1 Deployment Flow
+
+**Main Branch Push:**
+```
+Push to main → Tests → Demo (prod profile) → Wait → Tests → Demo (dev-test profile)
+```
+
+**Version Tag Push:**
+```
+Tag v* → Tests → Production (prod profile) [requires approval]
+```
+
+**Benefits:**
+- Cost optimization: Demo runs dev-test profile between deployments
+- Risk mitigation: Both profiles tested in demo before production
+- Separation: Independent workflows for demo testing vs production deployment
 
 **Example production deployment:**
 ```bash
@@ -501,7 +817,7 @@ Monitor deployments in:
 - AWS CloudFormation console
 - CloudTrail logs for API calls
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 **Common Issues:**
 
@@ -520,6 +836,7 @@ curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
      "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com"
 
 # Verify DNS delegation
+dig NS demo.tak.nz
 dig NS dev.tak.nz
 dig NS tak.nz
 ```
