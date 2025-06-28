@@ -77,6 +77,8 @@ This base infrastructure is the foundation of additional higher level layers. La
 - [AWS Account](https://signin.aws.amazon.com/signup) with configured credentials
 - Public Route 53 hosted zone (e.g., `tak.nz`)
 - [Node.js](https://nodejs.org/) and npm installed
+- **ECS Service-Linked Role:** `aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com` (first time only)
+- **For CI/CD deployment:** See [AWS & GitHub Setup Guide](docs/AWS_GITHUB_SETUP.md) for multi-account OIDC configuration
 
 ### Installation & Deployment
 
@@ -191,7 +193,6 @@ npx cdk deploy --context envType=prod
 ### Common Issues
 - **Route53 Hosted Zone** - Ensure your domain's hosted zone exists before deployment
 - **AWS Permissions** - CDK requires broad permissions for CloudFormation operations
-- **First ECS Deployment** - May require service-linked role creation: `aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com`
 
 ### Support Resources
 - **AWS CDK Documentation** - https://docs.aws.amazon.com/cdk/
