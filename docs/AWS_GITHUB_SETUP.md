@@ -356,9 +356,210 @@ In your GitHub repository, go to **Settings → Environments** and create:
 
 This ensures all code is reviewed and tested before reaching `main`, preventing untested commits from deploying to Demo.
 
-## 5. GitHub Actions Workflows
+## 5. Breaking Change Detection
 
-### 5.1 Demo Testing Workflow
+### 5.1 Overview
+
+To prevent catastrophic failures when deploying infrastructure changes, a two-stage breaking change detection system is implemented:
+
+1. **Stage 1 (PR Level)**: CDK diff analysis during pull requests - fast feedback
+2. **Stage 2 (Deploy Level)**: CloudFormation change set validation before demo deployment - comprehensive validation
+
+### 5.2 Stack-Specific Breaking Changes
+
+**BaseInfra (Critical - Affects All Stacks):**
+- VPC CIDR block modifications
+- Subnet CIDR changes or deletions
+- KMS key replacements
+- Route53 hosted zone changes
+- ECS cluster name changes
+- S3 bucket replacements
+
+**AuthInfra (Affects TakInfra):**
+- PostgreSQL database cluster replacements
+- Redis cluster replacements
+- EFS file system replacements
+- Application Load Balancer replacements
+- Secrets Manager secret deletions
+
+**TakInfra (Leaf Stack):**
+- PostgreSQL database cluster replacements
+- EFS file system replacements
+- Network Load Balancer replacements
+- Secrets Manager secret deletions
+
+### 5.3 Implementation Requirements
+
+**For Each Repository (base-infra, auth-infra, tak-infra):**
+
+1. **Create breaking change detection script** `scripts/github/check-breaking-changes.sh`:
+
+```bash
+#!/bin/bash
+# Breaking change detection for infrastructure deployments
+
+STACK_TYPE=${1:-"base"}
+CONTEXT_ENV=${2:-"prod"}
+OVERRIDE_CHECK=${3:-"false"}
+
+# Stack-specific breaking change patterns
+case $STACK_TYPE in
+  "base")
+    PATTERNS=(
+      "VPC.*will be destroyed"
+      "Subnet.*will be destroyed"
+      "KMSKey.*will be destroyed"
+      "HostedZone.*will be destroyed"
+      "ECSCluster.*will be destroyed"
+      "S3.*Bucket.*will be destroyed"
+    )
+    ;;
+  "auth")
+    PATTERNS=(
+      "DatabaseCluster.*will be destroyed"
+      "ReplicationGroup.*will be destroyed"
+      "FileSystem.*will be destroyed"
+      "ApplicationLoadBalancer.*will be destroyed"
+      "Secret.*will be destroyed"
+    )
+    ;;
+  "tak")
+    PATTERNS=(
+      "DatabaseCluster.*will be destroyed"
+      "FileSystem.*will be destroyed"
+      "NetworkLoadBalancer.*will be destroyed"
+      "Secret.*will be destroyed"
+    )
+    ;;
+esac
+
+echo "🔍 Checking for breaking changes in $STACK_TYPE stack..."
+
+# Generate CDK diff
+npm run cdk diff --context envType=$CONTEXT_ENV > stack-diff.txt 2>&1
+
+# Check for breaking patterns
+BREAKING_FOUND=false
+for pattern in "${PATTERNS[@]}"; do
+  if grep -q "$pattern" stack-diff.txt; then
+    echo "❌ Breaking change detected: $pattern"
+    BREAKING_FOUND=true
+  fi
+done
+
+if [ "$BREAKING_FOUND" = true ]; then
+  if [ "$OVERRIDE_CHECK" = "true" ]; then
+    echo "🚨 Breaking changes detected but override enabled - proceeding"
+    exit 0
+  else
+    echo ""
+    echo "💡 To override this check, use commit message containing '[force-deploy]'"
+    echo "📋 Review the full diff above to understand the impact"
+    exit 1
+  fi
+else
+  echo "✅ No breaking changes detected"
+fi
+```
+
+2. **Create change set validation script** `scripts/github/validate-changeset.sh`:
+
+```bash
+#!/bin/bash
+# CloudFormation change set validation
+
+STACK_NAME=${1}
+CHANGE_SET_NAME="breaking-change-check-$(date +%s)"
+
+echo "🔍 Creating CloudFormation change set for $STACK_NAME..."
+
+# Generate CDK template
+npm run cdk synth --context envType=prod > template.json
+
+# Create change set
+aws cloudformation create-change-set \
+  --stack-name "$STACK_NAME" \
+  --change-set-name "$CHANGE_SET_NAME" \
+  --template-body file://template.json \
+  --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+
+# Wait for change set creation
+aws cloudformation wait change-set-create-complete \
+  --stack-name "$STACK_NAME" \
+  --change-set-name "$CHANGE_SET_NAME"
+
+# Analyze change set for resource replacements
+REPLACEMENTS=$(aws cloudformation describe-change-set \
+  --stack-name "$STACK_NAME" \
+  --change-set-name "$CHANGE_SET_NAME" \
+  --query 'Changes[?ResourceChange.Replacement==`True`].ResourceChange.LogicalResourceId' \
+  --output text)
+
+# Clean up change set
+aws cloudformation delete-change-set \
+  --stack-name "$STACK_NAME" \
+  --change-set-name "$CHANGE_SET_NAME"
+
+if [ -n "$REPLACEMENTS" ]; then
+  echo "❌ Resource replacements detected:"
+  echo "$REPLACEMENTS"
+  echo "💡 Use '[force-deploy]' in commit message to override"
+  exit 1
+else
+  echo "✅ No resource replacements detected"
+fi
+```
+
+3. **Create scripts directory structure**:
+```bash
+mkdir -p scripts/github
+chmod +x scripts/github/check-breaking-changes.sh
+chmod +x scripts/github/validate-changeset.sh
+```
+
+### 5.4 Cross-Stack Dependencies
+
+**BaseInfra repositories require additional validation** since changes affect dependent stacks:
+
+```bash
+# In base-infra repository only
+- name: Check Cross-Stack Impact
+  run: |
+    echo "🔍 Checking impact on dependent stacks..."
+    
+    # Check AuthInfra compatibility (if repository exists)
+    if [ -d "../auth-infra" ]; then
+      cd ../auth-infra
+      npm ci
+      npm run cdk diff --context envType=prod || echo "⚠️ AuthInfra may be affected"
+      cd ../base-infra
+    fi
+    
+    # Check TakInfra compatibility (if repository exists)
+    if [ -d "../tak-infra" ]; then
+      cd ../tak-infra
+      npm ci  
+      npm run cdk diff --context envType=prod || echo "⚠️ TakInfra may be affected"
+      cd ../base-infra
+    fi
+```
+
+### 5.5 Override Mechanism
+
+To deploy breaking changes intentionally:
+
+1. **Include `[force-deploy]` in commit message**:
+```bash
+git commit -m "feat: update VPC CIDR for network expansion [force-deploy]"
+```
+
+2. **The workflows will detect the override and proceed with deployment**
+
+3. **Use with caution** - ensure dependent stacks are updated accordingly
+
+## 6. GitHub Actions Workflows
+
+### 6.1 Demo Testing Workflow
 
 Create `.github/workflows/demo-deploy.yml`:
 
@@ -432,7 +633,7 @@ jobs:
         if: always()
 ```
 
-### 5.2 Production Deployment Workflow
+### 6.2 Production Deployment Workflow
 
 Create `.github/workflows/production-deploy.yml`:
 
@@ -494,9 +695,9 @@ jobs:
         run: npm run deploy:prod -- --require-approval never
 ```
 
-## 6. Security Best Practices
+## 7. Security Best Practices
 
-### 6.1 Least Privilege IAM Policies
+### 7.1 Least Privilege IAM Policies
 
 Instead of `PowerUserAccess`, create a comprehensive policy for all TAK infrastructure layers:
 
@@ -564,13 +765,13 @@ Instead of `PowerUserAccess`, create a comprehensive policy for all TAK infrastr
 - `application-autoscaling:*` - ECS service scaling
 - `servicediscovery:*` - Service mesh capabilities
 
-### 6.2 Environment Protection
+### 7.2 Environment Protection
 
 - **Production:** Requires manual approval + 5-minute wait + version tags only
 - **Demo:** Automatic deployment from `main` branch after tests pass, exercises both prod and dev-test profiles
 - **Branch protection:** Requires PR reviews and passing tests before merge to `main`
 
-### 6.3 Monitoring
+### 7.3 Monitoring
 
 Enable CloudTrail in Production and Demo accounts to monitor GitHub Actions activity:
 
@@ -580,14 +781,14 @@ aws cloudtrail create-trail \
     --s3-bucket-name your-cloudtrail-bucket
 ```
 
-## 7. Verification
+## 8. Verification
 
 Test the setup:
 
 1. **Demo Testing:** Push to `main` branch → Should deploy demo with prod profile → Wait → Run tests → Revert to dev-test profile
 2. **Production:** Create and push version tag (e.g., `git tag v2025.1 && git push origin v2025.1`) → Should require approval → Deploy after approval
 
-### 7.1 Deployment Flow
+### 8.1 Deployment Flow
 
 **Main Branch Push:**
 ```
@@ -616,7 +817,7 @@ Monitor deployments in:
 - AWS CloudFormation console
 - CloudTrail logs for API calls
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 **Common Issues:**
 

@@ -47,5 +47,36 @@ jobs:
       - name: TypeScript compilation check
         run: npx tsc --noEmit --skipLibCheck
 
+      - name: Check for Breaking Changes
+        run: |
+          # Check if override is requested
+          OVERRIDE="false"
+          if [[ "${{ github.event.head_commit.message }}" == *"[force-deploy]"* ]]; then
+            OVERRIDE="true"
+          fi
+          ./scripts/github/check-breaking-changes.sh base prod $OVERRIDE
+
+      - name: Check Cross-Stack Impact
+        run: |
+          echo "🔍 Checking impact on dependent stacks..."
+          
+          # Check AuthInfra compatibility (if repository exists)
+          if [ -d "../auth-infra" ]; then
+            echo "Checking AuthInfra compatibility..."
+            cd ../auth-infra
+            npm ci --silent
+            npm run cdk diff --context envType=prod || echo "⚠️ AuthInfra may be affected"
+            cd ../base-infra
+          fi
+          
+          # Check TakInfra compatibility (if repository exists)
+          if [ -d "../tak-infra" ]; then
+            echo "Checking TakInfra compatibility..."
+            cd ../tak-infra
+            npm ci --silent
+            npm run cdk diff --context envType=prod || echo "⚠️ TakInfra may be affected"
+            cd ../base-infra
+          fi
+
       - name: Run tests with coverage report
         run: npm run test:coverage

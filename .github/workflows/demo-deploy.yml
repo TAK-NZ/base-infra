@@ -44,6 +44,15 @@ jobs:
       - name: Validate CDK Synthesis (Prod Profile)
         run: npm run cdk synth -- --context envType=prod --context stackName=${{ vars.STACK_NAME }} --context r53ZoneName=${{ vars.R53_ZONE_NAME }}
 
+      - name: Validate Change Set
+        run: |
+          # Check if override is requested
+          if [[ "${{ github.event.head_commit.message }}" == *"[force-deploy]"* ]]; then
+            echo "🚨 Force deploy detected - skipping change set validation"
+          else
+            ./scripts/github/validate-changeset.sh ${{ vars.STACK_NAME }}
+          fi
+
       - name: Deploy Demo with Prod Profile
         run: npm run cdk deploy -- --context envType=prod --context stackName=${{ vars.STACK_NAME }} --context r53ZoneName=${{ vars.R53_ZONE_NAME }} --require-approval never
 
