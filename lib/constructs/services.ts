@@ -51,5 +51,18 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
     removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
     objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
   });
-  return { configBucket };
+
+  const appImagesBucket = new s3.Bucket(scope, 'AppImagesBucket', {
+    bucketName: `${stackName.toLowerCase()}-${region}-app-images`,
+    encryption: s3.BucketEncryption.KMS,
+    encryptionKey: kmsKey,
+    bucketKeyEnabled: true,
+    enforceSSL: true,
+    blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+    versioned: enableVersioning,
+    removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+    objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
+  });
+
+  return { configBucket, appImagesBucket };
 }
