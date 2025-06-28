@@ -30,7 +30,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
   deploy-devtest:
-    if: (github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'devtest')
+    if: (github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'demo')
     runs-on: ubuntu-latest
     environment: demo
     needs: test
@@ -61,7 +61,7 @@ jobs:
           fi
 
       - name: Deploy Demo
-        run: npm run deploy -- --context envType=dev-test --context stackName=Demo --context r53ZoneName=demo.tak.nz --require-approval never
+        run: npm run cdk deploy -- --context envType=dev-test --context stackName=Demo --context r53ZoneName=demo.tak.nz --require-approval never
 
   deploy-production:
     if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
@@ -95,4 +95,4 @@ jobs:
           fi
 
       - name: Deploy Production
-        run: npm run deploy:prod --require-approval never
+        run: npm run deploy:prod -- --require-approval never

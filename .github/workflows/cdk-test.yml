@@ -26,12 +26,10 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
-    environment: Test
-    if: ${{ github.event.pull_request.draft == false }}
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     timeout-minutes: 60
     permissions:
       contents: read
-      id-token: write
       pull-requests: write  # Required for PR comments
     steps:
       - run: echo "🌅 Job triggered by ${{ github.event_name }} event"
