@@ -55,7 +55,7 @@ jobs:
           fi
 
       - name: Deploy Demo
-        run: npm run deploy:dev --context stackName=Demo --context r53ZoneName=demo.tak.nz
+        run: npm run deploy -- --context envType=dev-test --context stackName=Demo --context r53ZoneName=demo.tak.nz --require-approval never
 
   deploy-production:
     if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
@@ -88,4 +88,4 @@ jobs:
           fi
 
       - name: Deploy Production
-        run: npm run deploy:prod
+        run: npm run deploy:prod --require-approval never

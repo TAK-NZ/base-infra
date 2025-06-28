@@ -215,7 +215,12 @@ cat > tak-github-actions-policy.json << 'EOF'
         "servicediscovery:*",
         "ssm:GetParameter",
         "ssm:GetParameters",
-        "ssm:GetParametersByPath"
+        "ssm:GetParametersByPath",
+        "ssm:PutParameter",
+        "ssm:DeleteParameter",
+        "ssm:AddTagsToResource",
+        "ssm:RemoveTagsFromResource",
+        "sts:GetCallerIdentity"
       ],
       "Resource": "*"
     }
@@ -350,7 +355,7 @@ jobs:
           fi
 
       - name: Deploy DevTest
-        run: npm run deploy:dev
+        run: npm run deploy:dev -- --require-approval never
 
   deploy-production:
     if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
@@ -383,7 +388,7 @@ jobs:
           fi
 
       - name: Deploy Production
-        run: npm run deploy:prod
+        run: npm run deploy:prod -- --require-approval never
 ```
 
 ## 6. Security Best Practices
@@ -420,7 +425,12 @@ Instead of `PowerUserAccess`, create a comprehensive policy for all TAK infrastr
         "servicediscovery:*",
         "ssm:GetParameter",
         "ssm:GetParameters",
-        "ssm:GetParametersByPath"
+        "ssm:GetParametersByPath",
+        "ssm:PutParameter",
+        "ssm:DeleteParameter",
+        "ssm:AddTagsToResource",
+        "ssm:RemoveTagsFromResource",
+        "sts:GetCallerIdentity"
       ],
       "Resource": "*"
     }
