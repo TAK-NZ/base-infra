@@ -105,9 +105,11 @@ aws iam create-open-id-connect-provider \
 
 ### 2.2 Create IAM Roles
 
-**Production Account - GitHub Actions Role:**
+**Production Account - Create trust policy file and role:**
 
-```json
+```bash
+# Create prod-github-trust-policy.json
+cat > prod-github-trust-policy.json << 'EOF'
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -132,11 +134,20 @@ aws iam create-open-id-connect-provider \
     }
   ]
 }
+EOF
+
+# Create the role
+aws iam create-role \
+    --role-name GitHubActions-TAK-Role \
+    --assume-role-policy-document file://prod-github-trust-policy.json \
+    --description "GitHub Actions role for TAK infrastructure deployment"
 ```
 
-**DevTest Account - GitHub Actions Role:**
+**DevTest Account - Create trust policy file and role:**
 
-```json
+```bash
+# Create devtest-github-trust-policy.json
+cat > devtest-github-trust-policy.json << 'EOF'
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -161,18 +172,70 @@ aws iam create-open-id-connect-provider \
     }
   ]
 }
+EOF
+
+# Create the role
+aws iam create-role \
+    --role-name GitHubActions-TAK-Role \
+    --assume-role-policy-document file://devtest-github-trust-policy.json \
+    --description "GitHub Actions role for TAK infrastructure deployment"
 ```
 
-**Attach CDK deployment permissions to both roles:**
+> **Note:** Replace `111111111111` and `222222222222` with your actual AWS account IDs.
+
+**Create and attach CDK deployment permissions to both roles:**
 
 ```bash
-# Create and attach the custom policy (replace GitHubActions-TAK-Deployment-Role with your chosen role name)
+# First, create the custom policy document
+cat > tak-github-actions-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:*",
+        "s3:*",
+        "iam:*",
+        "ec2:*",
+        "ecs:*",
+        "ecr:*",
+        "route53:*",
+        "acm:*",
+        "kms:*",
+        "rds:*",
+        "elasticache:*",
+        "efs:*",
+        "elasticloadbalancing:*",
+        "secretsmanager:*",
+        "lambda:*",
+        "logs:*",
+        "events:*",
+        "application-autoscaling:*",
+        "servicediscovery:*",
+        "ssm:GetParameter",
+        "ssm:GetParameters",
+        "ssm:GetParametersByPath"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+
+# Create the policy in both accounts
+aws iam create-policy \
+    --policy-name TAK-GitHub-Actions-Policy \
+    --policy-document file://tak-github-actions-policy.json \
+    --description "Comprehensive policy for TAK infrastructure deployment via GitHub Actions"
+
+# Attach the policy to the role
 aws iam attach-role-policy \
-    --role-name GitHubActions-TAK-Deployment-Role \
-    --policy-arn arn:aws:iam::ACCOUNT_ID:policy/TAK-GitHub-Actions-Policy
+    --role-name GitHubActions-TAK-Role \
+    --policy-arn arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):policy/TAK-GitHub-Actions-Policy
 ```
 
-> **Note:** Replace `GitHubActions-TAK-Deployment-Role` with your chosen IAM role name and use the custom policy from section 6.1 instead of PowerUserAccess.
+> **Note:** Run these commands in both Production and DevTest accounts. The policy provides least-privilege access for all TAK infrastructure components.
 
 ## 3. GitHub Environment Setup
 
@@ -183,12 +246,14 @@ In your GitHub repository, go to **Settings → Environments** and create:
 1. **`production`** environment
    - **Protection rules:**
      - Required reviewers: Add team leads
-     - Deployment branches: Restrict to tags only
      - Wait timer: 5 minutes
+     - Deployment branches and tags: Select "Selected branches and tags"
+       - Add rule: "v*" (for version tags like v1.0.0)
 
 2. **`devtest`** environment
    - **Protection rules:**
-     - Deployment branches: Allow `main` only
+     - Deployment branches and tags: Select "Selected branches and tags"
+       - Add rule: "main"
 
 ### 3.2 Configure Environment Secrets
 
@@ -216,9 +281,10 @@ In your GitHub repository, go to **Settings → Environments** and create:
 3. **Enable these protections:**
    - ☑️ Require a pull request before merging
    - ☑️ Require status checks to pass before merging
-   - ☑️ Require branches to be up to date before merging
-   - ☑️ Status checks: Select "Test CDK code" (from your existing workflow)
-   - ☑️ Restrict pushes that create files larger than 100MB
+     - ☑️ Require branches to be up to date before merging
+     - ☑️ Status checks: Will appear after first workflow run
+
+> **Note:** Status checks only appear in the "Add checks" list after they've run at least once. After your first PR or push triggers the "Test CDK code" workflow, you can return to branch protection settings and select it as a required status check.
 
 This ensures all code is reviewed and tested before reaching `main`, preventing untested commits from deploying to DevTest.
 
@@ -232,12 +298,21 @@ name: Deploy TAK Infrastructure
 on:
   push:
     branches: [main]
+    tags: ['v*']
     paths-ignore:
       - 'docs/**'
       - '*.md'
       - '.gitignore'
-  push:
-    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'devtest'
+        type: choice
+        options:
+          - devtest
+          - production
 
 permissions:
   id-token: write
@@ -245,7 +320,7 @@ permissions:
 
 jobs:
   deploy-devtest:
-    if: github.ref == 'refs/heads/main'
+    if: (github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'devtest')
     runs-on: ubuntu-latest
     environment: devtest
     steps:
@@ -278,7 +353,7 @@ jobs:
         run: npm run deploy:dev
 
   deploy-production:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
     runs-on: ubuntu-latest
     environment: production
     steps:
