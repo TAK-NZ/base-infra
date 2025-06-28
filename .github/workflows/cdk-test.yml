@@ -9,17 +9,9 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
-      - '.gitignore'
   pull_request:
     branches:
       - main
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
-      - '.gitignore'
   workflow_call:
   workflow_dispatch:
 
