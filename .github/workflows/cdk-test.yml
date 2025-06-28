@@ -20,6 +20,7 @@ on:
       - 'docs/**'
       - '*.md'
       - '.gitignore'
+  workflow_call:
   workflow_dispatch:
 
 jobs:
