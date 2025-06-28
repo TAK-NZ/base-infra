@@ -361,7 +361,8 @@ In your GitHub repository, go to **Settings → Environments** and create:
    - **Environment variables:**
      - `DEMO_TEST_DURATION`: `300` (wait time in seconds, default 5 minutes)
      - `STACK_NAME`: `Demo`
-     - `R53_ZONE_NAME`: `demo.tak.nz`
+       - BaseInfra: `R53_ZONE_NAME`: `demo.tak.nz`
+       - AuthInfra: `AUTHENTIK_ADMIN_EMAIL`: `admin@tak.nz`
 
 ### 3.2 Configure Environment Secrets
 
