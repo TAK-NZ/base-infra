@@ -297,6 +297,8 @@ This ensures all code is reviewed and tested before reaching `main`, preventing 
 
 Create `.github/workflows/deploy.yml`:
 
+> **Note:** This workflow depends on the existing `cdk-test.yml` workflow. It runs tests first, then only deploys if tests pass, ensuring no broken code is deployed.
+
 ```yaml
 name: Deploy TAK Infrastructure
 
@@ -324,10 +326,15 @@ permissions:
   contents: read
 
 jobs:
+  test:
+    uses: ./.github/workflows/cdk-test.yml
+    if: github.ref == 'refs/heads/main'
+
   deploy-devtest:
     if: (github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'devtest')
     runs-on: ubuntu-latest
     environment: devtest
+    needs: test
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -361,6 +368,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
     runs-on: ubuntu-latest
     environment: production
+    needs: test
     steps:
       - name: Checkout
         uses: actions/checkout@v4
