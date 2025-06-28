@@ -48,7 +48,7 @@ export class BaseInfraStack extends cdk.Stack {
     const { vpc, ipv6CidrBlock, vpcLogicalId } = createVpcL2Resources(this, vpcCidr, enableRedundantNatGateways);
     const { ecsCluster } = createEcsResources(this, this.stackName, vpc);
     const { kmsKey, kmsAlias } = createKmsResources(this, this.stackName, enableKeyRotation, removalPolicy);
-    const { configBucket } = createS3Resources(this, this.stackName, cdk.Stack.of(this).region, kmsKey, enableVersioning, removalPolicy);
+    const { configBucket, appImagesBucket } = createS3Resources(this, this.stackName, cdk.Stack.of(this).region, kmsKey, enableVersioning, removalPolicy);
 
     // Endpoint Security Group (for interface endpoints)
     let endpointSg: ec2.SecurityGroup | undefined = undefined;
@@ -91,6 +91,7 @@ export class BaseInfraStack extends cdk.Stack {
       kmsKey,
       kmsAlias,
       configBucket,
+      appImagesBucket,
       vpcEndpoints,
       certificate,
       hostedZone,
