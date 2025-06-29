@@ -10,7 +10,8 @@ describe('Stack Configuration', () => {
       certificate: { transparencyLoggingEnabled: true },
       general: { removalPolicy: 'RETAIN' },
       kms: { enableKeyRotation: true },
-      s3: { enableVersioning: true }
+      s3: { enableVersioning: true },
+      ecr: { imageRetentionCount: 20, scanOnPush: true }
     };
 
     const devTestContextConfig: ContextEnvironmentConfig = {
@@ -21,7 +22,8 @@ describe('Stack Configuration', () => {
       certificate: { transparencyLoggingEnabled: false },
       general: { removalPolicy: 'DESTROY' },
       kms: { enableKeyRotation: false },
-      s3: { enableVersioning: false }
+      s3: { enableVersioning: false },
+      ecr: { imageRetentionCount: 5, scanOnPush: false }
     };
 
     it('validates prod environment configuration structure', () => {
@@ -34,6 +36,8 @@ describe('Stack Configuration', () => {
       expect(prodContextConfig.general.removalPolicy).toBe('RETAIN');
       expect(prodContextConfig.kms.enableKeyRotation).toBe(true);
       expect(prodContextConfig.s3.enableVersioning).toBe(true);
+      expect(prodContextConfig.ecr.imageRetentionCount).toBe(20);
+      expect(prodContextConfig.ecr.scanOnPush).toBe(true);
     });
 
     it('validates dev-test environment configuration structure', () => {
@@ -46,6 +50,8 @@ describe('Stack Configuration', () => {
       expect(devTestContextConfig.general.removalPolicy).toBe('DESTROY');
       expect(devTestContextConfig.kms.enableKeyRotation).toBe(false);
       expect(devTestContextConfig.s3.enableVersioning).toBe(false);
+      expect(devTestContextConfig.ecr.imageRetentionCount).toBe(5);
+      expect(devTestContextConfig.ecr.scanOnPush).toBe(false);
     });
 
     it('validates optional vpcCidr property', () => {

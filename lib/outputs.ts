@@ -1,7 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
-
+import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as kms from 'aws-cdk-lib/aws-kms';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
@@ -14,7 +14,7 @@ export interface OutputParams {
   ipv6CidrBlock?: ec2.CfnVPCCidrBlock;
   vpcLogicalId?: string;
   ecsCluster: ecs.Cluster;
-
+  ecrRepo: ecr.Repository;
   kmsKey: kms.Key;
   kmsAlias: kms.Alias;
   configBucket: s3.Bucket;
@@ -39,6 +39,7 @@ export function registerOutputs(params: OutputParams): void {
     { key: 'SubnetPrivateA', value: params.vpc.privateSubnets[0].subnetId, description: 'Subnet Private A' },
     { key: 'SubnetPrivateB', value: params.vpc.privateSubnets[1].subnetId, description: 'Subnet Private B' },
     { key: 'EcsClusterArn', value: params.ecsCluster.clusterArn, description: 'ECS Cluster ARN' },
+    { key: 'EcrRepoArn', value: params.ecrRepo.repositoryArn, description: 'ECR Repository ARN' },
     { key: 'KmsKeyArn', value: params.kmsKey.keyArn, description: 'KMS Key ARN' },
     { key: 'KmsAlias', value: params.kmsAlias.aliasName, description: 'KMS Key Alias' },
     { key: 'S3BucketArn', value: params.configBucket.bucketArn, description: 'S3 Configuration Bucket ARN' },
