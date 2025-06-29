@@ -48,5 +48,10 @@ export function applyContextOverrides(
       ...baseConfig.s3,
       enableVersioning: app.node.tryGetContext('enableVersioning') ?? baseConfig.s3.enableVersioning,
     },
+    ecr: {
+      ...baseConfig.ecr,
+      imageRetentionCount: app.node.tryGetContext('imageRetentionCount') ?? baseConfig.ecr.imageRetentionCount,
+      scanOnPush: app.node.tryGetContext('scanOnPush') ?? baseConfig.ecr.scanOnPush,
+    },
   };
 }

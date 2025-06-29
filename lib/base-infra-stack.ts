@@ -7,7 +7,7 @@ import * as route53 from 'aws-cdk-lib/aws-route53';
 
 // Construct imports
 import { createVpcL2Resources } from './constructs/vpc';
-import { createEcsResources, createKmsResources, createS3Resources } from './constructs/services';
+import { createEcsResources, createEcrResources, createKmsResources, createS3Resources } from './constructs/services';
 import { createVpcEndpoints } from './constructs/endpoints';
 import { createAcmCertificate } from './constructs/acm';
 
@@ -28,7 +28,7 @@ export class BaseInfraStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BaseInfraStackProps) {
     super(scope, id, {
       ...props,
-      description: 'TAK Base Layer - VPC, ECS, KMS, S3, ACM',
+      description: 'TAK Base Layer - VPC, ECS, ECR, KMS, S3, ACM',
     });
 
     // Use environment configuration directly (no complex transformations needed)
@@ -43,10 +43,13 @@ export class BaseInfraStack extends cdk.Stack {
     const removalPolicy = envConfig.general.removalPolicy;
     const enableKeyRotation = envConfig.kms.enableKeyRotation;
     const enableVersioning = envConfig.s3.enableVersioning;
+    const imageRetentionCount = envConfig.ecr.imageRetentionCount;
+    const scanOnPush = envConfig.ecr.scanOnPush;
 
     // Create AWS resources
     const { vpc, ipv6CidrBlock, vpcLogicalId } = createVpcL2Resources(this, vpcCidr, enableRedundantNatGateways);
     const { ecsCluster } = createEcsResources(this, this.stackName, vpc);
+    const { ecrRepo } = createEcrResources(this, this.stackName, imageRetentionCount, scanOnPush, removalPolicy);
     const { kmsKey, kmsAlias } = createKmsResources(this, this.stackName, enableKeyRotation, removalPolicy);
     const { configBucket, appImagesBucket } = createS3Resources(this, this.stackName, cdk.Stack.of(this).region, kmsKey, enableVersioning, removalPolicy);
 
@@ -88,6 +91,7 @@ export class BaseInfraStack extends cdk.Stack {
       ipv6CidrBlock,
       vpcLogicalId,
       ecsCluster,
+      ecrRepo,
       kmsKey,
       kmsAlias,
       configBucket,
