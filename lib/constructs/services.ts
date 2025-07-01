@@ -5,6 +5,7 @@ import * as kms from 'aws-cdk-lib/aws-kms';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { RemovalPolicy } from 'aws-cdk-lib';
+import * as cdk from 'aws-cdk-lib';
 import { PolicyStatement, Effect, AccountRootPrincipal } from 'aws-cdk-lib/aws-iam';
 
 export function createEcsResources(scope: Construct, stackName: string, vpc: ec2.IVpc) {
@@ -23,6 +24,9 @@ export function createEcrResources(scope: Construct, stackName: string, imageRet
     imageTagMutability: ecr.TagMutability.MUTABLE,
     lifecycleRules: [{
       maxImageCount: imageRetentionCount,
+    }, {
+      tagStatus: ecr.TagStatus.UNTAGGED,
+      maxImageAge: cdk.Duration.days(1),
     }],
     removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
   });
