@@ -308,11 +308,4 @@ else
     echo "Deployment completed successfully!"
     echo "Admin certificate saved to: $INITIAL_DIR/tak-admin-cert.p12"
 
-    echo ""
-    echo "========================================"
-    echo "              NEXT STEPS"
-    echo "========================================"
-    echo "Groups in Authentik prefixed with \"tak_\" become \"channels\" in TAK."
-    echo "Create users in Authentik and assign them to \"tak_\" groups."
-    echo ""
 fi
