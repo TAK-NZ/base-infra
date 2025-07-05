@@ -128,7 +128,8 @@ update_repo() {
     if [ -d "$repo_name" ]; then
         echo "Updating $repo_name..."
         cd "$repo_name"
-        git pull origin main
+        git fetch origin
+        git reset --hard origin/main
         cd ..
     else
         echo "Cloning $repo_name..."
@@ -242,24 +243,7 @@ else
     DURATION=$((END_TIME - START_TIME))
     MINUTES=$((DURATION / 60))
     SECONDS=$((DURATION % 60))
-    
-    echo ""
-    echo "🎉 TAK infrastructure deployed successfully!"
-    echo "⏱️  Total deployment time: ${MINUTES}m ${SECONDS}s"
-    echo ""
-    echo "📋 Deployment Summary:"
-    echo "   • Environment: $ENV_TYPE"
-    echo "   • Stack Name: $STACK_NAME"
-    echo "   • Region: $REGION"
-    echo "   • Domain: $R53_ZONE_NAME"
-    echo "   • Project: $PROJECT"
-    echo ""
-    echo "🔗 Next Steps:"
-    echo "   • Check CloudFormation stacks in AWS Console"
-    echo "   • Verify DNS records in Route53"
-    echo "   • Test application endpoints"
-fiDURATION / 60))
-    SECONDS=$((DURATION % 60))
+        
     echo ""
     echo "========================================"
     echo "         DEPLOYMENT COMPLETE"
@@ -281,4 +265,5 @@ fiDURATION / 60))
     
     echo "Deployment completed successfully!"
     echo "Admin certificate saved to: $INITIAL_DIR/tak-admin-cert.p12"
+
 fi
