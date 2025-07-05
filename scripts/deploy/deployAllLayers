@@ -201,7 +201,7 @@ else
     cd base-infra
     npm install
     export CDK_DEFAULT_REGION="$REGION"
-    npm run cdk deploy -- --context envType="$ENV_TYPE" --context stackName="$STACK_NAME" --context r53ZoneName="$R53_ZONE_NAME" --context 'tak-defaults={"project":"'"$PROJECT"'","component":"BaseInfra","region":"'"$REGION"'"}' --require-approval never $NO_ROLLBACK
+    npm run cdk deploy -- --context envType="$ENV_TYPE" --context stackName="$STACK_NAME" --context r53ZoneName="$R53_ZONE_NAME" --context tak-project="$PROJECT" --context tak-component="BaseInfra" --context tak-region="$REGION" --require-approval never $NO_ROLLBACK
     cd ..
     
     # Upload configuration files to S3
@@ -224,7 +224,7 @@ else
     cd auth-infra
     npm install
     export CDK_DEFAULT_REGION="$REGION"
-    npm run cdk deploy -- --context envType="$ENV_TYPE" --context stackName="$STACK_NAME" --context adminUserEmail="$ADMIN_USER_EMAIL" --context branding="$BRANDING" --context 'tak-defaults={"project":"'"$PROJECT"'","component":"AuthInfra","region":"'"$REGION"'"}' --require-approval never $NO_ROLLBACK
+    npm run cdk deploy -- --context envType="$ENV_TYPE" --context stackName="$STACK_NAME" --context adminUserEmail="$ADMIN_USER_EMAIL" --context branding="$BRANDING" --context tak-project="$PROJECT" --context tak-component="AuthInfra" --context tak-region="$REGION" --require-approval never $NO_ROLLBACK
     cd ..
     
     # Deploy TakInfra
@@ -234,13 +234,31 @@ else
     cp "$INITIAL_DIR/takserver-docker-$REQUIRED_VERSION.zip" .
     npm install
     export CDK_DEFAULT_REGION="$REGION"
-    npm run cdk deploy -- --context envType="$ENV_TYPE" --context stackName="$STACK_NAME" --context branding="$BRANDING" --context 'tak-defaults={"project":"'"$PROJECT"'","component":"TakInfra","region":"'"$REGION"'"}' --require-approval never $NO_ROLLBACK
+    npm run cdk deploy -- --context envType="$ENV_TYPE" --context stackName="$STACK_NAME" --context branding="$BRANDING" --context tak-project="$PROJECT" --context tak-component="TakInfra" --context tak-region="$REGION" --require-approval never $NO_ROLLBACK
     cd ..
     
     # Calculate and display deployment duration
     END_TIME=$(date +%s)
     DURATION=$((END_TIME - START_TIME))
     MINUTES=$((DURATION / 60))
+    SECONDS=$((DURATION % 60))
+    
+    echo ""
+    echo "🎉 TAK infrastructure deployed successfully!"
+    echo "⏱️  Total deployment time: ${MINUTES}m ${SECONDS}s"
+    echo ""
+    echo "📋 Deployment Summary:"
+    echo "   • Environment: $ENV_TYPE"
+    echo "   • Stack Name: $STACK_NAME"
+    echo "   • Region: $REGION"
+    echo "   • Domain: $R53_ZONE_NAME"
+    echo "   • Project: $PROJECT"
+    echo ""
+    echo "🔗 Next Steps:"
+    echo "   • Check CloudFormation stacks in AWS Console"
+    echo "   • Verify DNS records in Route53"
+    echo "   • Test application endpoints"
+fiDURATION / 60))
     SECONDS=$((DURATION % 60))
     echo ""
     echo "========================================"
