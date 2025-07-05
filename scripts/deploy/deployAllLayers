@@ -9,6 +9,8 @@ ADMIN_USER_EMAIL="admin@example.com"
 PROJECT="TAK on AWS"
 REGION="us-west-2"
 BRANDING="generic"
+LDAP_BASE_DN="dc=ldap,dc=tak"
+LETS_ENCRYPT_MODE="staging"
 
 # Repository URLs
 BASE_INFRA_REPO="https://github.com/TAK-NZ/base-infra"
@@ -42,6 +44,8 @@ show_help() {
     echo "  PROJECT             Project name for tagging (default: \"TAK on AWS\")"
     echo "  REGION              AWS region (default: \"us-west-2\")"
     echo "  BRANDING            Branding type: \"generic\" or \"tak-nz\" (default: \"generic\")"
+    echo "  LDAP_BASE_DN        LDAP base DN (default: \"dc=ldap,dc=tak\")"
+    echo "  LETS_ENCRYPT_MODE   Let's Encrypt mode: \"staging\" or \"production\" (default: \"staging\")"
     echo ""
     echo "PREREQUISITES:"
     echo "  - AWS CLI configured with appropriate credentials"
@@ -128,7 +132,8 @@ update_repo() {
     if [ -d "$repo_name" ]; then
         echo "Updating $repo_name..."
         cd "$repo_name"
-        git pull origin main
+        git fetch origin
+        git reset --hard origin/main
         cd ..
     else
         echo "Cloning $repo_name..."
@@ -201,7 +206,14 @@ else
     cd base-infra
     npm install
     export CDK_DEFAULT_REGION="$REGION"
-    npm run cdk deploy -- --context envType="$ENV_TYPE" --context stackName="$STACK_NAME" --context r53ZoneName="$R53_ZONE_NAME" --context tak-project="$PROJECT" --context tak-component="BaseInfra" --context tak-region="$REGION" --require-approval never $NO_ROLLBACK
+    npm run cdk deploy -- \
+        --context envType="$ENV_TYPE" \
+        --context stackName="$STACK_NAME" \
+        --context r53ZoneName="$R53_ZONE_NAME" \
+        --context tak-project="$PROJECT" \
+        --context tak-component="BaseInfra" \
+        --context tak-region="$REGION" \
+        --require-approval never $NO_ROLLBACK
     cd ..
     
     # Upload configuration files to S3
@@ -224,7 +236,16 @@ else
     cd auth-infra
     npm install
     export CDK_DEFAULT_REGION="$REGION"
-    npm run cdk deploy -- --context envType="$ENV_TYPE" --context stackName="$STACK_NAME" --context adminUserEmail="$ADMIN_USER_EMAIL" --context branding="$BRANDING" --context tak-project="$PROJECT" --context tak-component="AuthInfra" --context tak-region="$REGION" --require-approval never $NO_ROLLBACK
+    npm run cdk deploy -- \
+        --context envType="$ENV_TYPE" \
+        --context stackName="$STACK_NAME" \
+        --context adminUserEmail="$ADMIN_USER_EMAIL" \
+        --context branding="$BRANDING" \
+        --context ldapBaseDn="$LDAP_BASE_DN" \
+        --context tak-project="$PROJECT" \
+        --context tak-component="AuthInfra" \
+        --context tak-region="$REGION" \
+        --require-approval never $NO_ROLLBACK
     cd ..
     
     # Deploy TakInfra
@@ -234,7 +255,16 @@ else
     cp "$INITIAL_DIR/takserver-docker-$REQUIRED_VERSION.zip" .
     npm install
     export CDK_DEFAULT_REGION="$REGION"
-    npm run cdk deploy -- --context envType="$ENV_TYPE" --context stackName="$STACK_NAME" --context branding="$BRANDING" --context tak-project="$PROJECT" --context tak-component="TakInfra" --context tak-region="$REGION" --require-approval never $NO_ROLLBACK
+    npm run cdk deploy -- \
+        --context envType="$ENV_TYPE" \
+        --context stackName="$STACK_NAME" \
+        --context branding="$BRANDING" \
+        --context staging="$LETS_ENCRYPT_MODE" \
+        --context letsEncryptEmail="$ADMIN_USER_EMAIL" \
+        --context tak-project="$PROJECT" \
+        --context tak-component="TakInfra" \
+        --context tak-region="$REGION" \
+        --require-approval never $NO_ROLLBACK
     cd ..
     
     # Calculate and display deployment duration
@@ -242,24 +272,7 @@ else
     DURATION=$((END_TIME - START_TIME))
     MINUTES=$((DURATION / 60))
     SECONDS=$((DURATION % 60))
-    
-    echo ""
-    echo "🎉 TAK infrastructure deployed successfully!"
-    echo "⏱️  Total deployment time: ${MINUTES}m ${SECONDS}s"
-    echo ""
-    echo "📋 Deployment Summary:"
-    echo "   • Environment: $ENV_TYPE"
-    echo "   • Stack Name: $STACK_NAME"
-    echo "   • Region: $REGION"
-    echo "   • Domain: $R53_ZONE_NAME"
-    echo "   • Project: $PROJECT"
-    echo ""
-    echo "🔗 Next Steps:"
-    echo "   • Check CloudFormation stacks in AWS Console"
-    echo "   • Verify DNS records in Route53"
-    echo "   • Test application endpoints"
-fiDURATION / 60))
-    SECONDS=$((DURATION % 60))
+        
     echo ""
     echo "========================================"
     echo "         DEPLOYMENT COMPLETE"
@@ -269,11 +282,19 @@ fiDURATION / 60))
     
     # Display Authentik admin password
     echo "Authentik Admin Credentials:"
+    AUTHENTIK_URL=$(aws cloudformation describe-stacks --stack-name "TAK-$STACK_NAME-AuthInfra" --region "$REGION" --query "Stacks[0].Outputs[?OutputKey=='AuthentikUrlOutput'].OutputValue" --output text)
+    echo "Account URL: $AUTHENTIK_URL"
     ADMIN_CREDS=$(aws secretsmanager get-secret-value --secret-id "TAK-$STACK_NAME-AuthInfra/Authentik/Admin-Password" --query SecretString --output text)
     USERNAME=$(echo "$ADMIN_CREDS" | grep -o '"username":"[^"]*"' | cut -d'"' -f4)
     PASSWORD=$(echo "$ADMIN_CREDS" | grep -o '"password":"[^"]*"' | cut -d'"' -f4)
     echo "Username: $USERNAME"
     echo "Password: $PASSWORD"
+    echo ""
+    
+    # Display TAK Server URL
+    echo "TAK Server Information:"
+    TAK_URL=$(aws cloudformation describe-stacks --stack-name "TAK-$STACK_NAME-TakInfra" --region "$REGION" --query "Stacks[0].Outputs[?OutputKey=='TakServiceUrl'].OutputValue" --output text)
+    echo "TAK Server URL: $TAK_URL"
     
     # Download TAK Server admin certificate
     echo "Downloading TAK Server admin certificate..."
@@ -281,4 +302,12 @@ fiDURATION / 60))
     
     echo "Deployment completed successfully!"
     echo "Admin certificate saved to: $INITIAL_DIR/tak-admin-cert.p12"
+
+    echo ""
+    echo "========================================"
+    echo "              NEXT STEPS"
+    echo "========================================"
+    echo "Groups in Authentik prefixed with \"tak_\" become \"channels\" in TAK."
+    echo "Create users in Authentik and assign them to \"tak_\" groups."
+    echo ""
 fi
