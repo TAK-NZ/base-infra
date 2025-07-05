@@ -1,0 +1,266 @@
+#!/bin/bash
+set -e
+
+# Configuration Variables
+STACK_NAME="Demo"
+ENV_TYPE="dev-test"
+R53_ZONE_NAME=""
+ADMIN_USER_EMAIL="admin@example.com"
+PROJECT="TAK on AWS"
+REGION="us-west-2"
+BRANDING="generic"
+
+# Repository URLs
+BASE_INFRA_REPO="https://github.com/TAK-NZ/base-infra"
+AUTH_INFRA_REPO="https://github.com/TAK-NZ/auth-infra"
+TAK_INFRA_REPO="https://github.com/TAK-NZ/tak-infra"
+
+# Store initial directory
+INITIAL_DIR=$(pwd)
+
+# Help function
+show_help() {
+    # Fetch current version requirement
+    local REQUIRED_VERSION=$(curl -s https://raw.githubusercontent.com/TAK-NZ/tak-infra/main/cdk.json | grep '"version":' | head -1 | cut -d'"' -f4 2>/dev/null || echo "<version>")
+    
+    echo "TAK All Layers Deployment Script"
+    echo ""
+    echo "USAGE:"
+    echo "  ./deployAllLayers [OPTIONS]"
+    echo ""
+    echo "OPTIONS:"
+    echo "  --help              Show this help message"
+    echo "  --destroy           Destroy all TAK infrastructure in reverse order"
+    echo "  --r53ZoneName NAME  Override the Route53 zone name (e.g., demo.tak.nz)"
+    echo "  --no-rollback       Disable rollback on deployment failure"
+    echo ""
+    echo "CONFIGURATION VARIABLES (edit at top of script):"
+    echo "  STACK_NAME          Stack identifier (default: \"Demo\")"
+    echo "  ENV_TYPE            Environment type: \"dev-test\" or \"prod\" (default: \"dev-test\")"
+    echo "  R53_ZONE_NAME       Route53 hosted zone name (required for deployment)"
+    echo "  ADMIN_USER_EMAIL    Admin user email (default: \"admin@example.com\")"
+    echo "  PROJECT             Project name for tagging (default: \"TAK on AWS\")"
+    echo "  REGION              AWS region (default: \"us-west-2\")"
+    echo "  BRANDING            Branding type: \"generic\" or \"tak-nz\" (default: \"generic\")"
+    echo ""
+    echo "PREREQUISITES:"
+    echo "  - AWS CLI configured with appropriate credentials"
+    echo "  - Docker installed and running"
+    echo "  - Node.js and npm installed"
+    echo "  - takserver-docker-${REQUIRED_VERSION}.zip file in current directory"
+    echo ""
+    echo "OPTIONAL FILES (uploaded to S3 if present):"
+    echo "  - authentik-config.env"
+    echo "  - takserver-config.env"
+    echo "  - cloudtak-config.env"
+    echo ""
+    echo "EXAMPLES:"
+    echo "  ./deployAllLayers --r53ZoneName demo.tak.nz    # Deploy with custom domain"
+    echo "  ./deployAllLayers --destroy                     # Destroy all infrastructure"
+}
+
+# Parse command line arguments
+DESTROY_MODE=false
+NO_ROLLBACK=""
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --help|-h)
+            show_help
+            exit 0
+            ;;
+        --destroy)
+            DESTROY_MODE=true
+            shift
+            ;;
+        --r53ZoneName)
+            R53_ZONE_NAME="$2"
+            shift 2
+            ;;
+        --no-rollback)
+            NO_ROLLBACK="--no-rollback"
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
+
+# Check prerequisites and mandatory parameters (skip for destroy mode)
+if [ "$DESTROY_MODE" = false ]; then
+    # Check Docker installation and status
+    if ! command -v docker &> /dev/null; then
+        echo "Error: Docker is not installed"
+        exit 1
+    fi
+    
+    if ! docker info &> /dev/null; then
+        echo "Error: Docker is not running"
+        exit 1
+    fi
+    
+    if [ -z "$R53_ZONE_NAME" ]; then
+        echo "Error: r53ZoneName must be set in configuration variables"
+        exit 1
+    fi
+    
+    # Check for mandatory files
+    if ! ls takserver-docker-*.zip 1> /dev/null 2>&1; then
+        # Fetch required version for error message
+        REQUIRED_VERSION=$(curl -s https://raw.githubusercontent.com/TAK-NZ/tak-infra/main/cdk.json | grep '"version":' | head -1 | cut -d'"' -f4 2>/dev/null || echo "<version>")
+        echo "Error: takserver-docker-${REQUIRED_VERSION}.zip file not found"
+        exit 1
+    fi
+    
+    # Check for optional files
+    echo "Checking for optional configuration files:"
+    [ -f "authentik-config.env" ] && echo "✓ authentik-config.env found" || echo "- authentik-config.env not found"
+    [ -f "takserver-config.env" ] && echo "✓ takserver-config.env found" || echo "- takserver-config.env not found"
+    [ -f "cloudtak-config.env" ] && echo "✓ cloudtak-config.env found" || echo "- cloudtak-config.env not found"
+fi
+
+# Function to clone or update repository
+update_repo() {
+    local repo_url=$1
+    local repo_name=$(basename "$repo_url" .git)
+    
+    if [ -d "$repo_name" ]; then
+        echo "Updating $repo_name..."
+        cd "$repo_name"
+        git pull origin main
+        cd ..
+    else
+        echo "Cloning $repo_name..."
+        git clone "$repo_url"
+    fi
+}
+
+# Update repositories
+update_repo "$BASE_INFRA_REPO"
+update_repo "$AUTH_INFRA_REPO"
+update_repo "$TAK_INFRA_REPO"
+
+# Validate TAK server version (skip for destroy mode)
+if [ "$DESTROY_MODE" = false ]; then
+    echo "Validating TAK server version..."
+    REQUIRED_VERSION=$(grep -A 20 '"takserver"' tak-infra/cdk.json | grep '"version"' | head -1 | cut -d'"' -f4)
+    LOCAL_ZIP=$(ls takserver-docker-*.zip 2>/dev/null | head -1)
+    LOCAL_VERSION=$(echo "$LOCAL_ZIP" | sed 's/takserver-docker-\(.*\)\.zip/\1/')
+    
+    if [ "$LOCAL_VERSION" != "$REQUIRED_VERSION" ]; then
+        echo "Error: TAK server version mismatch"
+        echo "  Required: $REQUIRED_VERSION (from tak-infra/cdk.json)"
+        echo "  Found:    $LOCAL_VERSION (from $LOCAL_ZIP)"
+        echo "  Please download takserver-docker-$REQUIRED_VERSION.zip"
+        exit 1
+    fi
+    echo "✓ TAK server version $LOCAL_VERSION matches requirement"
+fi
+
+if [ "$DESTROY_MODE" = true ]; then
+    # Destroy stacks in reverse order
+    echo "Destroying TAK infrastructure in reverse order..."
+    
+    # Destroy TakInfra
+    echo "Destroying TakInfra..."
+    cd tak-infra
+    npm install
+    export CDK_DEFAULT_REGION="$REGION"
+    npm run cdk destroy -- --context envType="$ENV_TYPE" --context stackName="$STACK_NAME" --force
+    cd ..
+    
+    # Destroy AuthInfra
+    echo "Destroying AuthInfra..."
+    cd auth-infra
+    npm install
+    export CDK_DEFAULT_REGION="$REGION"
+    npm run cdk destroy -- --context envType="$ENV_TYPE" --context stackName="$STACK_NAME" --force
+    cd ..
+    
+    # Empty S3 bucket before destroying BaseInfra
+    echo "Emptying S3 bucket..."
+    S3_BUCKET="tak-${STACK_NAME,,}-baseinfra-${REGION}-env-config"
+    aws s3 rm "s3://$S3_BUCKET" --recursive || true
+    
+    # Destroy BaseInfra
+    echo "Destroying BaseInfra..."
+    cd base-infra
+    npm install
+    export CDK_DEFAULT_REGION="$REGION"
+    npm run cdk destroy -- --context envType="$ENV_TYPE" --context stackName="$STACK_NAME" --force
+    cd ..
+    
+    echo "Destruction completed successfully!"
+else
+    # Record start time
+    START_TIME=$(date +%s)
+    
+    # Deploy BaseInfra
+    echo "Deploying BaseInfra..."
+    cd base-infra
+    npm install
+    export CDK_DEFAULT_REGION="$REGION"
+    npm run cdk deploy -- --context envType="$ENV_TYPE" --context stackName="$STACK_NAME" --context r53ZoneName="$R53_ZONE_NAME" --context 'tak-defaults={"project":"'"$PROJECT"'","component":"BaseInfra","region":"'"$REGION"'"}' --require-approval never $NO_ROLLBACK
+    cd ..
+    
+    # Upload configuration files to S3
+    echo "Uploading configuration files to S3..."
+    S3_BUCKET="tak-${STACK_NAME,,}-baseinfra-${REGION}-env-config"
+    for config_file in "authentik-config.env" "takserver-config.env" "cloudtak-config.env"; do
+        if [ -f "$INITIAL_DIR/$config_file" ]; then
+            echo "Uploading existing $config_file"
+            aws s3 cp "$INITIAL_DIR/$config_file" "s3://$S3_BUCKET/$config_file"
+        else
+            echo "Creating empty $config_file"
+            touch "/tmp/$config_file"
+            aws s3 cp "/tmp/$config_file" "s3://$S3_BUCKET/$config_file"
+            rm "/tmp/$config_file"
+        fi
+    done
+    
+    # Deploy AuthInfra
+    echo "Deploying AuthInfra..."
+    cd auth-infra
+    npm install
+    export CDK_DEFAULT_REGION="$REGION"
+    npm run cdk deploy -- --context envType="$ENV_TYPE" --context stackName="$STACK_NAME" --context adminUserEmail="$ADMIN_USER_EMAIL" --context branding="$BRANDING" --context 'tak-defaults={"project":"'"$PROJECT"'","component":"AuthInfra","region":"'"$REGION"'"}' --require-approval never $NO_ROLLBACK
+    cd ..
+    
+    # Deploy TakInfra
+    echo "Deploying TakInfra..."
+    cd tak-infra
+    # Copy TAK server zip file to tak-infra directory
+    cp "$INITIAL_DIR/takserver-docker-$REQUIRED_VERSION.zip" .
+    npm install
+    export CDK_DEFAULT_REGION="$REGION"
+    npm run cdk deploy -- --context envType="$ENV_TYPE" --context stackName="$STACK_NAME" --context branding="$BRANDING" --context 'tak-defaults={"project":"'"$PROJECT"'","component":"TakInfra","region":"'"$REGION"'"}' --require-approval never $NO_ROLLBACK
+    cd ..
+    
+    # Calculate and display deployment duration
+    END_TIME=$(date +%s)
+    DURATION=$((END_TIME - START_TIME))
+    MINUTES=$((DURATION / 60))
+    SECONDS=$((DURATION % 60))
+    echo ""
+    echo "========================================"
+    echo "         DEPLOYMENT COMPLETE"
+    echo "========================================"
+    echo "Deployment completed in ${MINUTES}m ${SECONDS}s"
+    echo ""
+    
+    # Display Authentik admin password
+    echo "Authentik Admin Credentials:"
+    ADMIN_CREDS=$(aws secretsmanager get-secret-value --secret-id "TAK-$STACK_NAME-AuthInfra/Authentik/Admin-Password" --query SecretString --output text)
+    USERNAME=$(echo "$ADMIN_CREDS" | grep -o '"username":"[^"]*"' | cut -d'"' -f4)
+    PASSWORD=$(echo "$ADMIN_CREDS" | grep -o '"password":"[^"]*"' | cut -d'"' -f4)
+    echo "Username: $USERNAME"
+    echo "Password: $PASSWORD"
+    
+    # Download TAK Server admin certificate
+    echo "Downloading TAK Server admin certificate..."
+    aws secretsmanager get-secret-value --secret-id "TAK-$STACK_NAME-TakInfra/TAK-Server/Admin-Cert" --query SecretBinary --output text | base64 -d > "$INITIAL_DIR/tak-admin-cert.p12"
+    
+    echo "Deployment completed successfully!"
+    echo "Admin certificate saved to: $INITIAL_DIR/tak-admin-cert.p12"
+fi
