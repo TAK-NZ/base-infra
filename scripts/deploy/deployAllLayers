@@ -5,7 +5,7 @@ set -e
 STACK_NAME="Demo"
 ENV_TYPE="dev-test"
 R53_ZONE_NAME=""
-ADMIN_USER_EMAIL="admin@example.com"
+ADMIN_USER_EMAIL=""
 PROJECT="TAK on AWS"
 REGION="us-west-2"
 BRANDING="generic"
@@ -40,7 +40,7 @@ show_help() {
     echo "  STACK_NAME          Stack identifier (default: \"Demo\")"
     echo "  ENV_TYPE            Environment type: \"dev-test\" or \"prod\" (default: \"dev-test\")"
     echo "  R53_ZONE_NAME       Route53 hosted zone name (required for deployment)"
-    echo "  ADMIN_USER_EMAIL    Admin user email (default: \"admin@example.com\")"
+    echo "  ADMIN_USER_EMAIL    Admin user email - must be real/valid (default: admin@R53_ZONE_NAME)"
     echo "  PROJECT             Project name for tagging (default: \"TAK on AWS\")"
     echo "  REGION              AWS region (default: \"us-west-2\")"
     echo "  BRANDING            Branding type: \"generic\" or \"tak-nz\" (default: \"generic\")"
@@ -230,6 +230,11 @@ else
             rm "/tmp/$config_file"
         fi
     done
+    
+    # Set admin email if not provided
+    if [ -z "$ADMIN_USER_EMAIL" ]; then
+        ADMIN_USER_EMAIL="admin@$R53_ZONE_NAME"
+    fi
     
     # Deploy AuthInfra
     echo "Deploying AuthInfra..."
