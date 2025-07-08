@@ -136,7 +136,17 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
     resources: [albLogsBucket.bucketArn]
   }));
 
-
+  // Allow cross-stack access for other TAK infrastructure layers
+  albLogsBucket.addToResourcePolicy(new PolicyStatement({
+    effect: Effect.ALLOW,
+    principals: [new AccountRootPrincipal()],
+    actions: [
+      's3:GetBucketLocation',
+      's3:GetBucketAcl',
+      's3:ListBucket'
+    ],
+    resources: [albLogsBucket.bucketArn]
+  }));
 
   return { configBucket, envConfigBucket, appImagesBucket, albLogsBucket };
 }
