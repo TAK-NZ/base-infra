@@ -55,7 +55,7 @@ export function createKmsResources(scope: Construct, stackName: string, enableKe
   return { kmsKey, kmsAlias };
 }
 
-export function createS3Resources(scope: Construct, stackName: string, region: string, kmsKey: kms.Key, enableVersioning: boolean, removalPolicy: string, albLogsRetentionDays: number) {
+export function createS3Resources(scope: Construct, stackName: string, region: string, kmsKey: kms.Key, enableVersioning: boolean, removalPolicy: string, elbLogsRetentionDays: number) {
   // Legacy config bucket - keep for migration
   const configBucket = new s3.Bucket(scope, 'ConfigBucket', {
     bucketName: `${stackName.toLowerCase()}-${region}-env-config`,
@@ -95,19 +95,19 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
     objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
   });
 
-  // ALB access logs bucket with globally unique naming
-  const albLogsBucket = new s3.Bucket(scope, 'AlbLogsBucket', {
+  // ELB access logs bucket with globally unique naming (ALB and NLB)
+  const elbLogsBucket = new s3.Bucket(scope, 'ElbLogsBucket', {
     bucketName: `${stackName.toLowerCase()}-${region}-${cdk.Aws.ACCOUNT_ID}-logs`,
     removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
     autoDeleteObjects: removalPolicy !== 'RETAIN',
     lifecycleRules: [{
       id: 'MonthlyDelete',
-      expiration: cdk.Duration.days(albLogsRetentionDays),
+      expiration: cdk.Duration.days(elbLogsRetentionDays),
       enabled: true
     }]
   });
 
-  // Grant ALB service account permission to write access logs
+  // Grant ELB service account permission to write access logs (ALB and NLB)
   const elbServiceAccountMap: { [key: string]: string } = {
     'us-east-1': '127311923021', 'us-east-2': '033677994240', 'us-west-1': '027434742980', 'us-west-2': '797873946194',
     'ca-central-1': '985666609251', 'eu-central-1': '054676820928', 'eu-west-1': '156460612806', 'eu-west-2': '652711504416',
@@ -121,30 +121,27 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
     ? new cdk.aws_iam.AccountPrincipal(elbServiceAccountMap[region])
     : new cdk.aws_iam.ServicePrincipal('elasticloadbalancing.amazonaws.com');
   
-  albLogsBucket.addToResourcePolicy(new PolicyStatement({
+  elbLogsBucket.addToResourcePolicy(new PolicyStatement({
     effect: Effect.ALLOW,
     principals: [elbPrincipal],
     actions: ['s3:PutObject'],
-    resources: [`${albLogsBucket.bucketArn}/*`]
+    resources: [`${elbLogsBucket.bucketArn}/*`],
+    conditions: {
+      StringEquals: {
+        's3:x-amz-acl': 'bucket-owner-full-control'
+      }
+    }
   }));
   
-  albLogsBucket.addToResourcePolicy(new PolicyStatement({
+  elbLogsBucket.addToResourcePolicy(new PolicyStatement({
     effect: Effect.ALLOW,
     principals: [elbPrincipal],
     actions: ['s3:GetBucketAcl'],
-    resources: [albLogsBucket.bucketArn]
-  }));
-
-  // Grant NLB service account permission to write access logs
-  albLogsBucket.addToResourcePolicy(new PolicyStatement({
-    effect: Effect.ALLOW,
-    principals: [new cdk.aws_iam.ServicePrincipal('elasticloadbalancing.amazonaws.com')],
-    actions: ['s3:PutObject', 's3:GetBucketAcl'],
-    resources: [albLogsBucket.bucketArn, `${albLogsBucket.bucketArn}/*`]
+    resources: [elbLogsBucket.bucketArn]
   }));
 
   // Allow cross-stack access for other TAK infrastructure layers
-  albLogsBucket.addToResourcePolicy(new PolicyStatement({
+  elbLogsBucket.addToResourcePolicy(new PolicyStatement({
     effect: Effect.ALLOW,
     principals: [new AccountRootPrincipal()],
     actions: [
@@ -156,8 +153,8 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
       's3:ListBucketVersions',
       's3:DeleteObjectVersion'
     ],
-    resources: [albLogsBucket.bucketArn, `${albLogsBucket.bucketArn}/*`]
+    resources: [elbLogsBucket.bucketArn, `${elbLogsBucket.bucketArn}/*`]
   }));
 
-  return { configBucket, envConfigBucket, appImagesBucket, albLogsBucket };
+  return { configBucket, envConfigBucket, appImagesBucket, elbLogsBucket };
 }
