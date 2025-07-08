@@ -135,6 +135,14 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
     resources: [albLogsBucket.bucketArn]
   }));
 
+  // Grant NLB service account permission to write access logs
+  albLogsBucket.addToResourcePolicy(new PolicyStatement({
+    effect: Effect.ALLOW,
+    principals: [new cdk.aws_iam.ServicePrincipal('elasticloadbalancing.amazonaws.com')],
+    actions: ['s3:PutObject', 's3:GetBucketAcl'],
+    resources: [albLogsBucket.bucketArn, `${albLogsBucket.bucketArn}/*`]
+  }));
+
   // Allow cross-stack access for other TAK infrastructure layers
   albLogsBucket.addToResourcePolicy(new PolicyStatement({
     effect: Effect.ALLOW,
