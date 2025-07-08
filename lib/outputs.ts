@@ -18,6 +18,7 @@ export interface OutputParams {
   kmsKey: kms.Key;
   kmsAlias: kms.Alias;
   configBucket: s3.Bucket;
+  envConfigBucket: s3.Bucket;
   appImagesBucket: s3.Bucket;
   vpcEndpoints?: Record<string, ec2.GatewayVpcEndpoint | ec2.InterfaceVpcEndpoint>;
   certificate?: acm.Certificate;
@@ -52,6 +53,27 @@ export function registerOutputs(params: OutputParams): void {
       description,
       exportName: `${stackName}-${key}`,
     });
+  });
+
+  // Legacy ConfigBucket export (for migration)
+  new cdk.CfnOutput(stack, 'ConfigBucketOutput', {
+    value: params.configBucket.bucketName,
+    description: 'Legacy configuration bucket (deprecated)',
+    exportName: `${stackName}-ConfigBucket`,
+  });
+
+  // New EnvConfigBucket export
+  new cdk.CfnOutput(stack, 'EnvConfigBucketOutput', {
+    value: params.envConfigBucket.bucketName,
+    description: 'Environment configuration bucket with globally unique naming',
+    exportName: `${stackName}-EnvConfigBucket`,
+  });
+
+  // AppImagesBucket export (updated with new naming)
+  new cdk.CfnOutput(stack, 'AppImagesBucketOutput', {
+    value: params.appImagesBucket.bucketName,
+    description: 'Application images bucket with globally unique naming',
+    exportName: `${stackName}-AppImagesBucket`,
   });
 
   // Conditional outputs
