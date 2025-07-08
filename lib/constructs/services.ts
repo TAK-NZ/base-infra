@@ -95,5 +95,18 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
     objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
   });
 
-  return { configBucket, envConfigBucket, appImagesBucket };
+  // ALB access logs bucket with globally unique naming
+  const albLogsBucket = new s3.Bucket(scope, 'AlbLogsBucket', {
+    bucketName: `tak-${stackName.toLowerCase()}-${region}-${cdk.Aws.ACCOUNT_ID}-logs`,
+    encryption: s3.BucketEncryption.KMS,
+    encryptionKey: kmsKey,
+    bucketKeyEnabled: true,
+    enforceSSL: true,
+    blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+    versioned: enableVersioning,
+    removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+    objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
+  });
+
+  return { configBucket, envConfigBucket, appImagesBucket, albLogsBucket };
 }
