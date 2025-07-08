@@ -13,7 +13,7 @@ const createTestConfig = (overrides: Partial<ContextEnvironmentConfig> = {}): Co
     removalPolicy: 'DESTROY'
   },
   kms: { enableKeyRotation: true },
-  s3: { enableVersioning: true, albLogsRetentionDays: 30 },
+  s3: { enableVersioning: true, elbLogsRetentionDays: 30 },
   ecr: { imageRetentionCount: 5, scanOnPush: true },
   ...overrides
 });

@@ -20,7 +20,7 @@ export interface OutputParams {
   configBucket: s3.Bucket;
   envConfigBucket: s3.Bucket;
   appImagesBucket: s3.Bucket;
-  albLogsBucket: s3.Bucket;
+  elbLogsBucket: s3.Bucket;
   vpcEndpoints?: Record<string, ec2.GatewayVpcEndpoint | ec2.InterfaceVpcEndpoint>;
   certificate?: acm.Certificate;
   hostedZone?: route53.IHostedZone;
@@ -47,7 +47,7 @@ export function registerOutputs(params: OutputParams): void {
     { key: 'S3BucketArn', value: params.configBucket.bucketArn, description: 'S3 Configuration Bucket ARN' },
     { key: 'S3TAKImagesArn', value: params.appImagesBucket.bucketArn, description: 'S3 TAK Images Bucket ARN' },
     { key: 'S3EnvConfigArn', value: params.envConfigBucket.bucketArn, description: 'S3 Environment Config Bucket ARN' },
-    { key: 'S3AlbLogsArn', value: params.albLogsBucket.bucketArn, description: 'S3 ALB Access Logs Bucket ARN' },
+    { key: 'S3ElbLogsArn', value: params.elbLogsBucket.bucketArn, description: 'S3 ELB Access Logs Bucket ARN' },
 
   ];
 
@@ -80,11 +80,11 @@ export function registerOutputs(params: OutputParams): void {
     exportName: `${stackName}-AppImagesBucket`,
   });
 
-  // AlbLogsBucket export
-  new cdk.CfnOutput(stack, 'AlbLogsBucketOutput', {
-    value: params.albLogsBucket.bucketName,
-    description: 'ALB access logs bucket with globally unique naming',
-    exportName: `${stackName}-AlbLogsBucket`,
+  // ElbLogsBucket export
+  new cdk.CfnOutput(stack, 'ElbLogsBucketOutput', {
+    value: params.elbLogsBucket.bucketName,
+    description: 'ELB access logs bucket with globally unique naming (ALB and NLB)',
+    exportName: `${stackName}-ElbLogsBucket`,
   });
 
   // Conditional outputs

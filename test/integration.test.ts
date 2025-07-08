@@ -25,7 +25,7 @@ describe('Integration Tests', () => {
       certificate: { transparencyLoggingEnabled: false },
       general: { removalPolicy: 'DESTROY' },
       kms: { enableKeyRotation: false },
-      s3: { enableVersioning: false, albLogsRetentionDays: 30 },
+      s3: { enableVersioning: false, elbLogsRetentionDays: 30 },
       ecr: { imageRetentionCount: 5, scanOnPush: false }
     };
     

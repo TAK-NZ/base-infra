@@ -36,7 +36,7 @@
       },
       "s3": {
         "enableVersioning": false,
-        "albLogsRetentionDays": 30
+        "elbLogsRetentionDays": 30
       },
       "ecr": {
         "imageRetentionCount": 5,
@@ -62,7 +62,7 @@
       },
       "s3": {
         "enableVersioning": true,
-        "albLogsRetentionDays": 30
+        "elbLogsRetentionDays": 30
       },
       "ecr": {
         "imageRetentionCount": 20,

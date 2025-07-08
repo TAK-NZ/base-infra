@@ -110,7 +110,7 @@ Use CDK's built-in `--context` flag with **flat parameter names** to override an
 | Parameter | Description | dev-test | prod |
 |-----------|-------------|----------|------|
 | `enableVersioning` | S3 bucket versioning | `false` | `true` |
-| `albLogsRetentionDays` | ALB access logs retention period | `30` | `30` |
+| `elbLogsRetentionDays` | ELB access logs retention period | `30` | `30` |
 | `lifecycleRules` | S3 lifecycle management | `true` | `true` |
 
 ---
@@ -207,8 +207,8 @@ npm run deploy:prod -- \
   --context enableVersioning=false \
   --context enableKeyRotation=false
 
-# ALB logs retention (7 days for cost savings)
-npm run deploy:dev -- --context albLogsRetentionDays=7
+# ELB logs retention (7 days for cost savings)
+npm run deploy:dev -- --context elbLogsRetentionDays=7
 
 # Certificate settings
 npm run deploy:dev -- --context transparencyLoggingEnabled=false
