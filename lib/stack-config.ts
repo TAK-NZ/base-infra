@@ -26,6 +26,7 @@ export interface ContextEnvironmentConfig {
   };
   s3: {
     enableVersioning: boolean;
+    albLogsRetentionDays: number;
   };
   ecr: {
     imageRetentionCount: number;

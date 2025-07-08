@@ -35,7 +35,8 @@
         "enableKeyRotation": false
       },
       "s3": {
-        "enableVersioning": false
+        "enableVersioning": false,
+        "albLogsRetentionDays": 30
       },
       "ecr": {
         "imageRetentionCount": 5,
@@ -60,7 +61,8 @@
         "enableKeyRotation": true
       },
       "s3": {
-        "enableVersioning": true
+        "enableVersioning": true,
+        "albLogsRetentionDays": 30
       },
       "ecr": {
         "imageRetentionCount": 20,

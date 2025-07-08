@@ -20,7 +20,7 @@ describe('ACM Certificate', () => {
           certificate: { transparencyLoggingEnabled: true },
           general: { removalPolicy: 'RETAIN' },
           kms: { enableKeyRotation: true },
-          s3: { enableVersioning: true },
+          s3: { enableVersioning: true, albLogsRetentionDays: 30 },
           ecr: { imageRetentionCount: 20, scanOnPush: true }
         },
         'tak-defaults': { project: 'TAK', component: 'BaseInfra', region: 'ap-southeast-2' }
@@ -66,7 +66,7 @@ describe('ACM Certificate', () => {
           certificate: { transparencyLoggingEnabled: true },
           general: { removalPolicy: 'RETAIN' },
           kms: { enableKeyRotation: true },
-          s3: { enableVersioning: true },
+          s3: { enableVersioning: true, albLogsRetentionDays: 30 },
           ecr: { imageRetentionCount: 20, scanOnPush: true }
         }
       });
@@ -83,7 +83,7 @@ describe('ACM Certificate', () => {
           certificate: { transparencyLoggingEnabled: true },
           general: { removalPolicy: 'RETAIN' },
           kms: { enableKeyRotation: true },
-          s3: { enableVersioning: true },
+          s3: { enableVersioning: true, albLogsRetentionDays: 30 },
           ecr: { imageRetentionCount: 20, scanOnPush: true }
         }
       });
@@ -119,7 +119,7 @@ describe('ACM Certificate', () => {
           certificate: { transparencyLoggingEnabled: true },
           general: { removalPolicy: 'RETAIN' },
           kms: { enableKeyRotation: true },
-          s3: { enableVersioning: true },
+          s3: { enableVersioning: true, albLogsRetentionDays: 30 },
           ecr: { imageRetentionCount: 20, scanOnPush: true }
         }
       });
@@ -142,7 +142,7 @@ describe('ACM Certificate', () => {
           certificate: { transparencyLoggingEnabled: true },
           general: { removalPolicy: 'RETAIN' },
           kms: { enableKeyRotation: true },
-          s3: { enableVersioning: true },
+          s3: { enableVersioning: true, albLogsRetentionDays: 30 },
           ecr: { imageRetentionCount: 20, scanOnPush: true }
         },
         'tak-defaults': { project: 'TAK', component: 'BaseInfra', region: 'ap-southeast-2' }
@@ -180,7 +180,7 @@ describe('ACM Certificate', () => {
           certificate: { transparencyLoggingEnabled: false },
           general: { removalPolicy: 'DESTROY' },
           kms: { enableKeyRotation: false },
-          s3: { enableVersioning: false },
+          s3: { enableVersioning: false, albLogsRetentionDays: 30 },
           ecr: { imageRetentionCount: 5, scanOnPush: false }
         },
         'tak-defaults': { project: 'TAK', component: 'BaseInfra', region: 'ap-southeast-2' }
@@ -223,7 +223,7 @@ describe('ACM Certificate', () => {
       certificate: { transparencyLoggingEnabled: true }, // Override dev-test default
       general: { removalPolicy: 'DESTROY' },
       kms: { enableKeyRotation: false },
-      s3: { enableVersioning: false },
+      s3: { enableVersioning: false, albLogsRetentionDays: 30 },
       ecr: { imageRetentionCount: 5, scanOnPush: false }
     };
     
