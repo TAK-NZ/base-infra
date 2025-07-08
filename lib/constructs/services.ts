@@ -71,7 +71,7 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
 
   // New config bucket with globally unique naming
   const envConfigBucket = new s3.Bucket(scope, 'EnvConfigBucket', {
-    bucketName: `tak-${stackName.toLowerCase()}-${region}-${cdk.Aws.ACCOUNT_ID}-config`,
+    bucketName: `${stackName.toLowerCase()}-${region}-${cdk.Aws.ACCOUNT_ID}-config`,
     encryption: s3.BucketEncryption.KMS,
     encryptionKey: kmsKey,
     bucketKeyEnabled: true,
@@ -84,7 +84,7 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
 
   // Updated app images bucket with globally unique naming
   const appImagesBucket = new s3.Bucket(scope, 'AppImagesBucket', {
-    bucketName: `tak-${stackName.toLowerCase()}-${region}-${cdk.Aws.ACCOUNT_ID}-artifacts`,
+    bucketName: `${stackName.toLowerCase()}-${region}-${cdk.Aws.ACCOUNT_ID}-artifacts`,
     encryption: s3.BucketEncryption.KMS,
     encryptionKey: kmsKey,
     bucketKeyEnabled: true,
@@ -97,7 +97,7 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
 
   // ALB access logs bucket with globally unique naming
   const albLogsBucket = new s3.Bucket(scope, 'AlbLogsBucket', {
-    bucketName: `tak-${stackName.toLowerCase()}-${region}-${cdk.Aws.ACCOUNT_ID}-logs`,
+    bucketName: `${stackName.toLowerCase()}-${region}-${cdk.Aws.ACCOUNT_ID}-logs`,
     removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
     autoDeleteObjects: removalPolicy !== 'RETAIN',
     lifecycleRules: [{
