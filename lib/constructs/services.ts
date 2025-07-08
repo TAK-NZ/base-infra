@@ -142,6 +142,7 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
     actions: [
       's3:GetBucketLocation',
       's3:GetBucketAcl',
+      's3:GetBucketTagging',
       's3:ListBucket'
     ],
     resources: [albLogsBucket.bucketArn]
