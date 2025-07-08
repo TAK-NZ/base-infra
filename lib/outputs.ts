@@ -20,6 +20,7 @@ export interface OutputParams {
   configBucket: s3.Bucket;
   envConfigBucket: s3.Bucket;
   appImagesBucket: s3.Bucket;
+  albLogsBucket: s3.Bucket;
   vpcEndpoints?: Record<string, ec2.GatewayVpcEndpoint | ec2.InterfaceVpcEndpoint>;
   certificate?: acm.Certificate;
   hostedZone?: route53.IHostedZone;
@@ -44,6 +45,9 @@ export function registerOutputs(params: OutputParams): void {
     { key: 'KmsKeyArn', value: params.kmsKey.keyArn, description: 'KMS Key ARN' },
     { key: 'KmsAlias', value: params.kmsAlias.aliasName, description: 'KMS Key Alias' },
     { key: 'S3BucketArn', value: params.configBucket.bucketArn, description: 'S3 Configuration Bucket ARN' },
+    { key: 'S3TAKImagesArn', value: params.appImagesBucket.bucketArn, description: 'S3 TAK Images Bucket ARN' },
+    { key: 'S3EnvConfigArn', value: params.envConfigBucket.bucketArn, description: 'S3 Environment Config Bucket ARN' },
+    { key: 'S3AlbLogsArn', value: params.albLogsBucket.bucketArn, description: 'S3 ALB Access Logs Bucket ARN' },
 
   ];
 
@@ -74,6 +78,13 @@ export function registerOutputs(params: OutputParams): void {
     value: params.appImagesBucket.bucketName,
     description: 'Application images bucket with globally unique naming',
     exportName: `${stackName}-AppImagesBucket`,
+  });
+
+  // AlbLogsBucket export
+  new cdk.CfnOutput(stack, 'AlbLogsBucketOutput', {
+    value: params.albLogsBucket.bucketName,
+    description: 'ALB access logs bucket with globally unique naming',
+    exportName: `${stackName}-AlbLogsBucket`,
   });
 
   // Conditional outputs
