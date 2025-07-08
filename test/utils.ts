@@ -55,7 +55,7 @@ export function createTestApp(): cdk.App {
         },
         s3: {
           enableVersioning: false,
-          albLogsRetentionDays: 30
+          elbLogsRetentionDays: 30
         },
         ecr: {
           imageRetentionCount: 5,
@@ -81,7 +81,7 @@ export function createTestApp(): cdk.App {
         },
         s3: {
           enableVersioning: true,
-          albLogsRetentionDays: 30
+          elbLogsRetentionDays: 30
         },
         ecr: {
           imageRetentionCount: 20,

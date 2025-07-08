@@ -10,7 +10,7 @@ describe('Stack Configuration', () => {
       certificate: { transparencyLoggingEnabled: true },
       general: { removalPolicy: 'RETAIN' },
       kms: { enableKeyRotation: true },
-      s3: { enableVersioning: true, albLogsRetentionDays: 30 },
+      s3: { enableVersioning: true, elbLogsRetentionDays: 30 },
       ecr: { imageRetentionCount: 20, scanOnPush: true }
     };
 
@@ -22,7 +22,7 @@ describe('Stack Configuration', () => {
       certificate: { transparencyLoggingEnabled: false },
       general: { removalPolicy: 'DESTROY' },
       kms: { enableKeyRotation: false },
-      s3: { enableVersioning: false, albLogsRetentionDays: 30 },
+      s3: { enableVersioning: false, elbLogsRetentionDays: 30 },
       ecr: { imageRetentionCount: 5, scanOnPush: false }
     };
 
