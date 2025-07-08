@@ -48,6 +48,7 @@ export function registerOutputs(params: OutputParams): void {
     { key: 'S3TAKImagesArn', value: params.appImagesBucket.bucketArn, description: 'S3 TAK Images Bucket ARN' },
     { key: 'S3EnvConfigArn', value: params.envConfigBucket.bucketArn, description: 'S3 Environment Config Bucket ARN' },
     { key: 'S3ElbLogsArn', value: params.elbLogsBucket.bucketArn, description: 'S3 ELB Access Logs Bucket ARN' },
+    { key: 'S3AlbLogsArn', value: params.elbLogsBucket.bucketArn, description: 'S3 ALB Access Logs Bucket ARN (deprecated - use S3ElbLogsArn)' },
 
   ];
 
@@ -86,6 +87,8 @@ export function registerOutputs(params: OutputParams): void {
     description: 'ELB access logs bucket with globally unique naming (ALB and NLB)',
     exportName: `${stackName}-ElbLogsBucket`,
   });
+
+
 
   // Conditional outputs
   if (params.ipv6CidrBlock && params.vpcLogicalId) {
