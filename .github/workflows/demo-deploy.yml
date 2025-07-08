@@ -50,7 +50,7 @@ jobs:
           if [[ "${{ github.event.head_commit.message }}" == *"[force-deploy]"* ]]; then
             echo "🚨 Force deploy detected - skipping change set validation"
           else
-            ./scripts/github/validate-changeset.sh ${{ vars.STACK_NAME }}
+            ./scripts/github/validate-changeset.sh TAK-${{ vars.STACK_NAME }}-BaseInfra
           fi
 
       - name: Deploy Demo with Prod Profile
