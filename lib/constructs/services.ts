@@ -143,9 +143,12 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
       's3:GetBucketLocation',
       's3:GetBucketAcl',
       's3:GetBucketTagging',
-      's3:ListBucket'
+      's3:ListBucket',
+      's3:DeleteObject',
+      's3:ListBucketVersions',
+      's3:DeleteObjectVersion'
     ],
-    resources: [albLogsBucket.bucketArn]
+    resources: [albLogsBucket.bucketArn, `${albLogsBucket.bucketArn}/*`]
   }));
 
   return { configBucket, envConfigBucket, appImagesBucket, albLogsBucket };
