@@ -55,7 +55,7 @@ export function createKmsResources(scope: Construct, stackName: string, enableKe
   return { kmsKey, kmsAlias };
 }
 
-export function createS3Resources(scope: Construct, stackName: string, region: string, kmsKey: kms.Key, enableVersioning: boolean, removalPolicy: string) {
+export function createS3Resources(scope: Construct, stackName: string, region: string, kmsKey: kms.Key, enableVersioning: boolean, removalPolicy: string, albLogsRetentionDays: number) {
   // Legacy config bucket - keep for migration
   const configBucket = new s3.Bucket(scope, 'ConfigBucket', {
     bucketName: `${stackName.toLowerCase()}-${region}-env-config`,
@@ -98,14 +98,13 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
   // ALB access logs bucket with globally unique naming
   const albLogsBucket = new s3.Bucket(scope, 'AlbLogsBucket', {
     bucketName: `tak-${stackName.toLowerCase()}-${region}-${cdk.Aws.ACCOUNT_ID}-logs`,
-    encryption: s3.BucketEncryption.KMS,
-    encryptionKey: kmsKey,
-    bucketKeyEnabled: true,
-    enforceSSL: true,
-    blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-    versioned: enableVersioning,
     removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
-    objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
+    autoDeleteObjects: removalPolicy !== 'RETAIN',
+    lifecycleRules: [{
+      id: 'MonthlyDelete',
+      expiration: cdk.Duration.days(albLogsRetentionDays),
+      enabled: true
+    }]
   });
 
   // Grant ALB service account permission to write access logs

@@ -54,7 +54,8 @@ export function createTestApp(): cdk.App {
           enableKeyRotation: false
         },
         s3: {
-          enableVersioning: false
+          enableVersioning: false,
+          albLogsRetentionDays: 30
         },
         ecr: {
           imageRetentionCount: 5,
@@ -79,7 +80,8 @@ export function createTestApp(): cdk.App {
           enableKeyRotation: true
         },
         s3: {
-          enableVersioning: true
+          enableVersioning: true,
+          albLogsRetentionDays: 30
         },
         ecr: {
           imageRetentionCount: 20,
