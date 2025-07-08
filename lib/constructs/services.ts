@@ -56,6 +56,7 @@ export function createKmsResources(scope: Construct, stackName: string, enableKe
 }
 
 export function createS3Resources(scope: Construct, stackName: string, region: string, kmsKey: kms.Key, enableVersioning: boolean, removalPolicy: string) {
+  // Legacy config bucket - keep for migration
   const configBucket = new s3.Bucket(scope, 'ConfigBucket', {
     bucketName: `${stackName.toLowerCase()}-${region}-env-config`,
     encryption: s3.BucketEncryption.KMS,
@@ -68,8 +69,9 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
     objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
   });
 
-  const appImagesBucket = new s3.Bucket(scope, 'AppImagesBucket', {
-    bucketName: `${stackName.toLowerCase()}-${region}-app-images`,
+  // New config bucket with globally unique naming
+  const envConfigBucket = new s3.Bucket(scope, 'EnvConfigBucket', {
+    bucketName: `tak-${stackName.toLowerCase()}-baseinfra-${region}-${cdk.Aws.ACCOUNT_ID}-env-config`,
     encryption: s3.BucketEncryption.KMS,
     encryptionKey: kmsKey,
     bucketKeyEnabled: true,
@@ -80,5 +82,18 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
     objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
   });
 
-  return { configBucket, appImagesBucket };
+  // Updated app images bucket with globally unique naming
+  const appImagesBucket = new s3.Bucket(scope, 'AppImagesBucket', {
+    bucketName: `tak-${stackName.toLowerCase()}-baseinfra-${region}-${cdk.Aws.ACCOUNT_ID}-app-images`,
+    encryption: s3.BucketEncryption.KMS,
+    encryptionKey: kmsKey,
+    bucketKeyEnabled: true,
+    enforceSSL: true,
+    blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+    versioned: enableVersioning,
+    removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+    objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
+  });
+
+  return { configBucket, envConfigBucket, appImagesBucket };
 }
