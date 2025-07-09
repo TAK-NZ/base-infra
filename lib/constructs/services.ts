@@ -97,7 +97,7 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
 
   // ELB access logs bucket with globally unique naming (ALB and NLB)
   const elbLogsBucket = new s3.Bucket(scope, 'ElbLogsBucket', {
-    bucketName: `${stackName.toLowerCase()}-${region}-${cdk.Aws.ACCOUNT_ID}-logs`,
+    bucketName: `${stackName.toLowerCase()}-${region}-${cdk.Aws.ACCOUNT_ID}-elblogs`,
     removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
     autoDeleteObjects: removalPolicy !== 'RETAIN',
     lifecycleRules: [{
