@@ -95,7 +95,19 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
     objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
   });
 
-  // ELB access logs bucket with globally unique naming (ALB and NLB)
+  // Legacy ALB logs bucket - keep for migration compatibility
+  const albLogsBucket = new s3.Bucket(scope, 'AlbLogsBucket', {
+    bucketName: `${stackName.toLowerCase()}-${region}-${cdk.Aws.ACCOUNT_ID}-logs`,
+    removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+    autoDeleteObjects: removalPolicy !== 'RETAIN',
+    lifecycleRules: [{
+      id: 'MonthlyDelete',
+      expiration: cdk.Duration.days(elbLogsRetentionDays),
+      enabled: true
+    }]
+  });
+
+  // New ELB logs bucket with globally unique naming (ALB and NLB)
   const elbLogsBucket = new s3.Bucket(scope, 'ElbLogsBucket', {
     bucketName: `${stackName.toLowerCase()}-${region}-${cdk.Aws.ACCOUNT_ID}-elblogs`,
     removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
@@ -121,40 +133,43 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
     ? new cdk.aws_iam.AccountPrincipal(elbServiceAccountMap[region])
     : new cdk.aws_iam.ServicePrincipal('elasticloadbalancing.amazonaws.com');
   
-  elbLogsBucket.addToResourcePolicy(new PolicyStatement({
-    effect: Effect.ALLOW,
-    principals: [elbPrincipal],
-    actions: ['s3:PutObject'],
-    resources: [`${elbLogsBucket.bucketArn}/*`],
-    conditions: {
-      StringEquals: {
-        's3:x-amz-acl': 'bucket-owner-full-control'
+  // Apply permissions to both buckets
+  [albLogsBucket, elbLogsBucket].forEach(bucket => {
+    bucket.addToResourcePolicy(new PolicyStatement({
+      effect: Effect.ALLOW,
+      principals: [elbPrincipal],
+      actions: ['s3:PutObject'],
+      resources: [`${bucket.bucketArn}/*`],
+      conditions: {
+        StringEquals: {
+          's3:x-amz-acl': 'bucket-owner-full-control'
+        }
       }
-    }
-  }));
-  
-  elbLogsBucket.addToResourcePolicy(new PolicyStatement({
-    effect: Effect.ALLOW,
-    principals: [elbPrincipal],
-    actions: ['s3:GetBucketAcl'],
-    resources: [elbLogsBucket.bucketArn]
-  }));
+    }));
+    
+    bucket.addToResourcePolicy(new PolicyStatement({
+      effect: Effect.ALLOW,
+      principals: [elbPrincipal],
+      actions: ['s3:GetBucketAcl'],
+      resources: [bucket.bucketArn]
+    }));
 
-  // Allow cross-stack access for other TAK infrastructure layers
-  elbLogsBucket.addToResourcePolicy(new PolicyStatement({
-    effect: Effect.ALLOW,
-    principals: [new AccountRootPrincipal()],
-    actions: [
-      's3:GetBucketLocation',
-      's3:GetBucketAcl',
-      's3:GetBucketTagging',
-      's3:ListBucket',
-      's3:DeleteObject',
-      's3:ListBucketVersions',
-      's3:DeleteObjectVersion'
-    ],
-    resources: [elbLogsBucket.bucketArn, `${elbLogsBucket.bucketArn}/*`]
-  }));
+    // Allow cross-stack access for other TAK infrastructure layers
+    bucket.addToResourcePolicy(new PolicyStatement({
+      effect: Effect.ALLOW,
+      principals: [new AccountRootPrincipal()],
+      actions: [
+        's3:GetBucketLocation',
+        's3:GetBucketAcl',
+        's3:GetBucketTagging',
+        's3:ListBucket',
+        's3:DeleteObject',
+        's3:ListBucketVersions',
+        's3:DeleteObjectVersion'
+      ],
+      resources: [bucket.bucketArn, `${bucket.bucketArn}/*`]
+    }));
+  });
 
-  return { configBucket, envConfigBucket, appImagesBucket, elbLogsBucket };
+  return { configBucket, envConfigBucket, appImagesBucket, albLogsBucket, elbLogsBucket };
 }
