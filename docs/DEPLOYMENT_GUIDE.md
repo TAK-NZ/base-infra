@@ -27,10 +27,10 @@ npm run deploy:prod
 
 | Environment | Stack Name | Domain | Cost/Month* | Features |
 |-------------|------------|--------|-------------|----------|
-| **dev-test** | `TAK-Dev-BaseInfra` | `dev.tak.nz` | ~$44 | Cost-optimized, single NAT gateway |
-| **prod** | `TAK-Prod-BaseInfra` | `tak.nz` | ~$143 | High availability, dual NAT gateways, VPC endpoints |
+| **dev-test** | `TAK-Dev-BaseInfra` | `dev.tak.nz` | ~$45 | Cost-optimized, single NAT gateway |
+| **prod** | `TAK-Prod-BaseInfra` | `tak.nz` | ~$180 | High availability, dual NAT gateways, VPC endpoints |
 
-*Estimated AWS costs excluding data transfer and usage
+*Estimated AWS costs in USD excluding data transfer and usage. Production costs include VPC interface endpoints (~$90/month) for enhanced security.
 
 ---
 
