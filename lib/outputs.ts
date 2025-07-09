@@ -17,10 +17,8 @@ export interface OutputParams {
   ecrRepo: ecr.Repository;
   kmsKey: kms.Key;
   kmsAlias: kms.Alias;
-  configBucket: s3.Bucket;
   envConfigBucket: s3.Bucket;
   appImagesBucket: s3.Bucket;
-  albLogsBucket: s3.Bucket;
   elbLogsBucket: s3.Bucket;
   vpcEndpoints?: Record<string, ec2.GatewayVpcEndpoint | ec2.InterfaceVpcEndpoint>;
   certificate?: acm.Certificate;
@@ -45,11 +43,9 @@ export function registerOutputs(params: OutputParams): void {
     { key: 'EcrRepoArn', value: params.ecrRepo.repositoryArn, description: 'ECR Repository ARN' },
     { key: 'KmsKeyArn', value: params.kmsKey.keyArn, description: 'KMS Key ARN' },
     { key: 'KmsAlias', value: params.kmsAlias.aliasName, description: 'KMS Key Alias' },
-    { key: 'S3BucketArn', value: params.configBucket.bucketArn, description: 'S3 Configuration Bucket ARN' },
     { key: 'S3TAKImagesArn', value: params.appImagesBucket.bucketArn, description: 'S3 TAK Images Bucket ARN' },
     { key: 'S3EnvConfigArn', value: params.envConfigBucket.bucketArn, description: 'S3 Environment Config Bucket ARN' },
     { key: 'S3ElbLogsArn', value: params.elbLogsBucket.bucketArn, description: 'S3 ELB Access Logs Bucket ARN' },
-    { key: 'S3AlbLogsArn', value: params.albLogsBucket.bucketArn, description: 'S3 ALB Access Logs Bucket ARN (deprecated - use S3ElbLogsArn)' },
 
   ];
 
@@ -61,21 +57,14 @@ export function registerOutputs(params: OutputParams): void {
     });
   });
 
-  // Legacy ConfigBucket export (for migration)
-  new cdk.CfnOutput(stack, 'ConfigBucketOutput', {
-    value: params.configBucket.bucketName,
-    description: 'Legacy configuration bucket (deprecated)',
-    exportName: `${stackName}-ConfigBucket`,
-  });
-
-  // New EnvConfigBucket export
+  // EnvConfigBucket export
   new cdk.CfnOutput(stack, 'EnvConfigBucketOutput', {
     value: params.envConfigBucket.bucketName,
     description: 'Environment configuration bucket with globally unique naming',
     exportName: `${stackName}-EnvConfigBucket`,
   });
 
-  // AppImagesBucket export (updated with new naming)
+  // AppImagesBucket export
   new cdk.CfnOutput(stack, 'AppImagesBucketOutput', {
     value: params.appImagesBucket.bucketName,
     description: 'Application images bucket with globally unique naming',
@@ -88,9 +77,6 @@ export function registerOutputs(params: OutputParams): void {
     description: 'ELB access logs bucket with globally unique naming (ALB and NLB)',
     exportName: `${stackName}-ElbLogsBucket`,
   });
-
-
-
   // Conditional outputs
   if (params.ipv6CidrBlock && params.vpcLogicalId) {
     new cdk.CfnOutput(stack, 'VpcCidrIpv6Output', {

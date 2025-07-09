@@ -56,20 +56,7 @@ export function createKmsResources(scope: Construct, stackName: string, enableKe
 }
 
 export function createS3Resources(scope: Construct, stackName: string, region: string, kmsKey: kms.Key, enableVersioning: boolean, removalPolicy: string, elbLogsRetentionDays: number) {
-  // Legacy config bucket - keep for migration
-  const configBucket = new s3.Bucket(scope, 'ConfigBucket', {
-    bucketName: `${stackName.toLowerCase()}-${region}-env-config`,
-    encryption: s3.BucketEncryption.KMS,
-    encryptionKey: kmsKey,
-    bucketKeyEnabled: true,
-    enforceSSL: true,
-    blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-    versioned: enableVersioning,
-    removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
-    objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
-  });
-
-  // New config bucket with globally unique naming
+  // Config bucket with globally unique naming
   const envConfigBucket = new s3.Bucket(scope, 'EnvConfigBucket', {
     bucketName: `${stackName.toLowerCase()}-${region}-${cdk.Aws.ACCOUNT_ID}-config`,
     encryption: s3.BucketEncryption.KMS,
@@ -95,21 +82,11 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
     objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
   });
 
-  // Legacy ALB logs bucket - keep for migration compatibility
-  const albLogsBucket = new s3.Bucket(scope, 'AlbLogsBucket', {
-    bucketName: `${stackName.toLowerCase()}-${region}-${cdk.Aws.ACCOUNT_ID}-logs`,
-    removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
-    autoDeleteObjects: removalPolicy !== 'RETAIN',
-    lifecycleRules: [{
-      id: 'MonthlyDelete',
-      expiration: cdk.Duration.days(elbLogsRetentionDays),
-      enabled: true
-    }]
-  });
-
-  // New ELB logs bucket with globally unique naming (ALB and NLB)
+  // ELB logs bucket with globally unique naming (ALB and NLB)
   const elbLogsBucket = new s3.Bucket(scope, 'ElbLogsBucket', {
     bucketName: `${stackName.toLowerCase()}-${region}-${cdk.Aws.ACCOUNT_ID}-elblogs`,
+    blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+    objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
     removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
     autoDeleteObjects: removalPolicy !== 'RETAIN',
     lifecycleRules: [{
@@ -120,24 +97,34 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
   });
 
   // Grant ELB service account permission to write access logs (ALB and NLB)
-  const elbServiceAccountMap: { [key: string]: string } = {
-    'us-east-1': '127311923021', 'us-east-2': '033677994240', 'us-west-1': '027434742980', 'us-west-2': '797873946194',
-    'ca-central-1': '985666609251', 'eu-central-1': '054676820928', 'eu-west-1': '156460612806', 'eu-west-2': '652711504416',
-    'eu-west-3': '009996457667', 'eu-north-1': '897822967062', 'eu-south-1': '635631232127', 'ap-east-1': '754344448648',
-    'ap-northeast-1': '582318560864', 'ap-northeast-2': '600734575887', 'ap-northeast-3': '383597477331', 'ap-southeast-1': '114774131450',
-    'ap-southeast-2': '783225319266', 'ap-southeast-3': '589379963580', 'ap-south-1': '718504428378', 'me-south-1': '076674570225',
-    'sa-east-1': '507241528517', 'af-south-1': '098369216593', 'us-gov-west-1': '048591011584', 'us-gov-east-1': '190560391635'
+  const elbServiceAccountMap: { [key: string]: { accountId: string, partition: string } } = {
+    'us-east-1': { accountId: '127311923021', partition: 'aws' }, 'us-east-2': { accountId: '033677994240', partition: 'aws' }, 'us-west-1': { accountId: '027434742980', partition: 'aws' }, 'us-west-2': { accountId: '797873946194', partition: 'aws' },
+    'ca-central-1': { accountId: '985666609251', partition: 'aws' }, 'eu-central-1': { accountId: '054676820928', partition: 'aws' }, 'eu-west-1': { accountId: '156460612806', partition: 'aws' }, 'eu-west-2': { accountId: '652711504416', partition: 'aws' },
+    'eu-west-3': { accountId: '009996457667', partition: 'aws' }, 'eu-north-1': { accountId: '897822967062', partition: 'aws' }, 'eu-south-1': { accountId: '635631232127', partition: 'aws' }, 'ap-east-1': { accountId: '754344448648', partition: 'aws' },
+    'ap-northeast-1': { accountId: '582318560864', partition: 'aws' }, 'ap-northeast-2': { accountId: '600734575887', partition: 'aws' }, 'ap-northeast-3': { accountId: '383597477331', partition: 'aws' }, 'ap-southeast-1': { accountId: '114774131450', partition: 'aws' },
+    'ap-southeast-2': { accountId: '783225319266', partition: 'aws' }, 'ap-southeast-3': { accountId: '589379963580', partition: 'aws' }, 'ap-south-1': { accountId: '718504428378', partition: 'aws' }, 'me-south-1': { accountId: '076674570225', partition: 'aws' },
+    'sa-east-1': { accountId: '507241528517', partition: 'aws' }, 'af-south-1': { accountId: '098369216593', partition: 'aws' }, 'us-gov-west-1': { accountId: '048591011584', partition: 'aws-us-gov' }, 'us-gov-east-1': { accountId: '190560391635', partition: 'aws-us-gov' }
   };
   
-  const elbPrincipal = elbServiceAccountMap[region] 
-    ? new cdk.aws_iam.AccountPrincipal(elbServiceAccountMap[region])
-    : new cdk.aws_iam.ServicePrincipal('elasticloadbalancing.amazonaws.com');
+  // Detect current partition based on region
+  const isGovCloud = region.startsWith('us-gov-');
+  const currentPartition = isGovCloud ? 'aws-us-gov' : 'aws';
   
-  // Apply permissions to both buckets
-  [albLogsBucket, elbLogsBucket].forEach(bucket => {
+  // Filter ELB service accounts by current partition only
+  const filteredELBAccounts = Object.values(elbServiceAccountMap).filter(({ partition }) => 
+    partition === currentPartition
+  );
+  
+  // Create principals for ELB service accounts in current partition only
+  const allELBPrincipals = filteredELBAccounts.map(({ accountId, partition }) => 
+    new cdk.aws_iam.ArnPrincipal(`arn:${partition}:iam::${accountId}:root`)
+  );
+  
+  // Apply permissions to ELB logs bucket
+  [elbLogsBucket].forEach(bucket => {
     bucket.addToResourcePolicy(new PolicyStatement({
       effect: Effect.ALLOW,
-      principals: [elbPrincipal],
+      principals: allELBPrincipals,
       actions: ['s3:PutObject'],
       resources: [`${bucket.bucketArn}/*`],
       conditions: {
@@ -149,27 +136,47 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
     
     bucket.addToResourcePolicy(new PolicyStatement({
       effect: Effect.ALLOW,
-      principals: [elbPrincipal],
+      principals: allELBPrincipals,
+      actions: ['s3:GetBucketAcl', 's3:GetBucketPolicy'],
+      resources: [bucket.bucketArn]
+    }));
+
+    // Add NLB log delivery service principal
+    bucket.addToResourcePolicy(new PolicyStatement({
+      effect: Effect.ALLOW,
+      principals: [new cdk.aws_iam.ServicePrincipal('delivery.logs.amazonaws.com')],
       actions: ['s3:GetBucketAcl'],
       resources: [bucket.bucketArn]
     }));
 
-    // Allow cross-stack access for other TAK infrastructure layers
+    bucket.addToResourcePolicy(new PolicyStatement({
+      effect: Effect.ALLOW,
+      principals: [new cdk.aws_iam.ServicePrincipal('delivery.logs.amazonaws.com')],
+      actions: ['s3:PutObject'],
+      resources: [`${bucket.bucketArn}/*`]
+    }));
+
+    // Add ALB log delivery service principal
+    bucket.addToResourcePolicy(new PolicyStatement({
+      effect: Effect.ALLOW,
+      principals: [new cdk.aws_iam.ServicePrincipal('logdelivery.elasticloadbalancing.amazonaws.com')],
+      actions: ['s3:PutObject'],
+      resources: [`${bucket.bucketArn}/*`]
+    }));
+
+
+
+    // Allow account owner essential permissions for ELB logging and bucket management
     bucket.addToResourcePolicy(new PolicyStatement({
       effect: Effect.ALLOW,
       principals: [new AccountRootPrincipal()],
       actions: [
-        's3:GetBucketLocation',
         's3:GetBucketAcl',
-        's3:GetBucketTagging',
-        's3:ListBucket',
-        's3:DeleteObject',
-        's3:ListBucketVersions',
-        's3:DeleteObjectVersion'
+        's3:PutObject'
       ],
       resources: [bucket.bucketArn, `${bucket.bucketArn}/*`]
     }));
   });
 
-  return { configBucket, envConfigBucket, appImagesBucket, albLogsBucket, elbLogsBucket };
+  return { envConfigBucket, appImagesBucket, elbLogsBucket };
 }

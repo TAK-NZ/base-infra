@@ -51,7 +51,7 @@ export class BaseInfraStack extends cdk.Stack {
     const { ecsCluster } = createEcsResources(this, this.stackName, vpc);
     const { ecrRepo } = createEcrResources(this, this.stackName, imageRetentionCount, scanOnPush, removalPolicy);
     const { kmsKey, kmsAlias } = createKmsResources(this, this.stackName, enableKeyRotation, removalPolicy);
-    const { configBucket, envConfigBucket, appImagesBucket, albLogsBucket, elbLogsBucket } = createS3Resources(this, this.stackName, cdk.Stack.of(this).region, kmsKey, enableVersioning, removalPolicy, envConfig.s3.elbLogsRetentionDays);
+    const { envConfigBucket, appImagesBucket, elbLogsBucket } = createS3Resources(this, this.stackName, cdk.Stack.of(this).region, kmsKey, enableVersioning, removalPolicy, envConfig.s3.elbLogsRetentionDays);
 
     // Endpoint Security Group (for interface endpoints)
     let endpointSg: ec2.SecurityGroup | undefined = undefined;
@@ -94,10 +94,8 @@ export class BaseInfraStack extends cdk.Stack {
       ecrRepo,
       kmsKey,
       kmsAlias,
-      configBucket,
       envConfigBucket,
       appImagesBucket,
-      albLogsBucket,
       elbLogsBucket,
       vpcEndpoints,
       certificate,
