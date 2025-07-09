@@ -18,7 +18,7 @@ describe('AWS Resources', () => {
     template.resourceCountIs('AWS::ECR::Repository', 1);
     template.resourceCountIs('AWS::KMS::Key', 1);
     template.resourceCountIs('AWS::KMS::Alias', 1);
-    template.resourceCountIs('AWS::S3::Bucket', 4);
+    template.resourceCountIs('AWS::S3::Bucket', 5);
     template.resourceCountIs('AWS::CertificateManager::Certificate', 1);
     template.hasResourceProperties('AWS::S3::Bucket', {
       OwnershipControls: {

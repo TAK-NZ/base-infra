@@ -20,6 +20,7 @@ export interface OutputParams {
   configBucket: s3.Bucket;
   envConfigBucket: s3.Bucket;
   appImagesBucket: s3.Bucket;
+  albLogsBucket: s3.Bucket;
   elbLogsBucket: s3.Bucket;
   vpcEndpoints?: Record<string, ec2.GatewayVpcEndpoint | ec2.InterfaceVpcEndpoint>;
   certificate?: acm.Certificate;
@@ -48,7 +49,7 @@ export function registerOutputs(params: OutputParams): void {
     { key: 'S3TAKImagesArn', value: params.appImagesBucket.bucketArn, description: 'S3 TAK Images Bucket ARN' },
     { key: 'S3EnvConfigArn', value: params.envConfigBucket.bucketArn, description: 'S3 Environment Config Bucket ARN' },
     { key: 'S3ElbLogsArn', value: params.elbLogsBucket.bucketArn, description: 'S3 ELB Access Logs Bucket ARN' },
-    { key: 'S3AlbLogsArn', value: params.elbLogsBucket.bucketArn, description: 'S3 ALB Access Logs Bucket ARN (deprecated - use S3ElbLogsArn)' },
+    { key: 'S3AlbLogsArn', value: params.albLogsBucket.bucketArn, description: 'S3 ALB Access Logs Bucket ARN (deprecated - use S3ElbLogsArn)' },
 
   ];
 
