@@ -17,11 +17,13 @@ export function createEcsResources(scope: Construct, stackName: string, vpc: ec2
   return { ecsCluster };
 }
 
-export function createEcrResources(scope: Construct, stackName: string, imageRetentionCount: number, scanOnPush: boolean, removalPolicy: string) {
+export function createEcrResources(scope: Construct, stackName: string, imageRetentionCount: number, scanOnPush: boolean, removalPolicy: string, kmsKey: kms.Key) {
   const ecrRepo = new ecr.Repository(scope, 'ECRRepo', {
     repositoryName: stackName.toLowerCase(),
     imageScanOnPush: scanOnPush,
     imageTagMutability: ecr.TagMutability.MUTABLE,
+    encryption: ecr.RepositoryEncryption.KMS,
+    encryptionKey: kmsKey,
     lifecycleRules: [{
       maxImageCount: imageRetentionCount,
     }, {
