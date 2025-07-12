@@ -15,6 +15,8 @@ export interface OutputParams {
   vpcLogicalId?: string;
   ecsCluster: ecs.Cluster;
   ecrRepo: ecr.Repository;
+  ecrArtifactsRepo: ecr.Repository;
+  ecrEtlTasksRepo: ecr.Repository;
   kmsKey: kms.Key;
   kmsAlias: kms.Alias;
   envConfigBucket: s3.Bucket;
@@ -41,6 +43,8 @@ export function registerOutputs(params: OutputParams): void {
     { key: 'SubnetPrivateB', value: params.vpc.privateSubnets[1].subnetId, description: 'Subnet Private B' },
     { key: 'EcsClusterArn', value: params.ecsCluster.clusterArn, description: 'ECS Cluster ARN' },
     { key: 'EcrRepoArn', value: params.ecrRepo.repositoryArn, description: 'ECR Repository ARN' },
+    { key: 'EcrArtifactsRepoArn', value: params.ecrArtifactsRepo.repositoryArn, description: 'ECR Artifacts Repository ARN' },
+    { key: 'EcrEtlTasksRepoArn', value: params.ecrEtlTasksRepo.repositoryArn, description: 'ECR ETL Tasks Repository ARN' },
     { key: 'KmsKeyArn', value: params.kmsKey.keyArn, description: 'KMS Key ARN' },
     { key: 'KmsAlias', value: params.kmsAlias.aliasName, description: 'KMS Key Alias' },
     { key: 'S3TAKImagesArn', value: params.appImagesBucket.bucketArn, description: 'S3 TAK Images Bucket ARN' },

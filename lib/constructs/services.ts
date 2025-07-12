@@ -17,11 +17,13 @@ export function createEcsResources(scope: Construct, stackName: string, vpc: ec2
   return { ecsCluster };
 }
 
-export function createEcrResources(scope: Construct, stackName: string, imageRetentionCount: number, scanOnPush: boolean, removalPolicy: string) {
+export function createEcrResources(scope: Construct, stackName: string, imageRetentionCount: number, scanOnPush: boolean, removalPolicy: string, kmsKey: kms.Key) {
   const ecrRepo = new ecr.Repository(scope, 'ECRRepo', {
     repositoryName: stackName.toLowerCase(),
     imageScanOnPush: scanOnPush,
     imageTagMutability: ecr.TagMutability.MUTABLE,
+    encryption: ecr.RepositoryEncryption.KMS,
+    encryptionKey: kmsKey,
     lifecycleRules: [{
       maxImageCount: imageRetentionCount,
     }, {
@@ -30,7 +32,38 @@ export function createEcrResources(scope: Construct, stackName: string, imageRet
     }],
     removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
   });
-  return { ecrRepo };
+
+  const ecrArtifactsRepo = new ecr.Repository(scope, 'ECRArtifactsRepo', {
+    repositoryName: `tak-${stackName.toLowerCase()}-artifacts`,
+    imageScanOnPush: scanOnPush,
+    imageTagMutability: ecr.TagMutability.MUTABLE,
+    encryption: ecr.RepositoryEncryption.KMS,
+    encryptionKey: kmsKey,
+    lifecycleRules: [{
+      maxImageCount: imageRetentionCount,
+    }, {
+      tagStatus: ecr.TagStatus.UNTAGGED,
+      maxImageAge: cdk.Duration.days(1),
+    }],
+    removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+  });
+
+  const ecrEtlTasksRepo = new ecr.Repository(scope, 'ECREtlTasksRepo', {
+    repositoryName: `tak-${stackName.toLowerCase()}-etltasks`,
+    imageScanOnPush: scanOnPush,
+    imageTagMutability: ecr.TagMutability.MUTABLE,
+    encryption: ecr.RepositoryEncryption.KMS,
+    encryptionKey: kmsKey,
+    lifecycleRules: [{
+      maxImageCount: imageRetentionCount,
+    }, {
+      tagStatus: ecr.TagStatus.UNTAGGED,
+      maxImageAge: cdk.Duration.days(1),
+    }],
+    removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+  });
+
+  return { ecrRepo, ecrArtifactsRepo, ecrEtlTasksRepo };
 }
 
 export function createKmsResources(scope: Construct, stackName: string, enableKeyRotation: boolean, removalPolicy: string) {
