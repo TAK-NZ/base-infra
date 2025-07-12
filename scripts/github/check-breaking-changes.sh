@@ -15,6 +15,8 @@ case $STACK_TYPE in
       "HostedZone.*will be destroyed"
       "ECSCluster.*will be destroyed"
       "S3.*Bucket.*will be destroyed"
+      "ECRRepo.*must be replaced"
+      "Repository.*must be replaced"
     )
     ;;
   "auth")

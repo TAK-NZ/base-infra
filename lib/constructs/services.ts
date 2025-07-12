@@ -22,8 +22,6 @@ export function createEcrResources(scope: Construct, stackName: string, imageRet
     repositoryName: stackName.toLowerCase(),
     imageScanOnPush: scanOnPush,
     imageTagMutability: ecr.TagMutability.MUTABLE,
-    encryption: ecr.RepositoryEncryption.KMS,
-    encryptionKey: kmsKey,
     lifecycleRules: [{
       maxImageCount: imageRetentionCount,
     }, {
