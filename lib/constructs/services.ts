@@ -32,7 +32,7 @@ export function createEcrResources(scope: Construct, stackName: string, imageRet
   });
 
   const ecrArtifactsRepo = new ecr.Repository(scope, 'ECRArtifactsRepo', {
-    repositoryName: `tak-${stackName.toLowerCase()}-artifacts`,
+    repositoryName: `${stackName.toLowerCase()}-artifacts`,
     imageScanOnPush: scanOnPush,
     imageTagMutability: ecr.TagMutability.MUTABLE,
     encryption: ecr.RepositoryEncryption.KMS,
@@ -57,7 +57,7 @@ export function createEcrResources(scope: Construct, stackName: string, imageRet
   }));
 
   const ecrEtlTasksRepo = new ecr.Repository(scope, 'ECREtlTasksRepo', {
-    repositoryName: `tak-${stackName.toLowerCase()}-etltasks`,
+    repositoryName: `${stackName.toLowerCase()}-etltasks`,
     imageScanOnPush: scanOnPush,
     imageTagMutability: ecr.TagMutability.MUTABLE,
     encryption: ecr.RepositoryEncryption.KMS,
