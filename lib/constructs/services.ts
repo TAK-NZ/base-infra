@@ -224,7 +224,9 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
       actions: [
         's3:GetBucketAcl',
         's3:GetBucketTagging',
-        's3:PutObject'
+        's3:PutObject',
+        's3:ListBucket',
+        's3:DeleteObject'
       ],
       resources: [bucket.bucketArn, `${bucket.bucketArn}/*`]
     }));
