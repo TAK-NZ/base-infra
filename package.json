@@ -10,7 +10,7 @@
     "watch": "tsc -w",
     "test": "unset CDK_DEFAULT_ACCOUNT && unset CDK_DEFAULT_REGION && jest",
     "cdk": "cdk",
-    "clean": "rm -f bin/*.js bin/*.d.ts lib/*.js lib/*.d.ts test/*.js test/*.d.ts; rm -rf cdk.out/*",
+    "clean": "find bin lib test -name '*.js' -o -name '*.d.ts' | xargs rm -f; rm -rf cdk.out/*",
     
     "dev": "npm run build && npm run test",
     "test:watch": "unset CDK_DEFAULT_ACCOUNT && unset CDK_DEFAULT_REGION && jest --watch",
