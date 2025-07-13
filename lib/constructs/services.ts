@@ -213,6 +213,7 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
       principals: [new AccountRootPrincipal()],
       actions: [
         's3:GetBucketAcl',
+        's3:GetBucketTagging',
         's3:PutObject'
       ],
       resources: [bucket.bucketArn, `${bucket.bucketArn}/*`]
