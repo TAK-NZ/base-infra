@@ -61,6 +61,16 @@ export function createEcrResources(scope: Construct, stackName: string, imageRet
     removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
   });
 
+  ecrEtlTasksRepo.addToResourcePolicy(new cdk.aws_iam.PolicyStatement({
+    effect: cdk.aws_iam.Effect.ALLOW,
+    principals: [new cdk.aws_iam.ServicePrincipal('lambda.amazonaws.com')],
+    actions: [
+      'ecr:BatchCheckLayerAvailability',
+      'ecr:GetDownloadUrlForLayer',
+      'ecr:BatchGetImage'
+    ]
+  }));
+
   return { ecrRepo, ecrArtifactsRepo, ecrEtlTasksRepo };
 }
 
