@@ -54,7 +54,10 @@ export function createEcrResources(scope: Construct, stackName: string, imageRet
     encryption: ecr.RepositoryEncryption.KMS,
     encryptionKey: kmsKey,
     lifecycleRules: [
-      { tagPrefixList: ['etl-'], maxImageCount: imageRetentionCount },
+      { tagPrefixList: ['etl-adsbx-'], maxImageCount: imageRetentionCount },
+      { tagPrefixList: ['etl-earthquakes-'], maxImageCount: imageRetentionCount },
+      { tagPrefixList: ['etl-geojson-'], maxImageCount: imageRetentionCount },
+      { tagPrefixList: ['etl-inreach-'], maxImageCount: imageRetentionCount },
       { tagStatus: ecr.TagStatus.UNTAGGED, maxImageAge: cdk.Duration.days(1) }
     ],
     removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
