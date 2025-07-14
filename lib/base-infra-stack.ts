@@ -50,7 +50,7 @@ export class BaseInfraStack extends cdk.Stack {
     const { vpc, ipv6CidrBlock, vpcLogicalId } = createVpcL2Resources(this, vpcCidr, enableRedundantNatGateways);
     const { ecsCluster } = createEcsResources(this, this.stackName, vpc);
     const { kmsKey, kmsAlias } = createKmsResources(this, this.stackName, enableKeyRotation, removalPolicy);
-    const { ecrRepo, ecrArtifactsRepo, ecrEtlTasksRepo } = createEcrResources(this, this.stackName, imageRetentionCount, scanOnPush, removalPolicy, kmsKey);
+    const { ecrArtifactsRepo, ecrEtlTasksRepo } = createEcrResources(this, this.stackName, imageRetentionCount, scanOnPush, removalPolicy, kmsKey);
     const { envConfigBucket, appImagesBucket, elbLogsBucket } = createS3Resources(this, this.stackName, cdk.Stack.of(this).region, kmsKey, enableVersioning, removalPolicy, envConfig.s3.elbLogsRetentionDays);
 
     // Endpoint Security Group (for interface endpoints)
@@ -91,7 +91,7 @@ export class BaseInfraStack extends cdk.Stack {
       ipv6CidrBlock,
       vpcLogicalId,
       ecsCluster,
-      ecrRepo,
+
       ecrArtifactsRepo,
       ecrEtlTasksRepo,
       kmsKey,

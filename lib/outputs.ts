@@ -14,7 +14,7 @@ export interface OutputParams {
   ipv6CidrBlock?: ec2.CfnVPCCidrBlock;
   vpcLogicalId?: string;
   ecsCluster: ecs.Cluster;
-  ecrRepo: ecr.Repository;
+
   ecrArtifactsRepo: ecr.Repository;
   ecrEtlTasksRepo: ecr.Repository;
   kmsKey: kms.Key;
@@ -42,7 +42,7 @@ export function registerOutputs(params: OutputParams): void {
     { key: 'SubnetPrivateA', value: params.vpc.privateSubnets[0].subnetId, description: 'Subnet Private A' },
     { key: 'SubnetPrivateB', value: params.vpc.privateSubnets[1].subnetId, description: 'Subnet Private B' },
     { key: 'EcsClusterArn', value: params.ecsCluster.clusterArn, description: 'ECS Cluster ARN' },
-    { key: 'EcrRepoArn', value: params.ecrRepo.repositoryArn, description: 'ECR Repository ARN' },
+
     { key: 'EcrArtifactsRepoArn', value: params.ecrArtifactsRepo.repositoryArn, description: 'ECR Artifacts Repository ARN' },
     { key: 'EcrEtlTasksRepoArn', value: params.ecrEtlTasksRepo.repositoryArn, description: 'ECR ETL Tasks Repository ARN' },
     { key: 'KmsKeyArn', value: params.kmsKey.keyArn, description: 'KMS Key ARN' },

@@ -18,31 +18,22 @@ export function createEcsResources(scope: Construct, stackName: string, vpc: ec2
 }
 
 export function createEcrResources(scope: Construct, stackName: string, imageRetentionCount: number, scanOnPush: boolean, removalPolicy: string, kmsKey: kms.Key) {
-  const ecrRepo = new ecr.Repository(scope, 'ECRRepo', {
-    repositoryName: stackName.toLowerCase(),
-    imageScanOnPush: scanOnPush,
-    imageTagMutability: ecr.TagMutability.MUTABLE,
-    lifecycleRules: [{
-      maxImageCount: imageRetentionCount,
-    }, {
-      tagStatus: ecr.TagStatus.UNTAGGED,
-      maxImageAge: cdk.Duration.days(1),
-    }],
-    removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
-  });
-
   const ecrArtifactsRepo = new ecr.Repository(scope, 'ECRArtifactsRepo', {
     repositoryName: `${stackName.toLowerCase()}-artifacts`,
     imageScanOnPush: scanOnPush,
     imageTagMutability: ecr.TagMutability.MUTABLE,
     encryption: ecr.RepositoryEncryption.KMS,
     encryptionKey: kmsKey,
-    lifecycleRules: [{
-      maxImageCount: imageRetentionCount,
-    }, {
-      tagStatus: ecr.TagStatus.UNTAGGED,
-      maxImageAge: cdk.Duration.days(1),
-    }],
+    lifecycleRules: [
+      { tagPrefixList: ['tak-'], maxImageCount: imageRetentionCount },
+      { tagPrefixList: ['authentik-'], maxImageCount: imageRetentionCount },
+      { tagPrefixList: ['ldap-'], maxImageCount: imageRetentionCount },
+      { tagPrefixList: ['pmtiles-'], maxImageCount: imageRetentionCount },
+      { tagPrefixList: ['events-'], maxImageCount: imageRetentionCount },
+      { tagPrefixList: ['data-'], maxImageCount: imageRetentionCount },
+      { tagPrefixList: ['cloudtak-'], maxImageCount: imageRetentionCount },
+      { tagStatus: ecr.TagStatus.UNTAGGED, maxImageAge: cdk.Duration.days(1) }
+    ],
     removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
   });
 
@@ -62,12 +53,10 @@ export function createEcrResources(scope: Construct, stackName: string, imageRet
     imageTagMutability: ecr.TagMutability.MUTABLE,
     encryption: ecr.RepositoryEncryption.KMS,
     encryptionKey: kmsKey,
-    lifecycleRules: [{
-      maxImageCount: imageRetentionCount,
-    }, {
-      tagStatus: ecr.TagStatus.UNTAGGED,
-      maxImageAge: cdk.Duration.days(1),
-    }],
+    lifecycleRules: [
+      { tagPrefixList: ['etl-'], maxImageCount: imageRetentionCount },
+      { tagStatus: ecr.TagStatus.UNTAGGED, maxImageAge: cdk.Duration.days(1) }
+    ],
     removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
   });
 
@@ -81,7 +70,7 @@ export function createEcrResources(scope: Construct, stackName: string, imageRet
     ]
   }));
 
-  return { ecrRepo, ecrArtifactsRepo, ecrEtlTasksRepo };
+  return { ecrArtifactsRepo, ecrEtlTasksRepo };
 }
 
 export function createKmsResources(scope: Construct, stackName: string, enableKeyRotation: boolean, removalPolicy: string) {
