@@ -17,7 +17,7 @@ describe('Stack Outputs', () => {
     [
       'VpcIdOutput', 'VpcCidrIpv4Output',
       'SubnetPublicAOutput', 'SubnetPublicBOutput', 'SubnetPrivateAOutput', 'SubnetPrivateBOutput',
-      'EcsClusterArnOutput', 'EcrRepoArnOutput', 'KmsKeyArnOutput', 'KmsAliasOutput',
+      'EcsClusterArnOutput', 'KmsKeyArnOutput', 'KmsAliasOutput',
       'EnvConfigBucketOutput', 'AppImagesBucketOutput', 'ElbLogsBucketOutput',
       'CertificateArnOutput', 'HostedZoneIdOutput', 'HostedZoneNameOutput'
     ].forEach(name => {

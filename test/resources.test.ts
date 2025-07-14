@@ -15,7 +15,7 @@ describe('AWS Resources', () => {
     });
     const template = Template.fromStack(stack);
     template.resourceCountIs('AWS::ECS::Cluster', 1);
-    template.resourceCountIs('AWS::ECR::Repository', 3);
+    template.resourceCountIs('AWS::ECR::Repository', 2);
     template.resourceCountIs('AWS::KMS::Key', 1);
     template.resourceCountIs('AWS::KMS::Alias', 1);
     template.resourceCountIs('AWS::S3::Bucket', 3);
