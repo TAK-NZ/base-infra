@@ -173,7 +173,9 @@ cat > prod-github-trust-policy.json << 'EOF'
           "token.actions.githubusercontent.com:sub": [
             "repo:TAK-NZ/base-infra:environment:production",
             "repo:TAK-NZ/auth-infra:environment:production",
-            "repo:TAK-NZ/tak-infra:environment:production"
+            "repo:TAK-NZ/tak-infra:environment:production",
+            "repo:TAK-NZ/CloudTAK:environment:production",
+            "repo:TAK-NZ/media-infra:environment:production"
           ]
         }
       }
@@ -211,7 +213,9 @@ cat > demo-github-trust-policy.json << 'EOF'
           "token.actions.githubusercontent.com:sub": [
             "repo:TAK-NZ/base-infra:environment:demo",
             "repo:TAK-NZ/auth-infra:environment:demo",
-            "repo:TAK-NZ/tak-infra:environment:demo"
+            "repo:TAK-NZ/tak-infra:environment:demo",
+            "repo:TAK-NZ/CloudTAK:environment:demo",
+            "repo:TAK-NZ/media-infra:environment:demo"
           ]
         }
       }
