@@ -40,8 +40,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.PROD_AWS_REGION }}
           role-session-name: GitHubActions-Production
 
       - name: Install dependencies
@@ -50,7 +50,7 @@ jobs:
       - name: Bootstrap CDK (if needed)
         run: |
           if ! aws cloudformation describe-stacks --stack-name CDKToolkit 2>/dev/null; then
-            npx cdk bootstrap aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ secrets.AWS_REGION }} --context envType=prod
+            npx cdk bootstrap aws://${{ secrets.PROD_AWS_ACCOUNT_ID }}/${{ secrets.PROD_AWS_REGION }} --context envType=prod
           fi
 
       - name: Validate Production Change Set
