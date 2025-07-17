@@ -175,7 +175,8 @@ cat > prod-github-trust-policy.json << 'EOF'
             "repo:TAK-NZ/auth-infra:environment:production",
             "repo:TAK-NZ/tak-infra:environment:production",
             "repo:TAK-NZ/CloudTAK:environment:production",
-            "repo:TAK-NZ/media-infra:environment:production"
+            "repo:TAK-NZ/media-infra:environment:production",
+            "repo:TAK-NZ/etl-*:environment:production"
           ]
         }
       }
@@ -215,7 +216,8 @@ cat > demo-github-trust-policy.json << 'EOF'
             "repo:TAK-NZ/auth-infra:environment:demo",
             "repo:TAK-NZ/tak-infra:environment:demo",
             "repo:TAK-NZ/CloudTAK:environment:demo",
-            "repo:TAK-NZ/media-infra:environment:demo"
+            "repo:TAK-NZ/media-infra:environment:demo",
+            "repo:TAK-NZ/etl-*:environment:demo"
           ]
         }
       }
@@ -368,32 +370,35 @@ In your GitHub repository, go to **Settings → Environments** and create:
        - BaseInfra: `R53_ZONE_NAME`: `demo.tak.nz`
        - AuthInfra: `AUTHENTIK_ADMIN_EMAIL`: `admin@tak.nz`
 
-### 3.2 Configure Environment Secrets
+### 3.2 Configure Organization Secrets
 
-**For `production` environment:**
-- `AWS_ACCOUNT_ID`: `111111111111`
-- `AWS_ROLE_ARN`: `arn:aws:iam::111111111111:role/GitHubActions-TAK-Role`
-- `AWS_REGION`: `ap-southeast-6`
+**Create the following organization secrets:**
+- `DEMO_AWS_ACCOUNT_ID`: `222222222222`
+- `DEMO_AWS_REGION`: `ap-southeast-2`
+- `DEMO_AWS_ROLE_ARN`: `arn:aws:iam::222222222222:role/GitHubActions-TAK-Role`
+- `PROD_AWS_ACCOUNT_ID`: `111111111111`
+- `PROD_AWS_REGION`: `ap-southeast-6`
+- `PROD_AWS_ROLE_ARN`: `arn:aws:iam::111111111111:role/GitHubActions-TAK-Role`
 
-**For `demo` environment:**
-- `AWS_ACCOUNT_ID`: `222222222222`
-- `AWS_ROLE_ARN`: `arn:aws:iam::222222222222:role/GitHubActions-TAK-Role`
-- `AWS_REGION`: `ap-southeast-2`
+**To add organization secrets:**
+1. Go to organization **Settings → Secrets and variables → Actions**
+2. Click on **New organization secret**
+3. Add each secret with appropriate value
+4. Set repository access to either "All repositories" or select specific repositories
 
-**To add secrets:**
-1. Go to repository **Settings → Environments**
-2. Click on environment name
-3. Add environment secrets under **Environment secrets**
+### 3.3 Configure Organization Variables
 
-### 3.3 Configure Environment Variables
+**Create the following organization variables:**
+- `DEMO_R53_ZONE_NAME`: `demo.tak.nz`
+- `DEMO_STACK_NAME`: `Demo`
+- `DEMO_TEST_DURATION`: `300`
 
-**For `demo` environment:**
-1. Go to repository **Settings → Environments**
-2. Click on **demo** environment
-3. Add environment variables under **Environment variables**:
-   - `DEMO_TEST_DURATION`: `300`
-   - `STACK_NAME`: `Demo`
-   - `R53_ZONE_NAME`: `demo.tak.nz`
+**To add organization variables:**
+1. Go to organization **Settings → Secrets and variables → Actions**
+2. Click on **Variables** tab
+3. Click on **New organization variable**
+4. Add each variable with appropriate value
+5. Set repository access to either "All repositories" or select specific repositories
 
 > **Note:** Use variables (not secrets) for non-sensitive configuration like stack names and public domain names. Variables are visible in workflow logs, making debugging easier.
 
