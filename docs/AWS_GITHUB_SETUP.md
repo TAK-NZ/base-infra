@@ -347,30 +347,9 @@ aws iam attach-role-policy \
 
 > **Note:** Run these commands in both Production and Demo accounts. The policy provides least-privilege access for all TAK infrastructure components.
 
-## 3. GitHub Environment Setup
+## 3. GitHub Organization Setup (One-time Configuration)
 
-### 3.1 Create Environments
-
-In your GitHub repository, go to **Settings → Environments** and create:
-
-1. **`production`** environment
-   - **Protection rules:**
-     - Required reviewers: Add team leads
-     - Wait timer: 5 minutes
-     - Deployment branches and tags: Select "Selected branches and tags"
-       - Add rule: "v*" (for version tags like v1.0.0)
-
-2. **`demo`** environment
-   - **Protection rules:**
-     - Deployment branches and tags: Select "Selected branches and tags"
-       - Add rule: "main"
-   - **Environment variables:**
-     - `DEMO_TEST_DURATION`: `300` (wait time in seconds, default 5 minutes)
-     - `STACK_NAME`: `Demo`
-       - BaseInfra: `R53_ZONE_NAME`: `demo.tak.nz`
-       - AuthInfra: `AUTHENTIK_ADMIN_EMAIL`: `admin@tak.nz`
-
-### 3.2 Configure Organization Secrets
+### 3.1 Configure Organization Secrets
 
 **Create the following organization secrets:**
 - `DEMO_AWS_ACCOUNT_ID`: `222222222222`
@@ -386,7 +365,7 @@ In your GitHub repository, go to **Settings → Environments** and create:
 3. Add each secret with appropriate value
 4. Set repository access to either "All repositories" or select specific repositories
 
-### 3.3 Configure Organization Variables
+### 3.2 Configure Organization Variables
 
 **Create the following organization variables:**
 - `DEMO_R53_ZONE_NAME`: `demo.tak.nz`
@@ -402,7 +381,25 @@ In your GitHub repository, go to **Settings → Environments** and create:
 
 > **Note:** Use variables (not secrets) for non-sensitive configuration like stack names and public domain names. Variables are visible in workflow logs, making debugging easier.
 
-## 4. Branch Protection Setup
+## 4. GitHub Repository Setup (Per-Repository Configuration)
+
+### 4.1 Create Environments
+
+In your GitHub repository, go to **Settings → Environments** and create:
+
+1. **`production`** environment
+   - **Protection rules:**
+     - Required reviewers: Add team leads
+     - Wait timer: 5 minutes
+     - Deployment branches and tags: Select "Selected branches and tags"
+       - Add rule: "v*" (for version tags like v1.0.0)
+
+2. **`demo`** environment
+   - **Protection rules:**
+     - Deployment branches and tags: Select "Selected branches and tags"
+       - Add rule: "main"
+
+### 4.2 Branch Protection Setup
 
 **Configure branch protection for `main`** to ensure only tested code is deployed:
 
@@ -452,125 +449,15 @@ To prevent catastrophic failures when deploying infrastructure changes, a two-st
 
 ### 5.3 Implementation Requirements
 
-**For Each Repository (base-infra, auth-infra, tak-infra):**
+**For Each Repository (base-infra, auth-infra, tak-infra, CloudTAK, media-infra):**
 
-1. **Create breaking change detection script** `scripts/github/check-breaking-changes.sh`:
+1. **Create breaking change detection script** in `scripts/github/check-breaking-changes.sh`
+   - This script analyzes CDK diff output for patterns that indicate breaking changes
+   - It's included in this repository and can be copied to other repositories
 
-```bash
-#!/bin/bash
-# Breaking change detection for infrastructure deployments
-
-STACK_TYPE=${1:-"base"}
-CONTEXT_ENV=${2:-"prod"}
-OVERRIDE_CHECK=${3:-"false"}
-
-# Stack-specific breaking change patterns
-case $STACK_TYPE in
-  "base")
-    PATTERNS=(
-      "VPC.*will be destroyed"
-      "Subnet.*will be destroyed"
-      "KMSKey.*will be destroyed"
-      "HostedZone.*will be destroyed"
-      "ECSCluster.*will be destroyed"
-      "S3.*Bucket.*will be destroyed"
-    )
-    ;;
-  "auth")
-    PATTERNS=(
-      "DatabaseCluster.*will be destroyed"
-      "ReplicationGroup.*will be destroyed"
-      "FileSystem.*will be destroyed"
-      "ApplicationLoadBalancer.*will be destroyed"
-      "Secret.*will be destroyed"
-    )
-    ;;
-  "tak")
-    PATTERNS=(
-      "DatabaseCluster.*will be destroyed"
-      "FileSystem.*will be destroyed"
-      "NetworkLoadBalancer.*will be destroyed"
-      "Secret.*will be destroyed"
-    )
-    ;;
-esac
-
-echo "🔍 Checking for breaking changes in $STACK_TYPE stack..."
-
-# Generate CDK diff
-npm run cdk diff --context envType=$CONTEXT_ENV > stack-diff.txt 2>&1
-
-# Check for breaking patterns
-BREAKING_FOUND=false
-for pattern in "${PATTERNS[@]}"; do
-  if grep -q "$pattern" stack-diff.txt; then
-    echo "❌ Breaking change detected: $pattern"
-    BREAKING_FOUND=true
-  fi
-done
-
-if [ "$BREAKING_FOUND" = true ]; then
-  if [ "$OVERRIDE_CHECK" = "true" ]; then
-    echo "🚨 Breaking changes detected but override enabled - proceeding"
-    exit 0
-  else
-    echo ""
-    echo "💡 To override this check, use commit message containing '[force-deploy]'"
-    echo "📋 Review the full diff above to understand the impact"
-    exit 1
-  fi
-else
-  echo "✅ No breaking changes detected"
-fi
-```
-
-2. **Create change set validation script** `scripts/github/validate-changeset.sh`:
-
-```bash
-#!/bin/bash
-# CloudFormation change set validation
-
-STACK_NAME=${1}
-CHANGE_SET_NAME="breaking-change-check-$(date +%s)"
-
-echo "🔍 Creating CloudFormation change set for $STACK_NAME..."
-
-# Generate CDK template
-npm run cdk synth --context envType=prod > template.json
-
-# Create change set
-aws cloudformation create-change-set \
-  --stack-name "$STACK_NAME" \
-  --change-set-name "$CHANGE_SET_NAME" \
-  --template-body file://template.json \
-  --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
-
-# Wait for change set creation
-aws cloudformation wait change-set-create-complete \
-  --stack-name "$STACK_NAME" \
-  --change-set-name "$CHANGE_SET_NAME"
-
-# Analyze change set for resource replacements
-REPLACEMENTS=$(aws cloudformation describe-change-set \
-  --stack-name "$STACK_NAME" \
-  --change-set-name "$CHANGE_SET_NAME" \
-  --query 'Changes[?ResourceChange.Replacement==`True`].ResourceChange.LogicalResourceId' \
-  --output text)
-
-# Clean up change set
-aws cloudformation delete-change-set \
-  --stack-name "$STACK_NAME" \
-  --change-set-name "$CHANGE_SET_NAME"
-
-if [ -n "$REPLACEMENTS" ]; then
-  echo "❌ Resource replacements detected:"
-  echo "$REPLACEMENTS"
-  echo "💡 Use '[force-deploy]' in commit message to override"
-  exit 1
-else
-  echo "✅ No resource replacements detected"
-fi
-```
+2. **Create change set validation script** in `scripts/github/validate-changeset.sh`
+   - This script creates a CloudFormation change set to detect resource replacements
+   - It's included in this repository and can be copied to other repositories
 
 3. **Create scripts directory structure**:
 ```bash
@@ -579,34 +466,7 @@ chmod +x scripts/github/check-breaking-changes.sh
 chmod +x scripts/github/validate-changeset.sh
 ```
 
-### 5.4 Cross-Stack Dependencies
-
-**BaseInfra repositories require additional validation** since changes affect dependent stacks:
-
-```bash
-# In base-infra repository only
-- name: Check Cross-Stack Impact
-  run: |
-    echo "🔍 Checking impact on dependent stacks..."
-    
-    # Check AuthInfra compatibility (if repository exists)
-    if [ -d "../auth-infra" ]; then
-      cd ../auth-infra
-      npm ci
-      npm run cdk diff --context envType=prod || echo "⚠️ AuthInfra may be affected"
-      cd ../base-infra
-    fi
-    
-    # Check TakInfra compatibility (if repository exists)
-    if [ -d "../tak-infra" ]; then
-      cd ../tak-infra
-      npm ci  
-      npm run cdk diff --context envType=prod || echo "⚠️ TakInfra may be affected"
-      cd ../base-infra
-    fi
-```
-
-### 5.5 Override Mechanism
+### 5.4 Override Mechanism
 
 To deploy breaking changes intentionally:
 
@@ -621,141 +481,15 @@ git commit -m "feat: update VPC CIDR for network expansion [force-deploy]"
 
 ## 6. GitHub Actions Workflows
 
-### 6.1 Demo Testing Workflow
+This repository includes GitHub Actions workflows for testing and deployment:
 
-Create `.github/workflows/demo-deploy.yml`:
+- **cdk-test.yml**: Runs tests on pull requests and pushes
+- **demo-deploy.yml**: Deploys to demo environment on pushes to main
+- **production-deploy.yml**: Deploys to production on version tags
 
-> **Note:** This workflow tests both prod and dev-test profiles in demo before production deployment. It runs on every push to main.
+> **Note:** The demo workflow tests both prod and dev-test profiles in demo before production deployment.
 
-```yaml
-name: Demo Testing Pipeline
-
-on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
-      - '.gitignore'
-  workflow_dispatch:
-
-permissions:
-  id-token: write
-  contents: read
-
-jobs:
-  test:
-    uses: ./.github/workflows/cdk-test.yml
-
-  demo-prod-test:
-    runs-on: ubuntu-latest
-    environment: demo
-    needs: test
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
-          role-session-name: GitHubActions-Demo
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Validate CDK Synthesis (Prod Profile)
-        run: npm run cdk synth -- --context envType=prod --context stackName=${{ vars.STACK_NAME }} --context r53ZoneName=${{ vars.R53_ZONE_NAME }}
-
-      - name: Deploy Demo with Prod Profile
-        run: npm run cdk deploy -- --context envType=prod --context stackName=${{ vars.STACK_NAME }} --context r53ZoneName=${{ vars.R53_ZONE_NAME }} --require-approval never
-
-      - name: Wait for Testing Period
-        run: sleep ${{ vars.DEMO_TEST_DURATION || '300' }}
-
-      - name: Run Automated Tests
-        run: |
-          echo "Placeholder for automated tests"
-          # TODO: Add health checks and integration tests
-          # curl -f https://${{ vars.R53_ZONE_NAME }}/health || exit 1
-
-      - name: Validate CDK Synthesis (Dev-Test Profile)
-        run: npm run cdk synth -- --context envType=dev-test --context stackName=${{ vars.STACK_NAME }} --context r53ZoneName=${{ vars.R53_ZONE_NAME }}
-        if: always()
-
-      - name: Revert Demo to Dev-Test Profile
-        run: npm run cdk deploy -- --context envType=dev-test --context stackName=${{ vars.STACK_NAME }} --context r53ZoneName=${{ vars.R53_ZONE_NAME }} --require-approval never
-        if: always()
-```
-
-### 6.2 Production Deployment Workflow
-
-Create `.github/workflows/production-deploy.yml`:
-
-> **Note:** This workflow deploys to production only on version tags. It runs independently of the demo testing workflow.
-
-```yaml
-name: Production Deployment
-
-on:
-  push:
-    tags: ['v*']
-  workflow_dispatch:
-    inputs:
-      force_deploy:
-        description: 'Force deployment without tag'
-        required: false
-        type: boolean
-        default: false
-
-permissions:
-  id-token: write
-  contents: read
-
-jobs:
-  test:
-    uses: ./.github/workflows/cdk-test.yml
-
-  deploy-production:
-    runs-on: ubuntu-latest
-    environment: production
-    needs: test
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
-          role-session-name: GitHubActions-Production
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Bootstrap CDK (if needed)
-        run: |
-          if ! aws cloudformation describe-stacks --stack-name CDKToolkit 2>/dev/null; then
-            npx cdk bootstrap aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ secrets.AWS_REGION }} --context envType=prod
-          fi
-
-      - name: Deploy Production
-        run: npm run deploy:prod -- --require-approval never
-```
+## 7. Security Best Practices
 
 ## 7. Security Best Practices
 
