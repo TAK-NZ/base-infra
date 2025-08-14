@@ -179,3 +179,8 @@ npx cdk deploy --context envType=prod
 - **AWS CDK Documentation** - https://docs.aws.amazon.com/cdk/
 - **TAK-NZ Project** - https://github.com/TAK-NZ/
 - **Issue Tracking** - Use GitHub Issues for bug reports and feature requests
+
+## License
+
+TAK.NZ is distributed under [AGPL-3.0-only](LICENSE)
+Copyright (C) 2025 - Christian Elsen, Team Awareness Kit New Zealand (TAK.NZ)
