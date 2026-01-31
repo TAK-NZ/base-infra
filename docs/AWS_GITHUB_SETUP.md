@@ -176,6 +176,7 @@ cat > prod-github-trust-policy.json << 'EOF'
             "repo:TAK-NZ/tak-infra:environment:production",
             "repo:TAK-NZ/CloudTAK:environment:production",
             "repo:TAK-NZ/media-infra:environment:production",
+            "repo:TAK-NZ/util-infra:environment:production",
             "repo:TAK-NZ/etl-*:environment:production"
           ]
         }
@@ -217,6 +218,7 @@ cat > demo-github-trust-policy.json << 'EOF'
             "repo:TAK-NZ/tak-infra:environment:demo",
             "repo:TAK-NZ/CloudTAK:environment:demo",
             "repo:TAK-NZ/media-infra:environment:demo",
+            "repo:TAK-NZ/util-infra:environment:demo",
             "repo:TAK-NZ/etl-*:environment:demo"
           ]
         }
