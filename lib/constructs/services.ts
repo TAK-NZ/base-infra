@@ -33,6 +33,7 @@ export function createEcrResources(scope: Construct, stackName: string, imageRet
       { tagPrefixList: ['data-'], maxImageCount: imageRetentionCount },
       { tagPrefixList: ['cloudtak-'], maxImageCount: imageRetentionCount },
       { tagPrefixList: ['mediamtx-'], maxImageCount: imageRetentionCount },
+      { tagPrefixList: ['utils-'], maxImageCount: imageRetentionCount },
       { tagStatus: ecr.TagStatus.UNTAGGED, maxImageAge: cdk.Duration.days(1) }
     ],
     removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
