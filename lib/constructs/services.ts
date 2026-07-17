@@ -38,6 +38,7 @@ export function createEcrResources(scope: Construct, stackName: string, imageRet
       { tagPrefixList: ['utils-ais-proxy-'], maxImageCount: imageRetentionCount },
       { tagPrefixList: ['utils-power-outages-'], maxImageCount: imageRetentionCount },
       { tagPrefixList: ['utils-terrain-proxy-'], maxImageCount: imageRetentionCount },
+      { tagPrefixList: ['utils-display-proxy-'], maxImageCount: imageRetentionCount },
       { tagStatus: ecr.TagStatus.UNTAGGED, maxImageAge: cdk.Duration.days(1) }
     ],
     removalPolicy: removalPolicy === 'RETAIN' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
