@@ -153,6 +153,10 @@ aws iam create-open-id-connect-provider \
 
 **Production Account - Create trust policy file and role:**
 
+> **Note on immutable subject claims:** GitHub repos created (or renamed/transferred) after July 15, 2026 use a new OIDC `sub` format that includes immutable owner/repo IDs: `repo:OWNER@OWNER-ID/REPO@REPO-ID:environment:ENV`, instead of the legacy `repo:OWNER/REPO:environment:ENV`. Both formats are listed below so existing repos keep working while new repos (and any future renames of existing repos) are covered by ID-pinned entries. The `*@<repo-id>` entries match any future repo name — the ID after `@` never changes. See [GitHub docs: immutable subject claims](https://docs.github.com/en/actions/reference/security/oidc#immutable-subject-claims). To find a repo's immutable ID: `gh api repos/TAK-NZ/<repo> --jq '.id'`. To find the org ID: `gh api orgs/TAK-NZ --jq '.id'`.
+>
+> Current immutable IDs: TAK-NZ org `202459110` · base-infra `975205709` · auth-infra `975170924` · tak-infra `975286327` · CloudTAK `998677784` · media-infra `1030702028` · utils-infra `1031075351`
+
 ```bash
 # Create prod-github-trust-policy.json
 cat > prod-github-trust-policy.json << 'EOF'
@@ -177,7 +181,14 @@ cat > prod-github-trust-policy.json << 'EOF'
             "repo:TAK-NZ/CloudTAK:environment:production",
             "repo:TAK-NZ/media-infra:environment:production",
             "repo:TAK-NZ/utils-infra:environment:production",
-            "repo:TAK-NZ/etl-*:environment:production"
+            "repo:TAK-NZ/etl-*:environment:production",
+            "repo:TAK-NZ@202459110/etl-*:environment:production",
+            "repo:TAK-NZ@202459110/*@975205709:environment:production",
+            "repo:TAK-NZ@202459110/*@975170924:environment:production",
+            "repo:TAK-NZ@202459110/*@975286327:environment:production",
+            "repo:TAK-NZ@202459110/*@998677784:environment:production",
+            "repo:TAK-NZ@202459110/*@1030702028:environment:production",
+            "repo:TAK-NZ@202459110/*@1031075351:environment:production"
           ]
         }
       }
@@ -194,6 +205,8 @@ aws iam create-role \
 ```
 
 **Demo Account - Create trust policy file and role:**
+
+> **Note on immutable subject claims:** Same dual-format approach as Production above — legacy entries are preserved for existing repos, immutable ID-pinned entries cover new repos and any future renames. See the note above the Production policy for full details and ID values.
 
 ```bash
 # Create demo-github-trust-policy.json
@@ -219,7 +232,14 @@ cat > demo-github-trust-policy.json << 'EOF'
             "repo:TAK-NZ/CloudTAK:environment:demo",
             "repo:TAK-NZ/media-infra:environment:demo",
             "repo:TAK-NZ/utils-infra:environment:demo",
-            "repo:TAK-NZ/etl-*:environment:demo"
+            "repo:TAK-NZ/etl-*:environment:demo",
+            "repo:TAK-NZ@202459110/etl-*:environment:demo",
+            "repo:TAK-NZ@202459110/*@975205709:environment:demo",
+            "repo:TAK-NZ@202459110/*@975170924:environment:demo",
+            "repo:TAK-NZ@202459110/*@975286327:environment:demo",
+            "repo:TAK-NZ@202459110/*@998677784:environment:demo",
+            "repo:TAK-NZ@202459110/*@1030702028:environment:demo",
+            "repo:TAK-NZ@202459110/*@1031075351:environment:demo"
           ]
         }
       }
@@ -619,6 +639,7 @@ Monitor deployments in:
 
 **Common Issues:**
 
+- **New repo gets `Not authorized to perform sts:AssumeRoleWithWebIdentity`:** Check whether the repo was created after July 15, 2026 — it will use the immutable OIDC subject format (`repo:ORG@ORG-ID/REPO@REPO-ID:environment:ENV`) instead of the legacy format. Confirm via CloudTrail: `aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=AssumeRoleWithWebIdentity` — the `Username` field shows the exact `sub` value GitHub sent. The `*@<repo-id>` entries in the trust policy cover repos by immutable ID, so if the repo's ID is already listed the trust policy is correct and the issue is elsewhere. If the repo ID is not yet listed, add a new `"repo:TAK-NZ@202459110/*@<repo-id>:environment:<env>"` entry (get the ID with `gh api repos/TAK-NZ/<repo> --jq '.id'`) and update the role with `aws iam update-assume-role-policy`.
 - **OIDC Trust Policy:** Ensure exact repository name match
 - **Environment Names:** Must match exactly between GitHub and IAM conditions
 - **DNS Propagation:** Allow 24-48 hours for full DNS propagation
