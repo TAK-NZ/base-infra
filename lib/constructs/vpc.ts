@@ -66,7 +66,7 @@ function configureIpv6Subnets(
   const eigw = new ec2.CfnEgressOnlyInternetGateway(scope, 'EgressOnlyInternetGateway', {
     vpcId: vpc.vpcId,    
   });
-  eigw.addDependency(ipv6CidrBlock);
+  eigw.addResourceDependency(ipv6CidrBlock);
 
   // Get Internet Gateway for public subnets (created by VPC construct)
   const internetGateway = vpc.node.findChild('IGW') as ec2.CfnInternetGateway;
@@ -82,7 +82,7 @@ function configureIpv6Subnets(
       '64' // IPv6 subnet size
     ));
     subnetCfn.assignIpv6AddressOnCreation = true;
-    subnetCfn.addDependency(ipv6CidrBlock);
+    subnetCfn.addResourceDependency(ipv6CidrBlock);
 
     // Add IPv6 route to Internet Gateway
     const ipv6Route = new ec2.CfnRoute(scope, `PublicSubnetIpv6Route${index}`, {
@@ -90,8 +90,8 @@ function configureIpv6Subnets(
       destinationIpv6CidrBlock: '::/0',
       gatewayId: internetGateway.ref,
     });
-    ipv6Route.addDependency(internetGateway);
-    ipv6Route.addDependency(ipv6CidrBlock);
+    ipv6Route.addResourceDependency(internetGateway);
+    ipv6Route.addResourceDependency(ipv6CidrBlock);
   });
 
   // Configure private subnets for IPv6
@@ -105,7 +105,7 @@ function configureIpv6Subnets(
       '64' // IPv6 subnet size
     ));
     subnetCfn.assignIpv6AddressOnCreation = true;
-    subnetCfn.addDependency(ipv6CidrBlock);
+    subnetCfn.addResourceDependency(ipv6CidrBlock);
 
     // Add IPv6 route to Egress-Only Internet Gateway
     const ipv6Route = new ec2.CfnRoute(scope, `PrivateSubnetIpv6Route${index}`, {
@@ -113,7 +113,7 @@ function configureIpv6Subnets(
       destinationIpv6CidrBlock: '::/0',
       egressOnlyInternetGatewayId: eigw.ref,
     });
-    ipv6Route.addDependency(eigw);
-    ipv6Route.addDependency(ipv6CidrBlock);
+    ipv6Route.addResourceDependency(eigw);
+    ipv6Route.addResourceDependency(ipv6CidrBlock);
   });
 }
