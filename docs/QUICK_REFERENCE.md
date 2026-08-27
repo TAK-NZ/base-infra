@@ -23,7 +23,7 @@ npx cdk deploy --context env=prod --profile your-aws-profile
 ## Environment Comparison
 
 ### Development Environment (`dev-test`)
-- ✅ **Cost optimized** (~$45/month)
+- ✅ **Cost optimized**
 - ✅ **Same core functionality** as production
 - ✅ **Perfect for development** and testing
 - ✅ **Quick deployment** and teardown
@@ -35,7 +35,7 @@ npx cdk deploy --context env=prod --profile your-aws-profile
 - ✅ **Private VPC endpoints** for AWS services
 - ✅ **Enhanced security** features enabled
 - ✅ **Monitoring and logging** enabled
-- ❌ **Higher cost** (~$144/month)
+- ❌ **Higher cost**
 
 ## Configuration Override Examples
 
@@ -65,26 +65,6 @@ npm run deploy:dev -- --context createVpcEndpoints=true
 | **S3 Bucket** | 1 | 1 | KMS encrypted, config storage |
 | **KMS Key + Alias** | 1 | 1 | Customer-managed encryption |
 | **ACM Certificate** | 1 | 1 | Wildcard + SAN domains |
-
-## Cost Breakdown (Estimated for ap-southeast-2)
-
-### Development Environment (~$45/month)
-- **VPC**: Free
-- **Subnets**: Free  
-- **NAT Gateway**: $42.48/month (1 gateway × $0.059/hour)
-- **VPC Endpoints**: $0 (S3 Gateway is free)
-- **ECS**: $0 (Fargate pay-per-use)
-- **S3**: ~$1/month (config storage)
-- **KMS**: $1/month (customer-managed key)
-- **ACM**: Free
-- **Data Processing**: Variable (depends on usage)
-
-### Production Environment (~$144/month)
-- **NAT Gateways**: $84.96/month (2 × $42.48)
-- **VPC Endpoints**: $50.40/month (5 × $10.08)
-- **Storage**: ~$1/month (S3)
-- **KMS**: $1/month
-- **Data Processing**: Variable (reduced via endpoints)
 
 ## Development Workflow
 
