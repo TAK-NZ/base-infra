@@ -50,12 +50,10 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
       },
 ### **Environment Comparison**
 
-| Environment | Stack Name | Description | Monthly Cost* |
-|-------------|------------|-------------|---------------|
-| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized development | ~$45 |
-| `prod` | `TAK-Prod-BaseInfra` | High-availability production | ~$180 |
-
-*Estimated AWS costs in USD for ap-southeast-2, excluding data processing and storage usage. Production costs include VPC interface endpoints (~$90/month) for enhanced security.
+| Environment | Stack Name | Description |
+|-------------|------------|-------------|
+| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized development |
+| `prod` | `TAK-Prod-BaseInfra` | High-availability production |
 
 ### **Key Configuration Differences**
 
@@ -139,8 +137,8 @@ Use CDK's built-in `--context` flag with **flat parameter names** to override an
 ## **Cost Optimization**
 
 ### **Development Environment Optimizations**
-- **Single NAT Gateway**: Uses 1 NAT gateway vs 2 in production (~$32 USD/month savings)
-- **No VPC Endpoints**: Eliminates interface endpoint costs (~$90 USD/month savings)
+- **Single NAT Gateway**: Uses 1 NAT gateway vs 2 in production
+- **No VPC Endpoints**: Eliminates interface endpoint costs
 - **Container Insights Disabled**: Reduces CloudWatch costs
 
 ### **Production Environment Features**

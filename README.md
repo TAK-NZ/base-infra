@@ -69,12 +69,10 @@ npm run deploy:prod
 
 ## Available Environments
 
-| Environment | Stack Name | Description | Domain | Monthly Cost* |
-|-------------|------------|-------------|--------|---------------|
-| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized development | `dev.tak.nz` | ~$45 |
-| `prod` | `TAK-Prod-BaseInfra` | High-availability production | `tak.nz` | ~$180 |
-
-*Estimated AWS costs in USD for ap-southeast-2, excluding data processing and storage usage. Production costs include VPC interface endpoints (~$90/month) for enhanced security.
+| Environment | Stack Name | Description | Domain |
+|-------------|------------|-------------|--------|
+| `dev-test` | `TAK-Dev-BaseInfra` | Cost-optimized development | `dev.tak.nz` |
+| `prod` | `TAK-Prod-BaseInfra` | High-availability production | `tak.nz` |
 
 ## Development Workflow
 
