@@ -513,8 +513,6 @@ This repository includes GitHub Actions workflows for testing and deployment:
 
 ## 7. Security Best Practices
 
-## 7. Security Best Practices
-
 ### 7.1 Least Privilege IAM Policies
 
 Instead of `PowerUserAccess`, create a comprehensive policy for all TAK infrastructure layers:

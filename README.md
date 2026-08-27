@@ -12,45 +12,14 @@ It is specifically targeted at the deployment of [TAK.NZ](https://tak.nz) via a 
 
 ### Architecture Layers
 
-This base infrastructure is the foundation of additional higher level layers. Layers can be deployed in multiple independent environments. As an example:
+This base infrastructure is the foundation of additional higher level layers, each deployed as a
+separate stack from its own repository. **BaseInfra must be deployed first** - every other layer
+imports its outputs via CloudFormation exports.
 
-```
-        PRODUCTION ENVIRONMENT                DEVELOPMENT ENVIRONMENT
-        Domain: tak.nz                        Domain: dev.tak.nz
-
-┌─────────────────────────────────┐    ┌─────────────────────────────────┐
-│         CloudTAK                │    │         CloudTAK                │
-│    CloudFormation Stack         │    │    CloudFormation Stack         │
-└─────────────────────────────────┘    └─────────────────────────────────┘
-                │                                        │
-                ▼                                        ▼
-┌─────────────────────────────────┐    ┌─────────────────────────────────┐
-│         TakInfra                │    │         TakInfra                │
-│    CloudFormation Stack         │    │    CloudFormation Stack         │
-└─────────────────────────────────┘    └─────────────────────────────────┘
-                │                                        │
-                ▼                                        ▼
-┌─────────────────────────────────┐    ┌─────────────────────────────────┐
-│        AuthInfra                │    │        AuthInfra                │
-│    CloudFormation Stack         │    │    CloudFormation Stack         │
-└─────────────────────────────────┘    └─────────────────────────────────┘
-                │                                        │
-                ▼                                        ▼
-┌─────────────────────────────────┐    ┌─────────────────────────────────┐
-│        BaseInfra                │    │        BaseInfra                │
-│    CloudFormation Stack         │    │    CloudFormation Stack         │
-│      (This Repository)          │    │      (This Repository)          │
-└─────────────────────────────────┘    └─────────────────────────────────┘
-```
-
-| Layer | Repository | Description |
-|-------|------------|-------------|
-| **BaseInfra** | `base-infra` (this repo) | Foundation: VPC, ECS, S3, KMS, ACM |
-| **AuthInfra** | [`auth-infra`](https://github.com/TAK-NZ/auth-infra) | SSO via Authentik, LDAP |
-| **TAKInfra** | [`tak-infra`](https://github.com/TAK-NZ/tak-infra) | TAK Server |
-| **CloudTAK** | [`CloudTAK`](https://github.com/TAK-NZ/CloudTAK) | CloudTAK web interface, ETL, and media services |
-
-**Deployment Order**: BaseInfra must be deployed first, followed by AuthInfra, TakInfra, and finally CloudTAK. Each layer imports outputs from the layer below via CloudFormation exports.
+For the full layer diagram and deployment order across all TAK.NZ repositories, see the
+[TAK.NZ organization overview](https://github.com/TAK-NZ). That diagram is maintained in one place
+so it stays current as layers are added - it lists BaseInfra (this repo), AuthInfra, TakInfra,
+CloudTAK, MediaInfra, and UtilsInfra, in deployment order.
 
 ## Quick Start
 
@@ -183,4 +152,4 @@ npx cdk deploy --context envType=prod
 ## License
 
 TAK.NZ is distributed under [AGPL-3.0-only](LICENSE)
-Copyright (C) 2025 - Christian Elsen, Team Awareness Kit New Zealand (TAK.NZ)
+Copyright (C) 2026 - Christian Elsen, Team Awareness Kit New Zealand (TAK.NZ)
