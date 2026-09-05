@@ -7,7 +7,7 @@ import * as route53 from 'aws-cdk-lib/aws-route53';
 
 // Construct imports
 import { createVpcL2Resources } from './constructs/vpc';
-import { createEcsResources, createEcrResources, createKmsResources, createS3Resources } from './constructs/services';
+import { createEcsResources, createEcrResources, createKmsResources, createS3Resources, createMapDownloadsBucket, createMapBuildInstanceRole } from './constructs/services';
 import { createVpcEndpoints } from './constructs/endpoints';
 import { createAcmCertificate } from './constructs/acm';
 
@@ -52,6 +52,12 @@ export class BaseInfraStack extends cdk.Stack {
     const { kmsKey, kmsAlias } = createKmsResources(this, this.stackName, enableKeyRotation, removalPolicy);
     const { ecrArtifactsRepo, ecrEtlTasksRepo } = createEcrResources(this, this.stackName, imageRetentionCount, scanOnPush, removalPolicy, kmsKey);
     const { envConfigBucket, appImagesBucket, elbLogsBucket } = createS3Resources(this, this.stackName, cdk.Stack.of(this).region, kmsKey, enableVersioning, removalPolicy, envConfig.s3.elbLogsRetentionDays);
+    const { mapDownloadsBucket } = createMapDownloadsBucket(this, this.stackName, cdk.Stack.of(this).region, removalPolicy);
+    const {
+      instanceProfile: mapBuildInstanceProfile,
+      buildNotificationsTopic: mapBuildNotificationsTopic,
+      schedulerRole: mapBuildSchedulerRole,
+    } = createMapBuildInstanceRole(this, this.stackName, envConfigBucket, mapDownloadsBucket, appImagesBucket, ecsCluster, kmsKey);
 
     // Endpoint Security Group (for interface endpoints)
     let endpointSg: ec2.SecurityGroup | undefined = undefined;
@@ -99,6 +105,10 @@ export class BaseInfraStack extends cdk.Stack {
       envConfigBucket,
       appImagesBucket,
       elbLogsBucket,
+      mapDownloadsBucket,
+      mapBuildInstanceProfile,
+      mapBuildNotificationsTopic,
+      mapBuildSchedulerRole,
       vpcEndpoints,
       certificate,
       hostedZone,

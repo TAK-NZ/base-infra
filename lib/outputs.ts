@@ -4,6 +4,8 @@ import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as kms from 'aws-cdk-lib/aws-kms';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 
@@ -22,6 +24,10 @@ export interface OutputParams {
   envConfigBucket: s3.Bucket;
   appImagesBucket: s3.Bucket;
   elbLogsBucket: s3.Bucket;
+  mapDownloadsBucket: s3.Bucket;
+  mapBuildInstanceProfile: iam.InstanceProfile;
+  mapBuildNotificationsTopic: sns.Topic;
+  mapBuildSchedulerRole: iam.Role;
   vpcEndpoints?: Record<string, ec2.GatewayVpcEndpoint | ec2.InterfaceVpcEndpoint>;
   certificate?: acm.Certificate;
   hostedZone?: route53.IHostedZone;
@@ -75,12 +81,55 @@ export function registerOutputs(params: OutputParams): void {
     exportName: `${stackName}-AppImagesBucket`,
   });
 
+  // EcsClusterName export -- plain name, for CLI use (e.g. `aws ecs
+  // update-service --cluster <name>`), alongside the existing EcsClusterArn
+  new cdk.CfnOutput(stack, 'EcsClusterNameOutput', {
+    value: params.ecsCluster.clusterName,
+    description: 'ECS Cluster name',
+    exportName: `${stackName}-EcsClusterName`,
+  });
+
   // ElbLogsBucket export
   new cdk.CfnOutput(stack, 'ElbLogsBucketOutput', {
     value: params.elbLogsBucket.bucketName,
     description: 'ELB access logs bucket with globally unique naming (ALB and NLB)',
     exportName: `${stackName}-ElbLogsBucket`,
   });
+
+  // MapDownloadsBucket export -- large user-downloadable offline map files
+  new cdk.CfnOutput(stack, 'MapDownloadsBucketOutput', {
+    value: params.mapDownloadsBucket.bucketName,
+    description: 'Offline map downloads bucket with globally unique naming',
+    exportName: `${stackName}-MapDownloadsBucket`,
+  });
+
+  // MapBuildInstanceProfile export -- for the manually-launched EC2 build script
+  new cdk.CfnOutput(stack, 'MapBuildInstanceProfileOutput', {
+    value: params.mapBuildInstanceProfile.instanceProfileArn,
+    description: 'Instance profile ARN for the offline map build EC2 instance',
+    exportName: `${stackName}-MapBuildInstanceProfileArn`,
+  });
+  new cdk.CfnOutput(stack, 'MapBuildInstanceProfileNameOutput', {
+    value: params.mapBuildInstanceProfile.instanceProfileName,
+    description: 'Instance profile name for the offline map build EC2 instance',
+    exportName: `${stackName}-MapBuildInstanceProfileName`,
+  });
+
+  // MapBuildNotificationsTopic export
+  new cdk.CfnOutput(stack, 'MapBuildNotificationsTopicOutput', {
+    value: params.mapBuildNotificationsTopic.topicArn,
+    description: 'SNS topic ARN for offline map build progress/completion notifications',
+    exportName: `${stackName}-MapBuildNotificationsTopicArn`,
+  });
+
+  // MapBuildSchedulerRole export -- used by launch-build-instance.sh to
+  // create the per-launch stale-instance safety-net schedule
+  new cdk.CfnOutput(stack, 'MapBuildSchedulerRoleOutput', {
+    value: params.mapBuildSchedulerRole.roleArn,
+    description: 'EventBridge Scheduler execution role ARN for the offline map build stale-instance safety net',
+    exportName: `${stackName}-MapBuildSchedulerRoleArn`,
+  });
+
   // Conditional outputs
   if (params.ipv6CidrBlock && params.vpcLogicalId) {
     new cdk.CfnOutput(stack, 'VpcCidrIpv6Output', {
