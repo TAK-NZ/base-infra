@@ -4,7 +4,7 @@ import { BaseInfraStack } from '../lib/base-infra-stack';
 import { createTestApp } from './utils';
 
 describe('AWS Resources', () => {
-  it('creates ECS cluster, ECR repo, KMS key/alias, S3 bucket, and ACM certificate', () => {
+  it('creates ECS cluster, ECR repo, KMS key/alias, S3 buckets, and ACM certificate', () => {
     const app = createTestApp();
     const envConfig = app.node.tryGetContext('prod');
     
@@ -18,8 +18,11 @@ describe('AWS Resources', () => {
     template.resourceCountIs('AWS::ECR::Repository', 2);
     template.resourceCountIs('AWS::KMS::Key', 1);
     template.resourceCountIs('AWS::KMS::Alias', 1);
-    template.resourceCountIs('AWS::S3::Bucket', 3);
+    // envConfigBucket, appImagesBucket, elbLogsBucket, mapDownloadsBucket
+    template.resourceCountIs('AWS::S3::Bucket', 4);
     template.resourceCountIs('AWS::CertificateManager::Certificate', 1);
+    template.resourceCountIs('AWS::SNS::Topic', 1);
+    template.resourceCountIs('AWS::IAM::InstanceProfile', 1);
     template.hasResourceProperties('AWS::S3::Bucket', {
       OwnershipControls: {
         Rules: [{ ObjectOwnership: 'BucketOwnerEnforced' }]
