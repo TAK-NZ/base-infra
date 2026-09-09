@@ -7,7 +7,7 @@
 - **Coverage**: 
   - VPC resource creation (1 VPC, 4 subnets)
   - IPv6 dual-stack support
-  - Subnet properties and CIDR assignment
+  - Subnet properties and CIDR assignment (default and custom CIDR)
 
 ### 📁 **test/resources.test.ts** - AWS Resources  
 - **Purpose**: Tests core AWS service resources
@@ -15,7 +15,7 @@
   - ECS Cluster creation and configuration
   - ECR Repository creation with lifecycle rules
   - KMS Key and Alias creation
-  - S3 Bucket creation with security settings
+  - S3 Bucket creation with security settings (resource counts and ownership/public-access properties)
 
 ### 📁 **test/acm.test.ts** - ACM Certificate Management
 - **Purpose**: Tests SSL certificate creation and Route53 integration
@@ -33,41 +33,46 @@
   - Security group configuration for endpoints
   - Environment-specific endpoint creation
 
+### 📁 **test/elb-partition.test.ts** - ELB Log Bucket Partition Filtering
+- **Purpose**: Tests that the ELB access-log bucket policy grants only the
+  correct-partition ELB service-account principals
+- **Coverage**:
+  - Commercial regions get `arn:aws:` principals only
+  - GovCloud regions get `arn:aws-us-gov:` principals only
+  - Commercial and GovCloud principals are never mixed
+
 ### 📁 **test/outputs.test.ts** - CloudFormation Outputs
 - **Purpose**: Tests stack output generation and export naming
 - **Coverage**:
   - Validates all expected outputs exist
-  - Tests new dynamic export naming system
+  - Tests the dynamic export naming system
   - Conditional output creation (IPv6, certificates, hosted zones)
 
 ### 📁 **test/naming.test.ts** - Dynamic Stack Naming
-- **Purpose**: Tests the configurable naming system
+- **Purpose**: Tests the configurable naming system (cross-stack export contract)
 - **Coverage**:
   - Resource Name tags use dynamic references
-  - Export names use `Fn::Sub` with `AWS::StackName` parameter
-  - Validates stack-name prefixed export pattern
+  - Export names use the `TAK-<Env>-BaseInfra-*` stack-name-prefixed pattern
+    that consumer stacks import by name
 
-### 📁 **test/parameters.test.ts** - Configuration Management  
-- **Purpose**: Tests environment configuration and context system
+### 📁 **test/config-validation.test.ts** - Configuration Files
+- **Purpose**: Guards the `cdk.json` context contract that the app reads at
+  synth/deploy time
 - **Coverage**:
-  - Environment configuration validation
-  - Context override system functionality
-  - VPC CIDR configuration (replaced legacy Major/Minor ID system)
+  - `cdk.json` parses without error
+  - Required context sections (`dev-test`, `prod`, `tak-defaults`) exist
 
 ### 📁 **test/utils.test.ts** - Utility Functions
-- **Purpose**: Tests utility helper functions
+- **Purpose**: Tests decision-logic helper functions
 - **Coverage**:
-  - Tag generation helpers
-  - Output creation helpers
-  - Context override application
-  - Configuration merging
+  - Standard tag generation (defaults and custom overrides)
+  - Context override application and merging
 
 ### 📁 **test/integration.test.ts** - Integration Tests
-- **Purpose**: High-level integration testing
+- **Purpose**: High-level synth-smoke testing
 - **Coverage**:
-  - Stack synthesis without errors
-  - Full stack construction validation
-  - Environment-specific deployments
+  - Stack synthesizes without errors when an R53 zone is provided
+  - Stack construction throws when the R53 zone is missing
 
 ## Running Tests
 
@@ -86,9 +91,10 @@ npm test -- vpc.test.ts
 npm test -- resources.test.ts
 npm test -- acm.test.ts
 npm test -- endpoints.test.ts
+npm test -- elb-partition.test.ts
 npm test -- outputs.test.ts
 npm test -- naming.test.ts
-npm test -- parameters.test.ts
+npm test -- config-validation.test.ts
 npm test -- utils.test.ts
 npm test -- integration.test.ts
 
@@ -98,17 +104,17 @@ npm test -- --testPathPattern="vpc|resources|acm"
 
 ## Test Coverage Summary
 
-- **Total Test Suites**: 9
+- **Total Test Suites**: 10
 - **All Constructs Covered**: ✅ Yes
-- **Integration Tests**: ✅ Yes  
-- **Utility Functions**: ✅ Yes
-- **Configuration System**: ✅ Yes
+- **Integration/Synth-Smoke Tests**: ✅ Yes  
+- **Utility (Decision-Logic) Functions**: ✅ Yes
+- **Configuration Contract**: ✅ Yes
 
-## Recent Updates (Post-Modernization)
+## Testing Philosophy
 
-- ✅ **Updated** to reflect new VPC CIDR configuration system (removed Major/Minor ID references)
-- ✅ **Added** ACM construct test coverage documentation
-- ✅ **Enhanced** utility function test coverage
-- ✅ **Updated** export naming system tests
-- ✅ **Added** context override system testing
-
+Following the shared CDK test-cleanup guidance, this suite keeps only tests
+that can fail for a **real reason** — decision-logic unit tests, synth-smoke,
+cross-stack export-name contracts, and behavioral/safety-property assertions.
+Tautological "config equals the literal I just typed" tests and full-template
+snapshots are intentionally excluded, since they break on purposeful changes
+and library bumps without catching real defects.
