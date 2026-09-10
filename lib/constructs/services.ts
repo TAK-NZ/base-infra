@@ -34,7 +34,7 @@ export function createEcrResources(scope: Construct, stackName: string, imageRet
       { tagPrefixList: ['retention-'], maxImageCount: imageRetentionCount },
       { tagPrefixList: ['data-'], maxImageCount: imageRetentionCount },
       { tagPrefixList: ['cloudtak-'], maxImageCount: imageRetentionCount },
-      { tagPrefixList: ['teammanager-'], maxImageCount: imageRetentionCount },
+      { tagPrefixList: ['takteammanager-'], maxImageCount: imageRetentionCount },
       { tagPrefixList: ['mediamtx-'], maxImageCount: imageRetentionCount },
       { tagPrefixList: ['utils-tileserver-gl-'], maxImageCount: imageRetentionCount },
       { tagPrefixList: ['utils-weather-proxy-'], maxImageCount: imageRetentionCount },
