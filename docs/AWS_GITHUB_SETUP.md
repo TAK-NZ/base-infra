@@ -153,9 +153,9 @@ aws iam create-open-id-connect-provider \
 
 **Production Account - Create trust policy file and role:**
 
-> **Note on immutable subject claims:** GitHub repos created (or renamed/transferred) after July 15, 2026 use a new OIDC `sub` format that includes immutable owner/repo IDs: `repo:OWNER@OWNER-ID/REPO@REPO-ID:environment:ENV`, instead of the legacy `repo:OWNER/REPO:environment:ENV`. Both formats are listed below so existing repos keep working while new repos (and any future renames of existing repos) are covered by ID-pinned entries. The `*@<repo-id>` entries match any future repo name — the ID after `@` never changes. See [GitHub docs: immutable subject claims](https://docs.github.com/en/actions/reference/security/oidc#immutable-subject-claims). To find a repo's immutable ID: `gh api repos/TAK-NZ/<repo> --jq '.id'`. To find the org ID: `gh api orgs/TAK-NZ --jq '.id'`.
+> **Note on immutable subject claims:** GitHub is rolling out a new OIDC `sub` format that includes immutable owner/repo IDs: `repo:OWNER@OWNER-ID/REPO@REPO-ID:environment:ENV`, alongside the legacy `repo:OWNER/REPO:environment:ENV`. The rollout is gradual and opt-in — **do not assume a repo sends the immutable format just because it is new.** In practice a repo may still present the legacy `sub` (e.g. TAKTeamManager, created after the cutoff, presents `repo:TAK-NZ/TAKTeamManager:environment:ENV`). Therefore **list both formats for every repo**: a legacy `repo:OWNER/REPO:...` entry AND an immutable `repo:OWNER@OWNER-ID/*@REPO-ID:...` entry. The legacy entry covers repos still on the old format; the `*@<repo-id>` entry covers repos on the new format and survives any future rename (the ID after `@` never changes). If a repo gets `Not authorized to perform sts:AssumeRoleWithWebIdentity`, check which `sub` it actually presented via CloudTrail (see Troubleshooting) and confirm a matching entry exists. See [GitHub docs: immutable subject claims](https://docs.github.com/en/actions/reference/security/oidc#immutable-subject-claims). To find a repo's immutable ID: `gh api repos/TAK-NZ/<repo> --jq '.id'`. To find the org ID: `gh api orgs/TAK-NZ --jq '.id'`.
 >
-> Current immutable IDs: TAK-NZ org `202459110` · base-infra `975205709` · auth-infra `975170924` · tak-infra `975286327` · CloudTAK `998677784` · media-infra `1030702028` · utils-infra `1031075351`
+> Current immutable IDs: TAK-NZ org `202459110` · base-infra `975205709` · auth-infra `975170924` · tak-infra `975286327` · CloudTAK `998677784` · media-infra `1030702028` · utils-infra `1031075351` · TAKTeamManager `1046689634`
 
 ```bash
 # Create prod-github-trust-policy.json
@@ -181,6 +181,7 @@ cat > prod-github-trust-policy.json << 'EOF'
             "repo:TAK-NZ/CloudTAK:environment:production",
             "repo:TAK-NZ/media-infra:environment:production",
             "repo:TAK-NZ/utils-infra:environment:production",
+            "repo:TAK-NZ/TAKTeamManager:environment:production",
             "repo:TAK-NZ/etl-*:environment:production",
             "repo:TAK-NZ@202459110/etl-*:environment:production",
             "repo:TAK-NZ@202459110/*@975205709:environment:production",
@@ -188,7 +189,8 @@ cat > prod-github-trust-policy.json << 'EOF'
             "repo:TAK-NZ@202459110/*@975286327:environment:production",
             "repo:TAK-NZ@202459110/*@998677784:environment:production",
             "repo:TAK-NZ@202459110/*@1030702028:environment:production",
-            "repo:TAK-NZ@202459110/*@1031075351:environment:production"
+            "repo:TAK-NZ@202459110/*@1031075351:environment:production",
+            "repo:TAK-NZ@202459110/*@1046689634:environment:production"
           ]
         }
       }
@@ -232,6 +234,7 @@ cat > demo-github-trust-policy.json << 'EOF'
             "repo:TAK-NZ/CloudTAK:environment:demo",
             "repo:TAK-NZ/media-infra:environment:demo",
             "repo:TAK-NZ/utils-infra:environment:demo",
+            "repo:TAK-NZ/TAKTeamManager:environment:demo",
             "repo:TAK-NZ/etl-*:environment:demo",
             "repo:TAK-NZ@202459110/etl-*:environment:demo",
             "repo:TAK-NZ@202459110/*@975205709:environment:demo",
@@ -239,7 +242,8 @@ cat > demo-github-trust-policy.json << 'EOF'
             "repo:TAK-NZ@202459110/*@975286327:environment:demo",
             "repo:TAK-NZ@202459110/*@998677784:environment:demo",
             "repo:TAK-NZ@202459110/*@1030702028:environment:demo",
-            "repo:TAK-NZ@202459110/*@1031075351:environment:demo"
+            "repo:TAK-NZ@202459110/*@1031075351:environment:demo",
+            "repo:TAK-NZ@202459110/*@1046689634:environment:demo"
           ]
         }
       }
