@@ -159,41 +159,38 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
     'sa-east-1': { accountId: '507241528517', partition: 'aws' }, 'af-south-1': { accountId: '098369216593', partition: 'aws' }, 'us-gov-west-1': { accountId: '048591011584', partition: 'aws-us-gov' }, 'us-gov-east-1': { accountId: '190560391635', partition: 'aws-us-gov' }
   };
   
-  // Detect current partition based on region
-  const isGovCloud = region.startsWith('us-gov-');
-  const currentPartition = isGovCloud ? 'aws-us-gov' : 'aws';
-  
-  // Filter ELB service accounts by current partition only
-  const filteredELBAccounts = Object.values(elbServiceAccountMap).filter(({ partition }) => 
-    partition === currentPartition
-  );
-  
-  // Create principals for ELB service accounts in current partition only
-  const allELBPrincipals = filteredELBAccounts.map(({ accountId, partition }) => 
-    new cdk.aws_iam.ArnPrincipal(`arn:${partition}:iam::${accountId}:root`)
-  );
-  
+  // Legacy per-region ELB account (regions launched before August 2022 only).
+  // Newer regions (e.g. ap-southeast-6) have no entry and rely on the log delivery service principals below.
+  const legacyElbAccount = elbServiceAccountMap[region];
+  const legacyELBPrincipals = legacyElbAccount
+    ? [new cdk.aws_iam.ArnPrincipal(`arn:${legacyElbAccount.partition}:iam::${legacyElbAccount.accountId}:root`)]
+    : [];
+  // Access logs are written to [prefix/]AWSLogs/<account-id>/*, so restrict writes to this account's path
+  const logObjectResources = (bucket: s3.Bucket) => [
+    `${bucket.bucketArn}/AWSLogs/${cdk.Aws.ACCOUNT_ID}/*`,
+    `${bucket.bucketArn}/*/AWSLogs/${cdk.Aws.ACCOUNT_ID}/*`
+  ];
   // Apply permissions to ELB logs bucket
   [elbLogsBucket].forEach(bucket => {
-    bucket.addToResourcePolicy(new PolicyStatement({
-      effect: Effect.ALLOW,
-      principals: allELBPrincipals,
-      actions: ['s3:PutObject'],
-      resources: [`${bucket.bucketArn}/*`],
-      conditions: {
-        StringEquals: {
-          's3:x-amz-acl': 'bucket-owner-full-control'
+    if (legacyELBPrincipals.length > 0) {
+      bucket.addToResourcePolicy(new PolicyStatement({
+        effect: Effect.ALLOW,
+        principals: legacyELBPrincipals,
+        actions: ['s3:PutObject'],
+        resources: logObjectResources(bucket),
+        conditions: {
+          StringEquals: {
+            's3:x-amz-acl': 'bucket-owner-full-control'
+          }
         }
-      }
-    }));
-    
-    bucket.addToResourcePolicy(new PolicyStatement({
-      effect: Effect.ALLOW,
-      principals: allELBPrincipals,
-      actions: ['s3:GetBucketAcl', 's3:GetBucketPolicy'],
-      resources: [bucket.bucketArn]
-    }));
-
+      }));
+      bucket.addToResourcePolicy(new PolicyStatement({
+        effect: Effect.ALLOW,
+        principals: legacyELBPrincipals,
+        actions: ['s3:GetBucketAcl', 's3:GetBucketPolicy'],
+        resources: [bucket.bucketArn]
+      }));
+    }
     // Add NLB log delivery service principal
     bucket.addToResourcePolicy(new PolicyStatement({
       effect: Effect.ALLOW,
@@ -201,24 +198,19 @@ export function createS3Resources(scope: Construct, stackName: string, region: s
       actions: ['s3:GetBucketAcl'],
       resources: [bucket.bucketArn]
     }));
-
     bucket.addToResourcePolicy(new PolicyStatement({
       effect: Effect.ALLOW,
       principals: [new cdk.aws_iam.ServicePrincipal('delivery.logs.amazonaws.com')],
       actions: ['s3:PutObject'],
-      resources: [`${bucket.bucketArn}/*`]
+      resources: logObjectResources(bucket)
     }));
-
-    // Add ALB log delivery service principal
+    // Add ALB log delivery service principal (required for regions launched after August 2022)
     bucket.addToResourcePolicy(new PolicyStatement({
       effect: Effect.ALLOW,
       principals: [new cdk.aws_iam.ServicePrincipal('logdelivery.elasticloadbalancing.amazonaws.com')],
       actions: ['s3:PutObject'],
-      resources: [`${bucket.bucketArn}/*`]
+      resources: logObjectResources(bucket)
     }));
-
-
-
     // Allow account owner essential permissions for ELB logging and bucket management
     bucket.addToResourcePolicy(new PolicyStatement({
       effect: Effect.ALLOW,
