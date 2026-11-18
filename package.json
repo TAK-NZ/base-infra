@@ -27,7 +27,7 @@
     "@swc/jest": "^0.2.37",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.2",
-    "aws-cdk": "^2.1145.0",
+    "aws-cdk": "^2.1148.1",
     "jest": "^30.5.2",
     "ts-node": "^10.9.2",
     "typescript": "~5.7.2"
@@ -35,10 +35,12 @@
   "overrides": {
     "brace-expansion": "^2.0.1",
     "picomatch": "^4.0.2",
-    "js-yaml": "^4.1.1"
+    "js-yaml": "^4.1.1",
+    "minimatch": "^11.0.1",
+    "glob": "^14.0.2"
   },
   "dependencies": {
-    "aws-cdk-lib": "^2.273.0",
+    "aws-cdk-lib": "^2.277.0",
     "constructs": "^10.8.1"
   }
 }
