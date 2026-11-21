@@ -11,6 +11,7 @@
 ## Version History
 
 ### Pending Release
+- :arrow_up: Upgrade aws-cdk-lib to 2.278.0 and aws-cdk CLI to 2.1149.0. The bundled `minimatch` fix (aws/aws-cdk#39595) is included, so `npm audit` reports 0 vulnerabilities and the `.npmrc` `audit-level=critical` suppression is removed
 - :arrow_up: Upgrade aws-cdk-lib to 2.277.0 and aws-cdk CLI to 2.1148.1 (constructs already latest at 10.8.1)
 - :bug: Add `minimatch` ^11.0.1 and `glob` ^14.0.2 overrides to resolve `npm audit` findings in the Jest tree. Two moderate findings remain from the `minimatch` bundled inside `aws-cdk-lib` until a release includes aws/aws-cdk#39595
 - :bug: Restore `.npmrc` with `audit-level=critical` and a note on the remaining bundled `minimatch` finding (GHSA-g3hv-75wg-m249), matching auth-infra, tak-infra and utils-infra
