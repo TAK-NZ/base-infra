@@ -8,6 +8,7 @@ import * as sns from 'aws-cdk-lib/aws-sns';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as cloudtrail from 'aws-cdk-lib/aws-cloudtrail';
 
 export interface OutputParams {
   stack: cdk.Stack;
@@ -31,6 +32,7 @@ export interface OutputParams {
   vpcEndpoints?: Record<string, ec2.GatewayVpcEndpoint | ec2.InterfaceVpcEndpoint>;
   certificate?: acm.Certificate;
   hostedZone?: route53.IHostedZone;
+  cloudTrail?: cloudtrail.CfnTrail;
 }
 
 /**
@@ -144,6 +146,14 @@ export function registerOutputs(params: OutputParams): void {
       value: params.certificate.certificateArn,
       description: 'ACM Certificate ARN',
       exportName: `${stackName}-CertificateArn`,
+    });
+  }
+
+  if (params.cloudTrail) {
+    new cdk.CfnOutput(stack, 'CloudTrailNameOutput', {
+      value: params.cloudTrail.ref,
+      description: 'CloudTrail trail name (management events, read and write)',
+      exportName: `${stackName}-CloudTrailName`,
     });
   }
 

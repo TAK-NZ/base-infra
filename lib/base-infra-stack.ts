@@ -4,12 +4,14 @@ import { StackProps } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as cloudtrail from 'aws-cdk-lib/aws-cloudtrail';
 
 // Construct imports
 import { createVpcL2Resources } from './constructs/vpc';
 import { createEcsResources, createEcrResources, createKmsResources, createS3Resources, createMapDownloadsBucket, createMapBuildInstanceRole } from './constructs/services';
 import { createVpcEndpoints } from './constructs/endpoints';
 import { createAcmCertificate } from './constructs/acm';
+import { createCloudTrailResources } from './constructs/cloudtrail';
 
 // Utility imports
 import { registerOutputs } from './outputs';
@@ -89,6 +91,12 @@ export class BaseInfraStack extends cdk.Stack {
     certificate = acmResources.certificate;
     hostedZone = acmResources.hostedZone;
 
+    // CloudTrail (optional): management events, read and write
+    let cloudTrail: cloudtrail.CfnTrail | undefined = undefined;
+    if (envConfig.cloudTrail.enabled) {
+      cloudTrail = createCloudTrailResources(this, this.stackName, envConfig.cloudTrail.logRetentionDays).trail;
+    }
+
     // Outputs
     registerOutputs({
       stack: this,
@@ -112,6 +120,7 @@ export class BaseInfraStack extends cdk.Stack {
       vpcEndpoints,
       certificate,
       hostedZone,
+      cloudTrail,
     });
   }
 }

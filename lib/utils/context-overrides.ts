@@ -53,5 +53,16 @@ export function applyContextOverrides(
       imageRetentionCount: app.node.tryGetContext('imageRetentionCount') ?? baseConfig.ecr.imageRetentionCount,
       scanOnPush: app.node.tryGetContext('scanOnPush') ?? baseConfig.ecr.scanOnPush,
     },
+    cloudTrail: {
+      ...baseConfig.cloudTrail,
+      // CLI context values arrive as strings, so "false" must not be treated as truthy
+      enabled: parseBooleanContext(app.node.tryGetContext('createCloudTrail')) ?? baseConfig.cloudTrail.enabled,
+    },
   };
+}
+
+function parseBooleanContext(value: unknown): boolean | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === 'string') return value.trim().toLowerCase() !== 'false';
+  return Boolean(value);
 }

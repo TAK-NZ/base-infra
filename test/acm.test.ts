@@ -21,7 +21,8 @@ describe('ACM Certificate', () => {
           general: { removalPolicy: 'RETAIN' },
           kms: { enableKeyRotation: true },
           s3: { enableVersioning: true, elbLogsRetentionDays: 30 },
-          ecr: { imageRetentionCount: 20, scanOnPush: true }
+          ecr: { imageRetentionCount: 20, scanOnPush: true },
+          cloudTrail: { enabled: true, logRetentionDays: 90 }
         },
         'tak-defaults': { project: 'TAK', component: 'BaseInfra', region: 'ap-southeast-2' }
       }
@@ -67,7 +68,8 @@ describe('ACM Certificate', () => {
           general: { removalPolicy: 'RETAIN' },
           kms: { enableKeyRotation: true },
           s3: { enableVersioning: true, elbLogsRetentionDays: 30 },
-          ecr: { imageRetentionCount: 20, scanOnPush: true }
+          ecr: { imageRetentionCount: 20, scanOnPush: true },
+          cloudTrail: { enabled: true, logRetentionDays: 90 }
         }
       });
     }).toThrow('R53 zone name is required for ACM certificate creation');
@@ -84,7 +86,8 @@ describe('ACM Certificate', () => {
           general: { removalPolicy: 'RETAIN' },
           kms: { enableKeyRotation: true },
           s3: { enableVersioning: true, elbLogsRetentionDays: 30 },
-          ecr: { imageRetentionCount: 20, scanOnPush: true }
+          ecr: { imageRetentionCount: 20, scanOnPush: true },
+          cloudTrail: { enabled: true, logRetentionDays: 90 }
         }
       });
     }).toThrow('R53 zone name is required for ACM certificate creation');
@@ -120,7 +123,8 @@ describe('ACM Certificate', () => {
           general: { removalPolicy: 'RETAIN' },
           kms: { enableKeyRotation: true },
           s3: { enableVersioning: true, elbLogsRetentionDays: 30 },
-          ecr: { imageRetentionCount: 20, scanOnPush: true }
+          ecr: { imageRetentionCount: 20, scanOnPush: true },
+          cloudTrail: { enabled: true, logRetentionDays: 90 }
         }
       });
     }).toThrow('R53 zone name is required for ACM certificate creation');
@@ -143,7 +147,8 @@ describe('ACM Certificate', () => {
           general: { removalPolicy: 'RETAIN' },
           kms: { enableKeyRotation: true },
           s3: { enableVersioning: true, elbLogsRetentionDays: 30 },
-          ecr: { imageRetentionCount: 20, scanOnPush: true }
+          ecr: { imageRetentionCount: 20, scanOnPush: true },
+          cloudTrail: { enabled: true, logRetentionDays: 90 }
         },
         'tak-defaults': { project: 'TAK', component: 'BaseInfra', region: 'ap-southeast-2' }
       }
@@ -181,7 +186,8 @@ describe('ACM Certificate', () => {
           general: { removalPolicy: 'DESTROY' },
           kms: { enableKeyRotation: false },
           s3: { enableVersioning: false, elbLogsRetentionDays: 30 },
-          ecr: { imageRetentionCount: 5, scanOnPush: false }
+          ecr: { imageRetentionCount: 5, scanOnPush: false },
+          cloudTrail: { enabled: true, logRetentionDays: 90 }
         },
         'tak-defaults': { project: 'TAK', component: 'BaseInfra', region: 'ap-southeast-2' }
       }
@@ -224,7 +230,8 @@ describe('ACM Certificate', () => {
       general: { removalPolicy: 'DESTROY' },
       kms: { enableKeyRotation: false },
       s3: { enableVersioning: false, elbLogsRetentionDays: 30 },
-      ecr: { imageRetentionCount: 5, scanOnPush: false }
+      ecr: { imageRetentionCount: 5, scanOnPush: false },
+      cloudTrail: { enabled: true, logRetentionDays: 90 }
     };
     
     const stack = new BaseInfraStack(app5, 'TestStack', { 

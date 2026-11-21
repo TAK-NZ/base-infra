@@ -26,7 +26,8 @@ describe('Integration Tests', () => {
       general: { removalPolicy: 'DESTROY' },
       kms: { enableKeyRotation: false },
       s3: { enableVersioning: false, elbLogsRetentionDays: 30 },
-      ecr: { imageRetentionCount: 5, scanOnPush: false }
+      ecr: { imageRetentionCount: 5, scanOnPush: false },
+      cloudTrail: { enabled: true, logRetentionDays: 90 }
     };
     
     expect(() => {

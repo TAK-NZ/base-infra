@@ -32,4 +32,8 @@ export interface ContextEnvironmentConfig {
     imageRetentionCount: number;
     scanOnPush: boolean;
   };
+  cloudTrail: {
+    enabled: boolean;
+    logRetentionDays: number;
+  };
 }
