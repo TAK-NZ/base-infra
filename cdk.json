@@ -41,6 +41,10 @@
       "ecr": {
         "imageRetentionCount": 5,
         "scanOnPush": false
+      },
+      "cloudTrail": {
+        "enabled": true,
+        "logRetentionDays": 90
       }
     },
     "prod": {
@@ -67,6 +71,10 @@
       "ecr": {
         "imageRetentionCount": 20,
         "scanOnPush": true
+      },
+      "cloudTrail": {
+        "enabled": true,
+        "logRetentionDays": 90
       }
     },
     "tak-defaults": {

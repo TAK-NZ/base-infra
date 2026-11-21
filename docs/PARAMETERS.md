@@ -111,6 +111,13 @@ Use CDK's built-in `--context` flag with **flat parameter names** to override an
 | `elbLogsRetentionDays` | ELB access logs retention period | `30` | `30` |
 | `lifecycleRules` | S3 lifecycle management | `true` | `true` |
 
+### **CloudTrail Configuration**
+| Parameter | Description | dev-test | prod |
+|-----------|-------------|----------|------|
+| `createCloudTrail` | Create the management events trail (read and write). Set to `false` if the account already has a trail that logs read events in this Region | `true` | `true` |
+
+The log retention (`cloudTrail.logRetentionDays`, default `90`) is set in `cdk.json`.
+
 ---
 
 ## **Security Considerations**
@@ -210,6 +217,9 @@ npm run deploy:dev -- --context elbLogsRetentionDays=7
 
 # Certificate settings
 npm run deploy:dev -- --context transparencyLoggingEnabled=false
+
+# Skip the CloudTrail trail (account already has one)
+npm run deploy:prod -- --context createCloudTrail=false
 ```
 
 ### **Override Syntax Rules**
@@ -292,6 +302,10 @@ npm run deploy:dev -- --context tak-region="us-east-1"
 ### Security Configuration
 - `kms.enableKeyRotation`: Automatic KMS key rotation
 - `s3.enableVersioning`: S3 bucket versioning
+
+### CloudTrail Configuration
+- `cloudTrail.enabled`: Create the management events trail (default `true`, override with `--context createCloudTrail=false`)
+- `cloudTrail.logRetentionDays`: Days to keep trail logs in S3 (default `90`)
 
 ## 📋 Deployment Examples
 

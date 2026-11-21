@@ -19,7 +19,8 @@ describe('Stack Outputs', () => {
       'SubnetPublicAOutput', 'SubnetPublicBOutput', 'SubnetPrivateAOutput', 'SubnetPrivateBOutput',
       'EcsClusterArnOutput', 'KmsKeyArnOutput', 'KmsAliasOutput',
       'EnvConfigBucketOutput', 'AppImagesBucketOutput', 'ElbLogsBucketOutput',
-      'CertificateArnOutput', 'HostedZoneIdOutput', 'HostedZoneNameOutput'
+      'CertificateArnOutput', 'HostedZoneIdOutput', 'HostedZoneNameOutput',
+      'CloudTrailNameOutput'
     ].forEach(name => {
       expect(outputs[name]).toBeDefined();
     });

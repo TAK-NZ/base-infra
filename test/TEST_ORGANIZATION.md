@@ -41,6 +41,14 @@
   - GovCloud regions get `arn:aws-us-gov:` principals only
   - Commercial and GovCloud principals are never mixed
 
+### 📁 **test/cloudtrail.test.ts** - CloudTrail Management Events Trail
+- **Purpose**: Tests the optional single-Region trail created by BaseInfra
+- **Coverage**:
+  - Trail settings (ReadWriteType All, management events, global service events off, log file validation)
+  - Log bucket (block public access, S3-managed encryption, retention lifecycle rule, RETAIN, no fixed name)
+  - Bucket policy (CloudTrail access with `aws:SourceArn`/`aws:SourceAccount`, SSL-only) and trail dependency on it
+  - `CloudTrailNameOutput` export
+  - Opt-out via `cloudTrail.enabled=false` and `--context createCloudTrail=false`
 ### 📁 **test/outputs.test.ts** - CloudFormation Outputs
 - **Purpose**: Tests stack output generation and export naming
 - **Coverage**:

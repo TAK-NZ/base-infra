@@ -60,6 +60,10 @@ export function createTestApp(): cdk.App {
         ecr: {
           imageRetentionCount: 5,
           scanOnPush: false
+        },
+        cloudTrail: {
+          enabled: true,
+          logRetentionDays: 90
         }
       },
       'prod': {
@@ -86,6 +90,10 @@ export function createTestApp(): cdk.App {
         ecr: {
           imageRetentionCount: 20,
           scanOnPush: true
+        },
+        cloudTrail: {
+          enabled: true,
+          logRetentionDays: 90
         }
       },
       'tak-defaults': {

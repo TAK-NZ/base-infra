@@ -593,13 +593,17 @@ Instead of `PowerUserAccess`, create a comprehensive policy for all TAK infrastr
 
 ### 7.3 Monitoring
 
-Enable CloudTrail in Production and Demo accounts to monitor GitHub Actions activity:
+BaseInfra creates a CloudTrail trail in each account it is deployed to (setting `cloudTrail.enabled`, default `true`). The trail is single-Region (the stack's Region), logs management events with `ReadWriteType: All`, has global service events off and log file validation on, and writes to an encrypted S3 bucket that is retained when the stack is deleted. The trail name is exported as `TAK-<stack>-BaseInfra-CloudTrailName`. Log retention is set by `cloudTrail.logRetentionDays` (default 90 days).
+
+The trail must log **read** events as well as write events. The tak-infra Root CA alert is an EventBridge rule on `kms:Sign`, which is a read-only management event, and EventBridge only receives read events when a trail in the stack's Region logs management events with `ReadWriteType: All`.
+
+**Accounts that already have a trail:** because the setting is on by default, an account that already has a suitable trail must opt out, otherwise a second copy of management events is logged and billed. This applies to accounts `814704514736` (`IsengardTrail-DO-NOT-DELETE`) and `453572736517` (`aws-elsenc-logs`), which already have a multi-Region trail with `ReadWriteType: All`:
 
 ```bash
-aws cloudtrail create-trail \
-    --name github-actions-audit \
-    --s3-bucket-name your-cloudtrail-bucket
+npm run deploy:prod -- --context createCloudTrail=false
 ```
+
+Or set `"cloudTrail": { "enabled": false }` for the environment in `cdk.json`. An existing trail that only logs write events, or only logs other Regions, does not trigger the tak-infra Root CA alert.
 
 ## 8. Verification
 
