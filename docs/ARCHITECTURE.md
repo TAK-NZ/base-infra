@@ -151,6 +151,7 @@ The TAK Base Infrastructure provides foundational AWS resources for containerize
 - **Internet Gateway**: Bidirectional internet access for public subnets
 - **NAT Gateway**: Outbound-only internet access for private subnets
 - **Elastic IPs**: Static IP addresses for consistent outbound connectivity
+- **VPC Block Public Access**: The account-level setting is not managed by this stack. The public subnets get bidirectional BPA exclusions (`networking.excludePublicSubnetsFromBpa`, default `true`) so load balancers in them stay reachable if BPA is on. The private subnets need no exclusion
 
 #### 3. Security Groups
 - **Default Security Group**: Automatically restricted (no ingress/egress rules)

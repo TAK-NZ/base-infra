@@ -79,7 +79,8 @@ All settings are stored in [`cdk.json`](../cdk.json) under the `context` section
       "vpcCidr": "10.0.0.0/20",
       "networking": {
         "enableRedundantNatGateways": false,
-        "createVpcEndpoints": false
+        "createVpcEndpoints": false,
+        "excludePublicSubnetsFromBpa": true
       },
       "certificate": {
         "transparencyLoggingEnabled": true  
@@ -134,6 +135,7 @@ npm run deploy:dev -- --context transparencyLoggingEnabled=false
 | `vpcCidr` | VPC CIDR block | `10.0.0.0/20` | `10.0.0.0/20` |
 | `enableRedundantNatGateways` | Enable redundant NAT gateways | `false` (1 gateway) | `true` (2 gateways) |
 | `createVpcEndpoints` | Enable VPC endpoints | `false` | `true` |
+| `excludePublicSubnetsFromBpa` | Exclude public subnets from VPC Block Public Access | `true` | `true` |
 | `transparencyLoggingEnabled` | Certificate transparency | `true` | `true` |
 | `removalPolicy` | Resource cleanup policy | `DESTROY` | `RETAIN` |
 | `enableDetailedLogging` | CloudWatch detailed logging | `true` | `true` |

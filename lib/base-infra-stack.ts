@@ -41,6 +41,7 @@ export class BaseInfraStack extends cdk.Stack {
     const r53ZoneName = envConfig.r53ZoneName;
     const enableRedundantNatGateways = envConfig.networking.enableRedundantNatGateways;
     const enableVpcEndpoints = envConfig.networking.createVpcEndpoints;
+    const excludePublicSubnetsFromBpa = envConfig.networking.excludePublicSubnetsFromBpa ?? true;
     const certificateTransparency = envConfig.certificate.transparencyLoggingEnabled;
     const removalPolicy = envConfig.general.removalPolicy;
     const enableKeyRotation = envConfig.kms.enableKeyRotation;
@@ -49,7 +50,7 @@ export class BaseInfraStack extends cdk.Stack {
     const scanOnPush = envConfig.ecr.scanOnPush;
 
     // Create AWS resources
-    const { vpc, ipv6CidrBlock, vpcLogicalId } = createVpcL2Resources(this, vpcCidr, enableRedundantNatGateways);
+    const { vpc, ipv6CidrBlock, vpcLogicalId } = createVpcL2Resources(this, vpcCidr, enableRedundantNatGateways, excludePublicSubnetsFromBpa);
     const { ecsCluster } = createEcsResources(this, this.stackName, vpc);
     const { kmsKey, kmsAlias } = createKmsResources(this, this.stackName, enableKeyRotation, removalPolicy);
     const { ecrArtifactsRepo, ecrEtlTasksRepo } = createEcrResources(this, this.stackName, imageRetentionCount, scanOnPush, removalPolicy, kmsKey);

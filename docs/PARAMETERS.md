@@ -29,7 +29,8 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
       "vpcCidr": "10.0.0.0/20",
       "networking": {
         "enableRedundantNatGateways": false,
-        "createVpcEndpoints": false
+        "createVpcEndpoints": false,
+        "excludePublicSubnetsFromBpa": true
       }
     },
     "prod": {
@@ -38,7 +39,8 @@ All configurations are stored in [`cdk.json`](../cdk.json) under the `context` s
       "vpcCidr": "10.1.0.0/20", 
       "networking": {
         "enableRedundantNatGateways": true,
-        "createVpcEndpoints": true
+        "createVpcEndpoints": true,
+        "excludePublicSubnetsFromBpa": true
       }
     }
   }
@@ -79,7 +81,27 @@ Use CDK's built-in `--context` flag with **flat parameter names** to override an
 |-----------|-------------|----------|------|
 | `enableRedundantNatGateways` | Enable redundant NAT gateways | `false` (1 gateway) | `true` (2 gateways) |
 | `createVpcEndpoints` | Enable VPC interface endpoints | `false` | `true` |
+| `excludePublicSubnetsFromBpa` | Exclude the public subnets from VPC Block Public Access (see below) | `true` | `true` |
 | `vpcCidr` | VPC CIDR block | `10.0.0.0/20` | `10.0.0.0/20` |
+
+#### **VPC Block Public Access (BPA)**
+This stack never changes the account-level VPC BPA setting. With `excludePublicSubnetsFromBpa=true` (the default) it creates one bidirectional BPA exclusion per public subnet, so internet-facing load balancers placed in those subnets stay reachable.
+
+- If BPA is off in the account and Region, the exclusions have no effect.
+- If BPA is on, or is enabled later, the exclusions keep the public subnets working. The private subnets are not excluded because NAT gateway and egress-only internet gateway traffic is not blocked by BPA in ingress-only mode.
+- An exclusion opens both directions for the subnet, so keep security groups and network ACLs restrictive.
+- Set the parameter to `false` for an environment that has no public endpoints and should stay fully blocked.
+- If an exclusion for one of these subnets was created manually (console or CLI), the deployment fails. Delete it or import it into the stack first. List existing exclusions with `aws ec2 describe-vpc-block-public-access-exclusions --max-results 100 --region <region>`.
+
+To turn on BPA in ingress-only mode for a Region (outside this stack):
+
+```bash
+aws ec2 modify-vpc-block-public-access-options \
+  --internet-gateway-block-mode block-ingress \
+  --region <region>
+```
+
+To check or turn it off again, use `describe-vpc-block-public-access-options` and `--internet-gateway-block-mode off`.
 
 ### **Core Configuration**
 | Parameter | Description | dev-test | prod |
@@ -203,6 +225,9 @@ npm run deploy:prod -- --context enableRedundantNatGateways=false
 # Enable/disable VPC endpoints
 npm run deploy:dev -- --context createVpcEndpoints=true
 npm run deploy:prod -- --context createVpcEndpoints=false
+
+# Disable the VPC Block Public Access exclusions for the public subnets
+npm run deploy:dev -- --context excludePublicSubnetsFromBpa=false
 ```
 
 ### **Resource Configuration**
@@ -290,6 +315,7 @@ npm run deploy:dev -- --context tak-region="us-east-1"
 |-----------|-------------|----------|------|
 | `networking.enableRedundantNatGateways` | Enable redundant NAT gateways | `false` (1 NAT Gateway) | `true` (2 NAT Gateways) |
 | `networking.createVpcEndpoints` | Enable VPC interface endpoints | `false` | `true` |
+| `networking.excludePublicSubnetsFromBpa` | Exclude the public subnets from VPC Block Public Access | `true` | `true` |
 
 ### **Certificate Configuration**
 | Parameter | Description | dev-test | prod |

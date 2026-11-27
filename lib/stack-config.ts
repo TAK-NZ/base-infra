@@ -14,6 +14,8 @@ export interface ContextEnvironmentConfig {
   networking: {
     enableRedundantNatGateways: boolean;
     createVpcEndpoints: boolean;
+    /** Exclude the public subnets from VPC Block Public Access. Treated as true when omitted. */
+    excludePublicSubnetsFromBpa?: boolean;
   };
   certificate: {
     transparencyLoggingEnabled: boolean;

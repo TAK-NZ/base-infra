@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import { Template } from 'aws-cdk-lib/assertions';
+import { Match, Template } from 'aws-cdk-lib/assertions';
 import { BaseInfraStack } from '../lib/base-infra-stack';
 import { createTestApp } from './utils';
 
@@ -76,6 +76,43 @@ describe('VPC and Networking', () => {
     const template = Template.fromStack(testStack);
     template.hasResourceProperties('AWS::EC2::VPC', {
       CidrBlock: '192.168.0.0/16'
+    });
+  });
+  describe('VPC Block Public Access exclusions', () => {
+    const synth = (excludePublicSubnetsFromBpa?: boolean) => {
+      const { createVpcL2Resources } = require('../lib/constructs/vpc');
+      const app = createTestApp();
+      const testStack = new cdk.Stack(app, 'TestStack');
+      createVpcL2Resources(testStack, undefined, false, excludePublicSubnetsFromBpa);
+      return Template.fromStack(testStack);
+    };
+
+    it('excludes each public subnet with a bidirectional exclusion by default', () => {
+      const template = synth();
+      template.resourceCountIs('AWS::EC2::VPCBlockPublicAccessExclusion', 2);
+      template.hasResourceProperties('AWS::EC2::VPCBlockPublicAccessExclusion', {
+        InternetGatewayExclusionMode: 'allow-bidirectional',
+        SubnetId: { Ref: Match.stringLikeRegexp('^VpcpublicSubnet1Subnet') },
+      });
+      template.hasResourceProperties('AWS::EC2::VPCBlockPublicAccessExclusion', {
+        SubnetId: { Ref: Match.stringLikeRegexp('^VpcpublicSubnet2Subnet') },
+      });
+    });
+
+    it('does not exclude private subnets', () => {
+      const template = synth(true);
+      const exclusions = template.findResources('AWS::EC2::VPCBlockPublicAccessExclusion');
+      Object.values(exclusions).forEach((r: any) => {
+        expect(JSON.stringify(r.Properties.SubnetId)).not.toContain('privateSubnet');
+      });
+    });
+
+    it('creates no exclusions when disabled', () => {
+      synth(false).resourceCountIs('AWS::EC2::VPCBlockPublicAccessExclusion', 0);
+    });
+
+    it('does not manage the account-level BPA setting', () => {
+      synth().resourceCountIs('AWS::EC2::VPCBlockPublicAccessOptions', 0);
     });
   });
 });
