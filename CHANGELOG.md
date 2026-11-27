@@ -11,6 +11,10 @@
 ## Version History
 
 ### Pending Release
+- :tada: Add VPC Block Public Access (BPA) exclusions for the public subnets, so internet-facing load balancers stay reachable if account-level BPA is on or is enabled later. One `allow-bidirectional` exclusion is created per public subnet; private subnets are not excluded. The stack does not change the account-level BPA setting
+- :tada: Add the `networking.excludePublicSubnetsFromBpa` setting (default `true`) and the `--context excludePublicSubnetsFromBpa=false` override. An existing manual exclusion on a public subnet must be deleted or imported before the first deploy
+- :pencil2: Update `docs/PARAMETERS.md`, `docs/DEPLOYMENT_GUIDE.md`, `docs/ARCHITECTURE.md` and `docs/AWS_GITHUB_SETUP.md` for VPC BPA
+- :white_check_mark: Add BPA exclusion and context override tests
 - :tada: Add an optional CloudTrail trail for management events (read and write), created by BaseInfra and on by default (#101). The trail is single-Region, has global service events off and log file validation on, and writes to a new SSE-S3 encrypted log bucket that is retained on stack deletion (retention set by `cloudTrail.logRetentionDays`, default 90 days). The trail name is exported as `TAK-<stack>-BaseInfra-CloudTrailName`. This trail is what lets the tak-infra Root CA alert see `kms:Sign` read events
 - :tada: Add the `cloudTrail.enabled` setting and the `--context createCloudTrail=false` override. **Because the trail is on by default, accounts that already have a trail (e.g. 814704514736 and 453572736517) must set `createCloudTrail=false`**. An existing trail that only logs write events, or only other Regions, does not trigger the tak-infra Root CA alert
 - :pencil2: Update `docs/AWS_GITHUB_SETUP.md` section 7.3 and `docs/PARAMETERS.md` for the CloudTrail setting

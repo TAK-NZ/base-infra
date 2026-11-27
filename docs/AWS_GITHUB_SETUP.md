@@ -373,6 +373,8 @@ aws iam attach-role-policy \
 
 > **Note:** Run these commands in both Production and Demo accounts. The policy provides least-privilege access for all TAK infrastructure components.
 
+> **VPC Block Public Access:** BaseInfra creates `AWS::EC2::VPCBlockPublicAccessExclusion` resources for the public subnets. The `ec2:*` statement above already covers `ec2:CreateVpcBlockPublicAccessExclusion`, `ec2:DeleteVpcBlockPublicAccessExclusion` and `ec2:DescribeVpcBlockPublicAccessExclusions`. If you replace `ec2:*` with a narrower list, keep those three actions. The stack does not modify the account-level BPA options, so `ec2:ModifyVpcBlockPublicAccessOptions` is not needed.
+
 ## 3. GitHub Organization Setup (One-time Configuration)
 
 ### 3.1 Configure Organization Secrets

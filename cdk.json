@@ -23,7 +23,8 @@
       "vpcCidr": "10.0.0.0/20",
       "networking": {
         "enableRedundantNatGateways": false,
-        "createVpcEndpoints": false
+        "createVpcEndpoints": false,
+        "excludePublicSubnetsFromBpa": true
       },
       "certificate": {
         "transparencyLoggingEnabled": true
@@ -53,7 +54,8 @@
       "vpcCidr": "10.0.0.0/20",
       "networking": {
         "enableRedundantNatGateways": true,
-        "createVpcEndpoints": true
+        "createVpcEndpoints": true,
+        "excludePublicSubnetsFromBpa": true
       },
       "certificate": {
         "transparencyLoggingEnabled": true

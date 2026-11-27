@@ -88,6 +88,17 @@ describe('Utility Functions', () => {
       expect(applyContextOverrides(makeApp('false'), baseConfig).cloudTrail.logRetentionDays).toBe(90);
     });
 
+    it('overrides networking.excludePublicSubnetsFromBpa, including CLI string values', () => {
+      const makeApp = (value: unknown) => ({
+        node: { tryGetContext: jest.fn((key) => (key === 'excludePublicSubnetsFromBpa' ? value : undefined)) }
+      } as any);
+      const baseConfig = createTestConfig({ networking: { enableRedundantNatGateways: true, createVpcEndpoints: false, excludePublicSubnetsFromBpa: true } });
+
+      expect(applyContextOverrides(makeApp('false'), baseConfig).networking.excludePublicSubnetsFromBpa).toBe(false);
+      expect(applyContextOverrides(makeApp(undefined), baseConfig).networking.excludePublicSubnetsFromBpa).toBe(true);
+      expect(applyContextOverrides(makeApp('true'), createTestConfig({ networking: { enableRedundantNatGateways: true, createVpcEndpoints: false, excludePublicSubnetsFromBpa: false } })).networking.excludePublicSubnetsFromBpa).toBe(true);
+    });
+
     it('returns original config when no overrides exist', () => {
       const mockApp = {
         node: {

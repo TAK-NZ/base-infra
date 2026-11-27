@@ -15,7 +15,8 @@ export interface VpcResources {
 export function createVpcL2Resources(
   scope: Construct,
   vpcCidr: string = '10.0.0.0/20',
-  enableRedundantNatGateways: boolean
+  enableRedundantNatGateways: boolean,
+  excludePublicSubnetsFromBpa: boolean = true
 ): VpcResources {
   const vpc = new ec2.Vpc(scope, 'Vpc', {
     ipAddresses: ec2.IpAddresses.cidr(vpcCidr),
@@ -47,11 +48,36 @@ export function createVpcL2Resources(
   // Configure IPv6 for all subnets and routing
   configureIpv6Subnets(scope, vpc, ipv6CidrBlock);
 
+  if (excludePublicSubnetsFromBpa) {
+    excludePublicSubnetsFromBlockPublicAccess(scope, vpc);
+  }
+
   return {
     vpc,
     ipv6CidrBlock,
     vpcLogicalId: (vpc.node.defaultChild as ec2.CfnVPC).logicalId,
   };
+}
+
+/**
+ * Exempts the public subnets from VPC Block Public Access (BPA).
+ *
+ * The account-level BPA setting is not managed by this stack. If BPA is off
+ * these exclusions have no effect; if it is on (or is enabled later) they keep
+ * internet-facing load balancers in the public subnets reachable.
+ *
+ * Exclusions are bidirectional, which is the only mode that applies when BPA
+ * runs in ingress-only mode. All public subnets are excluded so that a load
+ * balancer spanning them is fully reachable. Private subnets are not excluded:
+ * NAT gateway and egress-only internet gateway traffic is not blocked by BPA.
+ */
+function excludePublicSubnetsFromBlockPublicAccess(scope: Construct, vpc: ec2.Vpc): void {
+  vpc.publicSubnets.forEach((subnet, index) => {
+    new ec2.CfnVPCBlockPublicAccessExclusion(scope, `PublicSubnetBpaExclusion${index}`, {
+      subnetId: subnet.subnetId,
+      internetGatewayExclusionMode: 'allow-bidirectional',
+    });
+  });
 }
 
 /**

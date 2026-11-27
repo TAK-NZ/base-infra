@@ -31,6 +31,8 @@ export function applyContextOverrides(
       ...baseConfig.networking,
       enableRedundantNatGateways: app.node.tryGetContext('enableRedundantNatGateways') ?? baseConfig.networking.enableRedundantNatGateways,
       createVpcEndpoints: app.node.tryGetContext('createVpcEndpoints') ?? baseConfig.networking.createVpcEndpoints,
+      // CLI context values arrive as strings, so "false" must not be treated as truthy
+      excludePublicSubnetsFromBpa: parseBooleanContext(app.node.tryGetContext('excludePublicSubnetsFromBpa')) ?? baseConfig.networking.excludePublicSubnetsFromBpa,
     },
     certificate: {
       ...baseConfig.certificate,
